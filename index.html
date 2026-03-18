@@ -1971,7 +1971,7 @@ function AddPunchModal({
     })
   }, /*#__PURE__*/React.createElement("option", {
     value: ""
-  }, "Select..."), emps.map(function (e) {
+  }, "Select..."), emps.filter(function(e){return e.st==="active"}).map(function (e) {
     return /*#__PURE__*/React.createElement("option", {
       key: e.id,
       value: e.id
@@ -5351,6 +5351,12 @@ function AdminView({
     });
     setShowAdd(false);
   }
+  var rEdit = useState(null), editEmp2 = rEdit[0], setEditEmp2 = rEdit[1];
+  var rEditForm = useState({}), editForm = rEditForm[0], setEditForm = rEditForm[1];
+  function startEdit(e) { setEditForm({fn:e.fn,ln:e.ln,dept:e.dept,shiftStart:e.shiftStart||"06:00",shiftEnd:e.shiftEnd||"14:30",rate:e.rate||16,salary:e.salary||0,badge:e.badge,pin:e.pin}); setEditEmp2(e); }
+  function saveEdit() { if(!editEmp2)return; onUpdateEmps(emps.map(function(x){return x.id===editEmp2.id?Object.assign({},x,{fn:editForm.fn||x.fn,ln:editForm.ln||x.ln,dept:editForm.dept||x.dept,shiftStart:editForm.shiftStart||x.shiftStart,shiftEnd:editForm.shiftEnd||x.shiftEnd,rate:parseFloat(editForm.rate)||x.rate,salary:parseFloat(editForm.salary)||0,badge:editForm.badge||x.badge,pin:editForm.pin||x.pin}):x})); setEditEmp2(null); }
+  function termEmp(id) { if(window.confirm("Terminate this employee? They will be moved to the Inactive bucket.")) onUpdateEmps(emps.map(function(x){return x.id===id?Object.assign({},x,{st:"terminated"}):x})); }
+  function deleteEmp(id) { var emp=emps.find(function(e){return e.id===id}); if(window.confirm("PERMANENTLY DELETE "+emp.fn+" "+emp.ln+"? This cannot be undone.")) { if(window.confirm("Are you absolutely sure? All records for this employee will be removed.")) { onUpdateEmps(emps.filter(function(x){return x.id!==id})); if(useSupa()){var sb=getSb();if(sb){sb.from("tk_employees").delete().eq("id",id);sb.from("tk_punches").delete().eq("eid",id);sb.from("tk_point_events").delete().eq("eid",id);sb.from("tk_requests").delete().eq("eid",id)}} } } }
   function tog(id) {
     onUpdateEmps(emps.map(function (x) {
       return x.id === id ? Object.assign({}, x, {
@@ -5951,104 +5957,7 @@ function AdminView({
         color: C.t4
       }
     }, e.badge, " \xB7 ", e.dept, " \xB7 ", e.shiftStart || "06:00", "\u2013", e.shiftEnd || "14:30"))), /*#__PURE__*/React.createElement("button", {
-      onClick: function () {
-        tog(e.id);
-      },
-      style: {
-        width: 36,
-        height: 20,
-        borderRadius: 10,
-        background: e.st === "active" ? C.green : C.bd,
-        position: "relative"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        width: 14,
-        height: 14,
-        borderRadius: "50%",
-        background: "#fff",
-        position: "absolute",
-        top: 3,
-        left: e.st === "active" ? 19 : 3,
-        transition: "left 0.2s"
-      }
-    }))), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 8
-      }
-    }, /*#__PURE__*/React.createElement("code", {
-      style: {
-        background: C.bg,
-        padding: "2px 8px",
-        borderRadius: 4,
-        fontFamily: Fm,
-        fontSize: 13,
-        color: C.spark,
-        border: "1px solid " + C.bd
-      }
-    }, e.pin), /*#__PURE__*/React.createElement("button", {
-      onClick: function () {
-        adj(e.id, -0.5);
-      },
-      style: {
-        width: 20,
-        height: 20,
-        borderRadius: 4,
-        background: C.bg,
-        color: C.t3,
-        fontSize: 13,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        border: "1px solid " + C.bd
-      }
-    }, "-"), /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontFamily: Fm,
-        fontSize: 13,
-        fontWeight: 700,
-        color: e.pts >= 8 ? C.red : e.pts >= 6 ? C.orange : e.pts >= 4.5 ? C.spark : e.pts >= 2.5 ? "#EAB308" : C.green,
-        minWidth: 24,
-        textAlign: "center"
-      }
-    }, e.pts), /*#__PURE__*/React.createElement("button", {
-      onClick: function () {
-        adj(e.id, 0.5);
-      },
-      style: {
-        width: 20,
-        height: 20,
-        borderRadius: 4,
-        background: C.bg,
-        color: C.t3,
-        fontSize: 13,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        border: "1px solid " + C.bd
-      }
-    }, "+")), /*#__PURE__*/React.createElement("button", {
-      onClick: function () {
-        rpin(e.id);
-      },
-      style: {
-        padding: "4px 10px",
-        borderRadius: 6,
-        fontSize: 13,
-        fontWeight: 600,
-        color: C.t3,
-        background: C.bg,
-        border: "1px solid " + C.bd
-      }
-    }, "Reset PIN")));
+    })), /*#__PURE__*/React.createElement("div", {style:{display:"flex",gap:6,marginTop:8,flexWrap:"wrap"}}, /*#__PURE__*/React.createElement("button",{onClick:function(){startEdit(e)},style:{padding:"6px 12px",borderRadius:6,fontSize:13,fontWeight:600,color:C.spark,background:C.spark+"12",border:"1px solid "+C.spark+"33"}},"Edit"), /*#__PURE__*/React.createElement("button",{onClick:function(){rpin(e.id)},style:{padding:"6px 12px",borderRadius:6,fontSize:13,fontWeight:600,color:C.t3,background:C.bg,border:"1px solid "+C.bd}},"PIN"), /*#__PURE__*/React.createElement("button",{onClick:function(){termEmp(e.id)},style:{padding:"6px 12px",borderRadius:6,fontSize:13,fontWeight:600,color:C.red,background:C.redD,border:"1px solid "+C.redB}},"Term"), /*#__PURE__*/React.createElement("div",{style:{display:"flex",alignItems:"center",gap:4,marginLeft:"auto"}}, /*#__PURE__*/React.createElement("span",{style:{fontSize:13,color:C.t4}},"Pts:"), /*#__PURE__*/React.createElement("button",{onClick:function(){adj(e.id,-0.5)},style:{width:22,height:22,borderRadius:4,background:C.bg,color:C.t3,fontSize:14,display:"flex",alignItems:"center",justifyContent:"center",border:"1px solid "+C.bd}},"-"), /*#__PURE__*/React.createElement(PtBar,{pts:e.pts}), /*#__PURE__*/React.createElement("button",{onClick:function(){adj(e.id,0.5)},style:{width:22,height:22,borderRadius:4,background:C.bg,color:C.t3,fontSize:14,display:"flex",alignItems:"center",justifyContent:"center",border:"1px solid "+C.bd}},"+"))));
   })) : /*#__PURE__*/React.createElement("div", {
     style: {
       background: C.sf,
@@ -6066,7 +5975,7 @@ function AdminView({
       width: "100%",
       borderCollapse: "collapse"
     }
-  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, ["Badge", "Name", "PIN", "Dept", "Shift", "Rate", "Salary", "Points", "Status", ""].map(function (h) {
+  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, ["Badge", "Name", "PIN", "Dept", "Shift", "Rate", "Salary", "Points", "Actions"].map(function (h) {
     return /*#__PURE__*/React.createElement("th", {
       key: h,
       style: {
@@ -6209,51 +6118,25 @@ function AdminView({
         justifyContent: "center",
         border: "1px solid " + C.bd
       }
-    }, "+"))), /*#__PURE__*/React.createElement("td", {
-      style: {
-        padding: "8px 12px"
-      }
-    }, /*#__PURE__*/React.createElement("button", {
-      onClick: function () {
-        tog(e.id);
-      },
-      style: {
-        width: 36,
-        height: 20,
-        borderRadius: 10,
-        background: e.st === "active" ? C.green : C.bd,
-        position: "relative"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        width: 14,
-        height: 14,
-        borderRadius: "50%",
-        background: "#fff",
-        position: "absolute",
-        top: 3,
-        left: e.st === "active" ? 19 : 3,
-        transition: "left 0.2s"
-      }
-    }))), /*#__PURE__*/React.createElement("td", {
-      style: {
-        padding: "8px 12px"
-      }
-    }, /*#__PURE__*/React.createElement("button", {
-      onClick: function () {
-        rpin(e.id);
-      },
-      style: {
-        padding: "4px 10px",
-        borderRadius: 6,
-        fontSize: 13,
-        fontWeight: 600,
-        color: C.t3,
-        background: C.bg,
-        border: "1px solid " + C.bd
-      }
-    }, "Reset")));
-  })))))), /*#__PURE__*/React.createElement("div", {style:{marginTop:24,borderTop:"2px solid "+C.red+"33",paddingTop:16}}, /*#__PURE__*/React.createElement("div", {style:{fontSize:14,fontWeight:700,color:C.red,marginBottom:12}}, "Terminated / Inactive (", emps.filter(function(e){return e.st!=="active"}).length, ")"), emps.filter(function(e){return e.st!=="active"}).length===0 ? /*#__PURE__*/React.createElement("div", {style:{fontSize:12,color:C.t4,padding:16,background:C.sf,borderRadius:8,border:"1px solid "+C.bd,textAlign:"center"}}, "No inactive employees") : /*#__PURE__*/React.createElement("div", {style:{background:C.sf,border:"1px solid "+C.red+"22",borderRadius:12,overflow:"hidden"}}, /*#__PURE__*/React.createElement("table", {style:{width:"100%",borderCollapse:"collapse"}}, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, ["Badge","Name","Dept","Last Shift","Rate","Action"].map(function(h){return /*#__PURE__*/React.createElement("th",{key:h,style:{padding:"8px 12px",textAlign:"left",fontSize:12,fontWeight:600,color:C.t4,borderBottom:"1px solid "+C.bd,fontFamily:Fb}},h)}))), /*#__PURE__*/React.createElement("tbody", null, emps.filter(function(e){return e.st!=="active"}).map(function(e){return /*#__PURE__*/React.createElement("tr",{key:e.id,style:{opacity:0.7,borderBottom:"1px solid "+C.bd+"08"}}, /*#__PURE__*/React.createElement("td",{style:{padding:"8px 12px"}}, /*#__PURE__*/React.createElement("code",{style:{fontFamily:Fm,fontSize:13,color:C.t4,fontWeight:700}},e.badge)), /*#__PURE__*/React.createElement("td",{style:{padding:"8px 12px"}}, /*#__PURE__*/React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}}, /*#__PURE__*/React.createElement(Av,{fn:e.fn,ln:e.ln,sz:28}), /*#__PURE__*/React.createElement("span",{style:{fontSize:14,fontWeight:600,color:C.t3}},e.fn," ",e.ln))), /*#__PURE__*/React.createElement("td",{style:{padding:"8px 12px",fontSize:14,color:C.t4}},e.dept), /*#__PURE__*/React.createElement("td",{style:{padding:"8px 12px",fontFamily:Fm,fontSize:13,color:C.t4}},e.shiftStart||"06:00","–",e.shiftEnd||"14:30"), /*#__PURE__*/React.createElement("td",{style:{padding:"8px 12px",fontFamily:Fm,fontSize:11,color:C.t4}},"$",e.rate||16,"/hr"), /*#__PURE__*/React.createElement("td",{style:{padding:"8px 12px"}}, /*#__PURE__*/React.createElement(Tag,{color:C.red},e.st==="terminated"?"TERMINATED":"INACTIVE"), /*#__PURE__*/React.createElement("button",{onClick:function(){tog(e.id)},style:{marginLeft:8,padding:"4px 10px",borderRadius:6,fontSize:11,fontWeight:600,color:C.green,background:C.greenD,border:"1px solid "+C.greenB}},"Reactivate")))}))))), tab === "staff" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    }, "+"))), /*#__PURE__*/React.createElement("td", {style:{padding:"8px 12px"}}, /*#__PURE__*/React.createElement("div",{style:{display:"flex",gap:4,flexWrap:"wrap"}}, /*#__PURE__*/React.createElement("button",{onClick:function(){startEdit(e)},style:{padding:"4px 10px",borderRadius:6,fontSize:13,fontWeight:600,color:C.spark,background:C.spark+"12",border:"1px solid "+C.spark+"33"}},"Edit"), /*#__PURE__*/React.createElement("button",{onClick:function(){rpin(e.id)},style:{padding:"4px 10px",borderRadius:6,fontSize:13,fontWeight:600,color:C.t3,background:C.bg,border:"1px solid "+C.bd}},"PIN"), /*#__PURE__*/React.createElement("button",{onClick:function(){termEmp(e.id)},style:{padding:"4px 10px",borderRadius:6,fontSize:13,fontWeight:600,color:C.red,background:C.redD,border:"1px solid "+C.redB}},"Term"))));
+  })))))),
+  editEmp2 && /*#__PURE__*/React.createElement("div", {style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,padding:16},onClick:function(){setEditEmp2(null)}},
+  /*#__PURE__*/React.createElement("div", {onClick:function(ev){ev.stopPropagation()},style:{background:C.sf,border:"1px solid "+C.bd,borderRadius:16,padding:24,width:480,maxWidth:"100%"}},
+  /*#__PURE__*/React.createElement("div", {style:{fontSize:16,fontWeight:700,color:C.t1,marginBottom:16}}, "Edit Employee — ",editEmp2.fn," ",editEmp2.ln),
+  /*#__PURE__*/React.createElement("div", {style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}},
+  /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"First Name"), /*#__PURE__*/React.createElement("input",{value:editForm.fn||"",onChange:function(ev){setEditForm(Object.assign({},editForm,{fn:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.t1,padding:"8px 10px",borderRadius:6,fontSize:14,outline:"none"}})),
+  /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"Last Name"), /*#__PURE__*/React.createElement("input",{value:editForm.ln||"",onChange:function(ev){setEditForm(Object.assign({},editForm,{ln:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.t1,padding:"8px 10px",borderRadius:6,fontSize:14,outline:"none"}})),
+  /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"Badge"), /*#__PURE__*/React.createElement("input",{value:editForm.badge||"",onChange:function(ev){setEditForm(Object.assign({},editForm,{badge:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px 10px",borderRadius:6,fontSize:14,fontFamily:Fm,outline:"none"}})),
+  /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"PIN"), /*#__PURE__*/React.createElement("input",{value:editForm.pin||"",maxLength:4,onChange:function(ev){setEditForm(Object.assign({},editForm,{pin:ev.target.value.replace(/\D/g,"")}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px 10px",borderRadius:6,fontSize:14,fontFamily:Fm,fontWeight:700,letterSpacing:4,outline:"none"}})),
+  /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"Department"), /*#__PURE__*/React.createElement("select",{value:editForm.dept||"Assembly",onChange:function(ev){setEditForm(Object.assign({},editForm,{dept:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.t1,padding:"8px 10px",borderRadius:6,fontSize:14,outline:"none",appearance:"none"}}, DEPTS.map(function(d){return /*#__PURE__*/React.createElement("option",{key:d,value:d},d)}))),
+  /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"Rate/HR"), /*#__PURE__*/React.createElement("input",{type:"number",step:"0.50",value:editForm.rate||"",onChange:function(ev){setEditForm(Object.assign({},editForm,{rate:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px 10px",borderRadius:6,fontSize:14,fontFamily:Fm,outline:"none"}})),
+  /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"Shift Start"), /*#__PURE__*/React.createElement("input",{type:"time",value:editForm.shiftStart||"06:00",onChange:function(ev){setEditForm(Object.assign({},editForm,{shiftStart:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px 10px",borderRadius:6,fontSize:14,fontFamily:Fm,outline:"none"}})),
+  /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"Shift End"), /*#__PURE__*/React.createElement("input",{type:"time",value:editForm.shiftEnd||"14:30",onChange:function(ev){setEditForm(Object.assign({},editForm,{shiftEnd:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px 10px",borderRadius:6,fontSize:14,fontFamily:Fm,outline:"none"}})),
+  /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"Salary/YR"), /*#__PURE__*/React.createElement("input",{type:"number",step:"1000",value:editForm.salary||"",onChange:function(ev){setEditForm(Object.assign({},editForm,{salary:ev.target.value}))},placeholder:"0 = hourly",style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.green,padding:"8px 10px",borderRadius:6,fontSize:14,fontFamily:Fm,outline:"none"}}))),
+  /*#__PURE__*/React.createElement("div", {style:{display:"flex",gap:8,marginTop:16}},
+  /*#__PURE__*/React.createElement("button",{onClick:function(){setEditEmp2(null)},style:{flex:1,padding:"10px",borderRadius:8,fontSize:14,fontWeight:600,color:C.t3,background:C.bg,border:"1px solid "+C.bd}},"Cancel"),
+  /*#__PURE__*/React.createElement("button",{onClick:saveEdit,style:{flex:1,padding:"10px",borderRadius:8,fontSize:14,fontWeight:700,color:C.bg,background:C.spark}},"Save Changes")))),
+  /*#__PURE__*/React.createElement("div", {style:{marginTop:24,borderTop:"2px solid "+C.red+"33",paddingTop:16}}, /*#__PURE__*/React.createElement("div", {style:{fontSize:14,fontWeight:700,color:C.red,marginBottom:12}}, "Terminated / Inactive (", emps.filter(function(e){return e.st!=="active"}).length, ")"), emps.filter(function(e){return e.st!=="active"}).length===0 ? /*#__PURE__*/React.createElement("div", {style:{fontSize:12,color:C.t4,padding:16,background:C.sf,borderRadius:8,border:"1px solid "+C.bd,textAlign:"center"}}, "No inactive employees") : /*#__PURE__*/React.createElement("div", {style:{background:C.sf,border:"1px solid "+C.red+"22",borderRadius:12,overflow:"hidden"}}, /*#__PURE__*/React.createElement("table", {style:{width:"100%",borderCollapse:"collapse"}}, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, ["Badge","Name","Dept","Last Shift","Rate","Action"].map(function(h){return /*#__PURE__*/React.createElement("th",{key:h,style:{padding:"8px 12px",textAlign:"left",fontSize:12,fontWeight:600,color:C.t4,borderBottom:"1px solid "+C.bd,fontFamily:Fb}},h)}))), /*#__PURE__*/React.createElement("tbody", null, emps.filter(function(e){return e.st!=="active"}).map(function(e){return /*#__PURE__*/React.createElement("tr",{key:e.id,style:{opacity:0.7,borderBottom:"1px solid "+C.bd+"08"}}, /*#__PURE__*/React.createElement("td",{style:{padding:"8px 12px"}}, /*#__PURE__*/React.createElement("code",{style:{fontFamily:Fm,fontSize:13,color:C.t4,fontWeight:700}},e.badge)), /*#__PURE__*/React.createElement("td",{style:{padding:"8px 12px"}}, /*#__PURE__*/React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}}, /*#__PURE__*/React.createElement(Av,{fn:e.fn,ln:e.ln,sz:28}), /*#__PURE__*/React.createElement("span",{style:{fontSize:14,fontWeight:600,color:C.t3}},e.fn," ",e.ln))), /*#__PURE__*/React.createElement("td",{style:{padding:"8px 12px",fontSize:14,color:C.t4}},e.dept), /*#__PURE__*/React.createElement("td",{style:{padding:"8px 12px",fontFamily:Fm,fontSize:13,color:C.t4}},e.shiftStart||"06:00","–",e.shiftEnd||"14:30"), /*#__PURE__*/React.createElement("td",{style:{padding:"8px 12px",fontFamily:Fm,fontSize:11,color:C.t4}},"$",e.rate||16,"/hr"), /*#__PURE__*/React.createElement("td",{style:{padding:"8px 12px"}}, /*#__PURE__*/React.createElement(Tag,{color:C.red},e.st==="terminated"?"TERMINATED":"INACTIVE"), /*#__PURE__*/React.createElement("button",{onClick:function(){tog(e.id)},style:{marginLeft:8,padding:"4px 10px",borderRadius:6,fontSize:13,fontWeight:600,color:C.green,background:C.greenD,border:"1px solid "+C.greenB}},"Reactivate"), /*#__PURE__*/React.createElement("button",{onClick:function(){deleteEmp(e.id)},style:{marginLeft:6,padding:"4px 10px",borderRadius:6,fontSize:13,fontWeight:600,color:"#fff",background:C.red,border:"1px solid "+C.red}},"Delete")))}))))), tab === "staff" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "space-between",
