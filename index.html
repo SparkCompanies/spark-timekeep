@@ -514,25 +514,30 @@ async function sbLoadConfig(key) {
   if (r.error) return null;
   return r.data.value;
 }
+/* ═══ OFFLINE PUNCH QUEUE ═══ */
+function getOfflineQueue() { try { var q=safeStorage.getItem("tk-offline-queue"); return q?JSON.parse(q):[]; } catch(e){return[]} }
+function saveOfflineQueue(q) { safeStorage.setItem("tk-offline-queue",JSON.stringify(q)); }
+async function flushOfflineQueue() { var q=getOfflineQueue(); if(q.length===0)return; var sb=getSb(); if(!sb)return; var failed=[]; for(var i=0;i<q.length;i++){var r=await sb.from("tk_punches").upsert(q[i]); if(r.error)failed.push(q[i])} saveOfflineQueue(failed); if(failed.length===0&&q.length>0)console.log("Flushed "+q.length+" offline punches"); }
+setInterval(flushOfflineQueue,30000); /* retry every 30 seconds */
+
 async function sbSavePunch(p) {
   var sb = getSb();
-  if (!sb) return;
-  await sb.from("tk_punches").upsert({
-    id: p.id,
-    eid: p.eid,
-    type: p.type,
-    time: p.time,
-    dev: p.dev,
-    ip: p.ip,
-    lat: p.lat,
-    lng: p.lng,
-    dist: p.dist,
-    accuracy: p.accuracy || null,
-    altitude: p.altitude || null,
-    speed: p.speed || null,
-    geo_flags: p.flags || null
-  });
+  if (!sb) { var q=getOfflineQueue();q.push({id:p.id,eid:p.eid,type:p.type,time:p.time,dev:p.dev,ip:p.ip,lat:p.lat,lng:p.lng,dist:p.dist,accuracy:p.accuracy||null,altitude:p.altitude||null,speed:p.speed||null,geo_flags:p.flags||null});saveOfflineQueue(q);return; }
+  var payload={id:p.id,eid:p.eid,type:p.type,time:p.time,dev:p.dev,ip:p.ip,lat:p.lat,lng:p.lng,dist:p.dist,accuracy:p.accuracy||null,altitude:p.altitude||null,speed:p.speed||null,geo_flags:p.flags||null};
+  try { var r=await sb.from("tk_punches").upsert(payload); if(r.error){var q2=getOfflineQueue();q2.push(payload);saveOfflineQueue(q2)} } catch(e){var q3=getOfflineQueue();q3.push(payload);saveOfflineQueue(q3)}
+  flushOfflineQueue();
 }
+
+/* ═══ ADMIN AUDIT TRAIL ═══ */
+async function logAdminAction(action, details, staffName) {
+  var entry={id:"AL-"+Date.now()+"-"+Math.random().toString(36).substr(2,4),action:action,details:details,by:staffName||"System",time:new Date().toISOString()};
+  var log=[];try{var s=safeStorage.getItem("tk-admin-log");log=s?JSON.parse(s):[];}catch(e){}
+  log.unshift(entry);if(log.length>500)log=log.slice(0,500);
+  safeStorage.setItem("tk-admin-log",JSON.stringify(log));
+  var sb=getSb();if(sb){try{await sb.from("tk_admin_log").insert(entry)}catch(e){}}
+}
+function getAdminLog(){try{var s=safeStorage.getItem("tk-admin-log");return s?JSON.parse(s):[];}catch(e){return[]}}
+
 async function sbSavePointEvent(ev) {
   var sb = getSb();
   if (!sb) return;
@@ -1290,33 +1295,34 @@ function useMobile() {
 function SparkLogo({
   size
 }) {
-  var s = size === "lg" ? 14 : size === "sm" ? 11 : 12;
+  var sz = size === "lg" ? 36 : size === "sm" ? 22 : 28;
   return /*#__PURE__*/React.createElement("div", {
     style: {
       display: "inline-flex",
       alignItems: "center",
-      gap: 4,
-      padding: size === "sm" ? "3px 8px" : "5px 12px",
-      background: C.spark + "15",
-      border: "1px solid " + C.spark + "30",
-      borderRadius: 5
+      gap: size === "sm" ? 4 : 6
     }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      width: size === "sm" ? 5 : 7,
-      height: size === "sm" ? 5 : 7,
-      borderRadius: "50%",
-      background: C.spark
-    }
-  }), /*#__PURE__*/React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("svg", {
+    width: sz, height: sz, viewBox: "0 0 64 64", fill: "none", xmlns: "http://www.w3.org/2000/svg"
+  }, /*#__PURE__*/React.createElement("circle", {cx:32,cy:32,r:29,stroke:"#FACC15",strokeWidth:3,fill:"#18181B"}),
+  /*#__PURE__*/React.createElement("line",{x1:32,y1:5,x2:32,y2:10,stroke:"#FACC15",strokeWidth:2,strokeLinecap:"round"}),
+  /*#__PURE__*/React.createElement("line",{x1:32,y1:54,x2:32,y2:59,stroke:"#FACC15",strokeWidth:2,strokeLinecap:"round"}),
+  /*#__PURE__*/React.createElement("line",{x1:5,y1:32,x2:10,y2:32,stroke:"#FACC15",strokeWidth:2,strokeLinecap:"round"}),
+  /*#__PURE__*/React.createElement("line",{x1:54,y1:32,x2:59,y2:32,stroke:"#FACC15",strokeWidth:2,strokeLinecap:"round"}),
+  /*#__PURE__*/React.createElement("line",{x1:12.9,y1:12.9,x2:16.4,y2:16.4,stroke:"#A08C15",strokeWidth:1.5,strokeLinecap:"round"}),
+  /*#__PURE__*/React.createElement("line",{x1:47.6,y1:16.4,x2:51.1,y2:12.9,stroke:"#A08C15",strokeWidth:1.5,strokeLinecap:"round"}),
+  /*#__PURE__*/React.createElement("line",{x1:12.9,y1:51.1,x2:16.4,y2:47.6,stroke:"#A08C15",strokeWidth:1.5,strokeLinecap:"round"}),
+  /*#__PURE__*/React.createElement("line",{x1:47.6,y1:47.6,x2:51.1,y2:51.1,stroke:"#A08C15",strokeWidth:1.5,strokeLinecap:"round"}),
+  /*#__PURE__*/React.createElement("polygon",{points:"35,14 25,35 32,35 28,50 40,28 33,28",fill:"#FACC15"})),
+  size !== "sm" ? /*#__PURE__*/React.createElement("span", {
     style: {
       fontFamily: Fb,
-      fontSize: s,
+      fontSize: size === "lg" ? 16 : 13,
       fontWeight: 800,
       color: C.spark,
       letterSpacing: 1.5
     }
-  }, "SPARK"));
+  }, "SPARK") : null);
 }
 function DfmLogo({
   size
@@ -5337,6 +5343,7 @@ function AdminView({
       pts: 0
     };
     onUpdateEmps(emps.concat([ne]));
+    logAdminAction("ADD_EMPLOYEE",ne.fn+" "+ne.ln+" ("+ne.badge+")",staffName);
     setForm({
       fn: "",
       ln: "",
@@ -5354,9 +5361,9 @@ function AdminView({
   var rEdit = useState(null), editEmp2 = rEdit[0], setEditEmp2 = rEdit[1];
   var rEditForm = useState({}), editForm = rEditForm[0], setEditForm = rEditForm[1];
   function startEdit(e) { setEditForm({fn:e.fn,ln:e.ln,dept:e.dept,shiftStart:e.shiftStart||"06:00",shiftEnd:e.shiftEnd||"14:30",rate:e.rate||16,salary:e.salary||0,badge:e.badge,pin:e.pin}); setEditEmp2(e); }
-  function saveEdit() { if(!editEmp2)return; onUpdateEmps(emps.map(function(x){return x.id===editEmp2.id?Object.assign({},x,{fn:editForm.fn||x.fn,ln:editForm.ln||x.ln,dept:editForm.dept||x.dept,shiftStart:editForm.shiftStart||x.shiftStart,shiftEnd:editForm.shiftEnd||x.shiftEnd,rate:parseFloat(editForm.rate)||x.rate,salary:parseFloat(editForm.salary)||0,badge:editForm.badge||x.badge,pin:editForm.pin||x.pin}):x})); setEditEmp2(null); }
-  function termEmp(id) { if(window.confirm("Terminate this employee? They will be moved to the Inactive bucket.")) onUpdateEmps(emps.map(function(x){return x.id===id?Object.assign({},x,{st:"terminated"}):x})); }
-  function deleteEmp(id) { var emp=emps.find(function(e){return e.id===id}); if(window.confirm("PERMANENTLY DELETE "+emp.fn+" "+emp.ln+"? This cannot be undone.")) { if(window.confirm("Are you absolutely sure? All records for this employee will be removed.")) { onUpdateEmps(emps.filter(function(x){return x.id!==id})); if(useSupa()){var sb=getSb();if(sb){sb.from("tk_employees").delete().eq("id",id);sb.from("tk_punches").delete().eq("eid",id);sb.from("tk_point_events").delete().eq("eid",id);sb.from("tk_requests").delete().eq("eid",id)}} } } }
+  function saveEdit() { if(!editEmp2)return; onUpdateEmps(emps.map(function(x){return x.id===editEmp2.id?Object.assign({},x,{fn:editForm.fn||x.fn,ln:editForm.ln||x.ln,dept:editForm.dept||x.dept,shiftStart:editForm.shiftStart||x.shiftStart,shiftEnd:editForm.shiftEnd||x.shiftEnd,rate:parseFloat(editForm.rate)||x.rate,salary:parseFloat(editForm.salary)||0,badge:editForm.badge||x.badge,pin:editForm.pin||x.pin}):x})); logAdminAction("EDIT",editEmp2.fn+" "+editEmp2.ln+" ("+editEmp2.badge+")",staffName); setEditEmp2(null); }
+  function termEmp(id) { var emp2=emps.find(function(e){return e.id===id}); if(window.confirm("Terminate this employee? They will be moved to the Inactive bucket.")) { onUpdateEmps(emps.map(function(x){return x.id===id?Object.assign({},x,{st:"terminated"}):x})); logAdminAction("TERMINATE",emp2.fn+" "+emp2.ln+" ("+emp2.badge+")",staffName); } }
+  function deleteEmp(id) { var emp=emps.find(function(e){return e.id===id}); if(window.confirm("PERMANENTLY DELETE "+emp.fn+" "+emp.ln+"? This cannot be undone.")) { if(window.confirm("Are you absolutely sure? All records for this employee will be removed.")) { onUpdateEmps(emps.filter(function(x){return x.id!==id})); logAdminAction("DELETE",emp.fn+" "+emp.ln+" ("+emp.badge+") — permanently removed",staffName); if(useSupa()){var sb=getSb();if(sb){sb.from("tk_employees").delete().eq("id",id);sb.from("tk_punches").delete().eq("eid",id);sb.from("tk_point_events").delete().eq("eid",id);sb.from("tk_requests").delete().eq("eid",id)}} } } }
   function tog(id) {
     onUpdateEmps(emps.map(function (x) {
       return x.id === id ? Object.assign({}, x, {
@@ -5365,13 +5372,17 @@ function AdminView({
     }));
   }
   function rpin(id) {
+    var emp2=emps.find(function(e){return e.id===id});
     onUpdateEmps(emps.map(function (x) {
       return x.id === id ? Object.assign({}, x, {
         pin: genPin()
       }) : x;
     }));
+    logAdminAction("PIN_RESET",(emp2?emp2.fn+" "+emp2.ln:"ID:"+id),staffName);
   }
   function adj(id, d) {
+    var emp2=emps.find(function(e){return e.id===id});
+    logAdminAction("POINTS_ADJUST",(emp2?emp2.fn+" "+emp2.ln:"ID:"+id)+" "+(d>0?"+":"")+d+" pts",staffName);
     onIssuePoint(id, "manual", d);
   }
   var inp = {
@@ -6038,9 +6049,13 @@ function AdminView({
         fontFamily: Fm,
         fontSize: 13,
         color: C.spark,
-        border: "1px solid " + C.bd
-      }
-    }, e.pin)), /*#__PURE__*/React.createElement("td", {
+        border: "1px solid " + C.bd,
+        cursor: "pointer",
+        letterSpacing: 2
+      },
+      title: "Click to reveal",
+      onClick: function(ev) { var el=ev.currentTarget; if(el.getAttribute("data-show")==="1"){el.textContent="\u2022\u2022\u2022\u2022";el.setAttribute("data-show","0")}else{el.textContent=e.pin;el.setAttribute("data-show","1");setTimeout(function(){el.textContent="\u2022\u2022\u2022\u2022";el.setAttribute("data-show","0")},3000)} }
+    }, "\u2022\u2022\u2022\u2022")), /*#__PURE__*/React.createElement("td", {
       style: {
         padding: "8px 12px",
         fontSize: 14,
