@@ -366,7 +366,7 @@ const DEFAULT_GEO = {
   enforceIP: false,
   siteLat: 42.2526,
   siteLng: -83.2119,
-  geoRadius: 500, geoMaxAccuracy: 150,
+  geoRadius: 30, geoMaxAccuracy: 50,
   enforceGeo: false,
   siteAddress: "DFM Marshall Plant, Marshall, MI"
 };
@@ -1352,7 +1352,7 @@ function Tag({
       display: "inline-block",
       padding: "3px 10px",
       borderRadius: 4,
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 700,
       fontFamily: Fb,
       letterSpacing: 0.5,
@@ -1431,7 +1431,7 @@ function StatCard({
   }, icon ? icon + " " : "", label), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: Fm,
-      fontSize: mo ? 24 : 32,
+      fontSize: mo ? 28 : 36,
       fontWeight: 700,
       color: C.t1,
       lineHeight: 1
@@ -1461,7 +1461,7 @@ function Clk({
   return /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: big ? Fb : Fm,
-      fontSize: big ? 48 : 12,
+      fontSize: big ? 52 : 13,
       fontWeight: big ? 800 : 500,
       color: big ? C.t1 : C.t3,
       letterSpacing: big ? 2 : 0.5,
@@ -1473,7 +1473,7 @@ function Clk({
     second: big ? "2-digit" : undefined
   }), big && /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 500,
       color: C.t4,
       marginTop: 6,
@@ -1498,7 +1498,7 @@ function PinPad({
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: Fb,
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 600,
       color: C.t4,
       letterSpacing: 2,
@@ -1561,7 +1561,7 @@ function PinPad({
       style: {
         padding: mo ? "12px" : "16px",
         borderRadius: 10,
-        fontSize: mo ? 20 : 24,
+        fontSize: mo ? 22 : 26,
         fontWeight: 600,
         fontFamily: Fm,
         color: C.t1,
@@ -1594,14 +1594,14 @@ function Header({
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: mo ? 14 : 16,
+      fontSize: mo ? 16 : 18,
       fontWeight: 700,
       color: C.t1,
       letterSpacing: 0.3
     }
   }, title), !mo && sub && /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t4,
       marginTop: 1
     }
@@ -1621,7 +1621,7 @@ function Header({
     }
   }, /*#__PURE__*/React.createElement("span", {
     style: {
-      fontSize: 11,
+      fontSize: 13,
       fontWeight: 600,
       color: C.spark
     }
@@ -1632,7 +1632,7 @@ function Header({
     style: {
       padding: "6px 14px",
       borderRadius: 6,
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 700,
       color: C.red,
       background: C.redD,
@@ -1793,7 +1793,7 @@ function StaffLogin({
     color: C.spark
   }, "STAFF LOGIN"), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t3,
       marginTop: 12,
       marginBottom: 4
@@ -1871,7 +1871,7 @@ function LoadScreen() {
     style: {
       marginTop: 12,
       fontFamily: Fb,
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 600,
       color: C.t4,
       letterSpacing: 2
@@ -1899,7 +1899,7 @@ function AddPunchModal({
     color: C.t1,
     padding: "9px 12px",
     borderRadius: 8,
-    fontSize: 12,
+    fontSize: 13,
     outline: "none",
     width: "100%",
     fontFamily: Fb
@@ -1942,7 +1942,7 @@ function AddPunchModal({
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 14,
+      fontSize: 16,
       fontWeight: 700,
       color: C.t1,
       marginBottom: 16
@@ -1953,7 +1953,7 @@ function AddPunchModal({
     }
   }, /*#__PURE__*/React.createElement("label", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 600,
       color: C.t4,
       fontFamily: Fb,
@@ -1982,7 +1982,7 @@ function AddPunchModal({
     }
   }, /*#__PURE__*/React.createElement("label", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 600,
       color: C.t4,
       fontFamily: Fb,
@@ -2005,7 +2005,7 @@ function AddPunchModal({
         flex: 1,
         padding: "8px 4px",
         borderRadius: 6,
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: 700,
         color: type === pt.k ? C.bg : C.t3,
         background: type === pt.k ? pt.c : "transparent",
@@ -2018,7 +2018,7 @@ function AddPunchModal({
     }
   }, /*#__PURE__*/React.createElement("label", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 600,
       color: C.t4,
       fontFamily: Fb,
@@ -2044,7 +2044,7 @@ function AddPunchModal({
       flex: 1,
       padding: "10px",
       borderRadius: 8,
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 600,
       color: C.t3,
       background: C.bg,
@@ -2057,7 +2057,7 @@ function AddPunchModal({
       flex: 1,
       padding: "10px",
       borderRadius: 8,
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 700,
       color: C.bg,
       background: eid ? C.spark : C.t4
@@ -2250,7 +2250,7 @@ function KioskView({
       style: {
         marginTop: mo ? 32 : 48,
         padding: mo ? "14px 36px" : "18px 52px",
-        fontSize: mo ? 14 : 16,
+        fontSize: mo ? 16 : 18,
         fontWeight: 800,
         letterSpacing: 3,
         color: C.bg,
@@ -2278,13 +2278,13 @@ function KioskView({
       }
     }, gc.enforceGeo ? /*#__PURE__*/React.createElement("span", {
       style: {
-        fontSize: 12,
+        fontSize: 13,
         color: C.green,
         fontWeight: 600
       }
     }, "\u25C9 GPS") : null, gc.enforceIP ? /*#__PURE__*/React.createElement("span", {
       style: {
-        fontSize: 12,
+        fontSize: 13,
         color: C.blue,
         fontWeight: 600
       }
@@ -2306,7 +2306,7 @@ function KioskView({
       marginTop: 16,
       padding: "8px 20px",
       borderRadius: 8,
-      fontSize: 12,
+      fontSize: 13,
       color: C.t3,
       background: C.sf,
       border: "1px solid " + C.bd
@@ -2329,7 +2329,7 @@ function KioskView({
     }
   }, emp.fn, " ", emp.ln), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t4,
       marginBottom: 16
     }
@@ -2345,7 +2345,7 @@ function KioskView({
       marginTop: 12,
       padding: "8px 20px",
       borderRadius: 8,
-      fontSize: 12,
+      fontSize: 13,
       color: C.t3,
       background: C.sf,
       border: "1px solid " + C.bd
@@ -2365,14 +2365,14 @@ function KioskView({
       sz: 48
     }), /*#__PURE__*/React.createElement("div", {
       style: {
-        fontSize: 15,
+        fontSize: 17,
         fontWeight: 700,
         color: C.t1,
         marginTop: 6
       }
     }, emp.fn, " ", emp.ln), /*#__PURE__*/React.createElement("div", {
       style: {
-        fontSize: 12,
+        fontSize: 13,
         color: C.t4,
         marginBottom: 4
       }
@@ -2381,7 +2381,7 @@ function KioskView({
     }, cs.label), /*#__PURE__*/React.createElement("div", {
       style: {
         fontFamily: Fm,
-        fontSize: 12,
+        fontSize: 13,
         color: C.t3,
         marginTop: 4,
         marginBottom: 20
@@ -2409,7 +2409,7 @@ function KioskView({
       }
     }, "Verifying location..."), /*#__PURE__*/React.createElement("div", {
       style: {
-        fontSize: 12,
+        fontSize: 13,
         color: C.t4,
         marginTop: 4
       }
@@ -2430,7 +2430,7 @@ function KioskView({
         style: {
           padding: mo ? "14px 24px" : "18px 36px",
           borderRadius: 12,
-          fontSize: mo ? 14 : 16,
+          fontSize: mo ? 16 : 18,
           fontWeight: 800,
           letterSpacing: 2,
           color: C.bg,
@@ -2446,7 +2446,7 @@ function KioskView({
       style: {
         padding: "10px 20px",
         borderRadius: 8,
-        fontSize: 11,
+        fontSize: 13,
         fontWeight: 600,
         color: C.spark,
         background: C.spark + "12",
@@ -2459,7 +2459,7 @@ function KioskView({
         margin: "12px auto 0",
         padding: "8px 20px",
         borderRadius: 8,
-        fontSize: 12,
+        fontSize: 13,
         color: C.t3,
         background: C.sf,
         border: "1px solid " + C.bd
@@ -2516,7 +2516,7 @@ function KioskView({
         color: C.t1,
         padding: "10px 12px",
         borderRadius: 8,
-        fontSize: 12,
+        fontSize: 13,
         marginBottom: 8,
         outline: "none",
         fontFamily: Fb
@@ -2535,7 +2535,7 @@ function KioskView({
         color: C.t1,
         padding: "10px 12px",
         borderRadius: 8,
-        fontSize: 12,
+        fontSize: 13,
         marginBottom: 12,
         outline: "none",
         fontFamily: Fb,
@@ -2554,7 +2554,7 @@ function KioskView({
         flex: 1,
         padding: "10px",
         borderRadius: 8,
-        fontSize: 12,
+        fontSize: 13,
         color: C.t3,
         background: C.sf,
         border: "1px solid " + C.bd
@@ -2566,7 +2566,7 @@ function KioskView({
         flex: 1,
         padding: "10px",
         borderRadius: 8,
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: 700,
         color: C.bg,
         background: reqType && reqTime ? C.spark : C.t4
@@ -2626,7 +2626,7 @@ function KioskView({
       }
     }, /*#__PURE__*/React.createElement("span", {
       style: {
-        fontSize: 11,
+        fontSize: 13,
         color: C.green,
         fontWeight: 600
       }
@@ -2671,7 +2671,7 @@ function KioskView({
       }, /*#__PURE__*/React.createElement("div", {
         style: {
           fontFamily: Fm,
-          fontSize: 12,
+          fontSize: 13,
           color: d.isToday ? C.spark : C.t4,
           letterSpacing: 1
         }
@@ -2693,7 +2693,7 @@ function KioskView({
     }, wk2.toFixed(1), "h"), /*#__PURE__*/React.createElement("div", {
       style: {
         fontFamily: Fm,
-        fontSize: 12,
+        fontSize: 13,
         color: C.t4
       }
     }, "this week"), /*#__PURE__*/React.createElement("button", {
@@ -2702,7 +2702,7 @@ function KioskView({
         marginTop: 16,
         padding: "10px 28px",
         borderRadius: 8,
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: 700,
         color: C.bg,
         background: C.spark
@@ -2736,7 +2736,7 @@ function KioskView({
     }
   }, "REQUEST SENT"), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t4,
       marginTop: 6
     }
@@ -2746,7 +2746,7 @@ function KioskView({
       marginTop: 16,
       padding: "10px 28px",
       borderRadius: 8,
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 700,
       color: C.bg,
       background: C.spark
@@ -2779,7 +2779,7 @@ function KioskView({
     }
   }, "INVALID"), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t4,
       marginTop: 6
     }
@@ -2826,7 +2826,7 @@ function KioskView({
     }
   }, "Distance: ", geoData.dist, "m from site") : null, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t4,
       marginTop: 14
     }
@@ -2916,15 +2916,11 @@ function KioskView({
       color: C.t4,
       letterSpacing: 0.5,
       WebkitUserSelect: "none",
-      userSelect: "none"
+      userSelect: "none",
+      cursor: "default"
     },
     onClick: function() {
-      if (!onStaffLogin) return;
-      var now = Date.now();
-      if (!window._tkTaps) window._tkTaps = [];
-      window._tkTaps.push(now);
-      window._tkTaps = window._tkTaps.filter(function(t) { return now - t < 2000; });
-      if (window._tkTaps.length >= 5) { window._tkTaps = []; onStaffLogin(); }
+      if (onStaffLogin) onStaffLogin();
     }
   }, "\xA9 2026 Spark Companies \xB7 DFM Solutions")));
 }
@@ -3045,7 +3041,7 @@ function ManagerView({
     color: C.t1,
     padding: "7px 12px",
     borderRadius: 8,
-    fontSize: 12,
+    fontSize: 13,
     outline: "none",
     fontFamily: Fb
   };
@@ -3148,7 +3144,7 @@ function ManagerView({
     style: {
       padding: "4px 12px",
       borderRadius: 6,
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 700,
       color: C.t2,
       background: C.bg,
@@ -3160,7 +3156,7 @@ function ManagerView({
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 14,
+      fontSize: 16,
       fontWeight: 700,
       color: C.t1
     }
@@ -3171,7 +3167,7 @@ function ManagerView({
       setSelEmp(null);
     },
     style: {
-      fontSize: 11,
+      fontSize: 13,
       fontWeight: 600,
       color: C.spark,
       background: "none",
@@ -3180,7 +3176,7 @@ function ManagerView({
     }
   }, "\u21BB Jump to Current Week"), isCurrentWeek && /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 11,
+      fontSize: 13,
       color: C.green,
       fontWeight: 600
     }
@@ -3194,7 +3190,7 @@ function ManagerView({
     style: {
       padding: "4px 12px",
       borderRadius: 6,
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 700,
       color: isCurrentWeek ? C.t4 : C.t2,
       background: C.bg,
@@ -3206,7 +3202,7 @@ function ManagerView({
       display: "grid",
       gridTemplateColumns: mo ? "repeat(2,1fr)" : "repeat(5,1fr)",
       gap: mo ? 6 : 10,
-      marginBottom: mo ? 16 : 28
+      marginBottom: mo ? 20 : 32
     }
   }, /*#__PURE__*/React.createElement(StatCard, {
     label: "WORKING",
@@ -3265,13 +3261,13 @@ function ManagerView({
     }
   }, "\u26A1"), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 14,
+      fontSize: 16,
       fontWeight: 700,
       color: C.orange
     }
   }, "Auto-Detected Violations (", violations.length, ")")), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t4
     }
   }, "Review and approve or dismiss")), violations.slice(0, 10).map(function (v) {
@@ -3321,7 +3317,7 @@ function ManagerView({
       }
     }, "\xB7 ", v.emp.dept)), /*#__PURE__*/React.createElement("div", {
       style: {
-        fontSize: 12,
+        fontSize: 13,
         color: C.t3,
         marginTop: 2
       }
@@ -3349,7 +3345,7 @@ function ManagerView({
       style: {
         padding: "6px 14px",
         borderRadius: 6,
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: 700,
         color: C.bg,
         background: C.green
@@ -3365,7 +3361,7 @@ function ManagerView({
       style: {
         padding: "6px 14px",
         borderRadius: 6,
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: 600,
         color: C.t3,
         background: C.bg,
@@ -3374,7 +3370,7 @@ function ManagerView({
     }, "Dismiss")));
   }), violations.length > 10 && /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t4,
       marginTop: 8,
       textAlign: "center"
@@ -3468,7 +3464,7 @@ function ManagerView({
       setSelDay(null);
     },
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t3,
       background: "none",
       border: "none"
@@ -3500,13 +3496,13 @@ function ManagerView({
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 14,
+      fontSize: 16,
       fontWeight: 700,
       color: C.t1
     }
   }, "Weekly Timesheet"), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: isCurrentWeek ? C.spark : C.t4
     }
   }, weekLabel, isCurrentWeek ? " (Current)" : "")), /*#__PURE__*/React.createElement("button", {
@@ -3552,7 +3548,7 @@ function ManagerView({
         }
       }, /*#__PURE__*/React.createElement("div", {
         style: {
-          fontSize: 11,
+          fontSize: 13,
           fontWeight: 600,
           color: isSel ? C.spark : C.t4,
           letterSpacing: 1,
@@ -3560,7 +3556,7 @@ function ManagerView({
         }
       }, d.day), /*#__PURE__*/React.createElement("div", {
         style: {
-          fontSize: 12,
+          fontSize: 13,
           color: C.t4,
           marginBottom: 2
         }
@@ -3576,7 +3572,7 @@ function ManagerView({
         }
       }, d.hrs > 0 ? d.hrs.toFixed(1) : "-"), /*#__PURE__*/React.createElement("div", {
         style: {
-          fontSize: 12,
+          fontSize: 13,
           color: C.t4
         }
       }, d.punches.length, " punch", d.punches.length !== 1 ? "es" : ""));
@@ -3601,7 +3597,7 @@ function ManagerView({
       day: "numeric"
     }), " \u2014 Punch Detail"), daily[selDay].punches.length === 0 ? /*#__PURE__*/React.createElement("div", {
       style: {
-        fontSize: 12,
+        fontSize: 13,
         color: C.t4,
         padding: "8px 0"
       }
@@ -3639,7 +3635,7 @@ function ManagerView({
       }, pt2.l)), /*#__PURE__*/React.createElement("div", {
         style: {
           fontFamily: Fm,
-          fontSize: 12,
+          fontSize: 13,
           fontWeight: 600,
           color: C.t1
         }
@@ -3653,12 +3649,12 @@ function ManagerView({
         }
       }, /*#__PURE__*/React.createElement("div", {
         style: {
-          fontSize: 12,
+          fontSize: 13,
           color: C.t4
         }
       }, p.dev || "KIOSK", p.ip ? " · " + p.ip : ""), p.lat ? /*#__PURE__*/React.createElement("div", {
         style: {
-          fontSize: 12,
+          fontSize: 13,
           color: C.green,
           fontFamily: Fm
         }
@@ -3673,14 +3669,14 @@ function ManagerView({
       }
     }, /*#__PURE__*/React.createElement("span", {
       style: {
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: 600,
         color: C.t3
       }
     }, "Day Total"), /*#__PURE__*/React.createElement("span", {
       style: {
         fontFamily: Fm,
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: 700,
         color: C.spark
       }
@@ -3698,55 +3694,55 @@ function ManagerView({
     }
   }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t4
     }
   }, "Week Total: "), /*#__PURE__*/React.createElement("span", {
     style: {
       fontFamily: Fm,
-      fontSize: 14,
+      fontSize: 16,
       fontWeight: 700,
       color: C.spark
     }
   }, calcWeekHoursForWeek(punches, selEmp.id, mon).toFixed(1), "h")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t4
     }
   }, "Reg: "), /*#__PURE__*/React.createElement("span", {
     style: {
       fontFamily: Fm,
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 600,
       color: C.t1
     }
   }, calcLaborCostForWeek(selEmp, punches, P, mon).regH.toFixed(1), "h")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t4
     }
   }, "OT: "), /*#__PURE__*/React.createElement("span", {
     style: {
       fontFamily: Fm,
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 600,
       color: C.orange
     }
   }, calcLaborCostForWeek(selEmp, punches, P, mon).otH.toFixed(1), "h")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t4
     }
   }, "Cost: "), /*#__PURE__*/React.createElement("span", {
     style: {
       fontFamily: Fm,
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 700,
       color: C.spark
     }
   }, "$", calcLaborCostForWeek(selEmp, punches, P, mon).total.toFixed(2))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t4
     }
   }, "Points: "), /*#__PURE__*/React.createElement(PtBar, {
@@ -3776,7 +3772,7 @@ function ManagerView({
         justifyContent: "space-between",
         padding: "4px 0",
         borderBottom: "1px solid " + C.bd + "06",
-        fontSize: 10
+        fontSize: 13
       }
     }, /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement(Tag, {
       color: pt2.c
@@ -3789,7 +3785,7 @@ function ManagerView({
     return p.eid === selEmp.id && new Date(p.time) >= mon && new Date(p.time) <= sun;
   }).length === 0 && /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t4,
       padding: "4px 0"
     }
@@ -3817,7 +3813,7 @@ function ManagerView({
       style: {
         padding: "5px 10px",
         borderRadius: 6,
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: 600,
         color: C.bg,
         background: C.spark
@@ -3878,18 +3874,18 @@ function ManagerView({
       }
     }, e.fn, " ", e.ln), /*#__PURE__*/React.createElement("div", {
       style: {
-        fontSize: 12,
+        fontSize: 13,
         color: C.t4
       }
     }, e.badge, " \xB7 ", e.dept)))), /*#__PURE__*/React.createElement("td", {
       style: {
-        padding: "6px"
+        padding: "8px"
       }
     }, /*#__PURE__*/React.createElement(Tag, {
       color: e.cs.color
     }, e.cs.label)), /*#__PURE__*/React.createElement("td", {
       style: {
-        padding: "6px",
+        padding: "8px",
         fontFamily: Fm,
         fontSize: 14,
         fontWeight: 600,
@@ -3897,41 +3893,41 @@ function ManagerView({
       }
     }, e.weekH.toFixed(1)), /*#__PURE__*/React.createElement("td", {
       style: {
-        padding: "6px"
+        padding: "8px"
       }
     }, e.otFlag && /*#__PURE__*/React.createElement(Tag, {
       color: C.orange
     }, "OT")), /*#__PURE__*/React.createElement("td", {
       style: {
-        padding: "6px",
+        padding: "8px",
         fontFamily: Fm,
-        fontSize: 11,
+        fontSize: 13,
         color: C.spark
       }
     }, "$", e.cost.total.toFixed(0)), /*#__PURE__*/React.createElement("td", {
       style: {
-        padding: "6px"
+        padding: "8px"
       }
     }, e.excs.length > 0 && /*#__PURE__*/React.createElement("span", {
       style: {
-        fontSize: 12,
+        fontSize: 13,
         color: e.excs[0].color
       }
     }, e.excs.map(function (x) {
       return x.label;
     }).join(", "))), /*#__PURE__*/React.createElement("td", {
       style: {
-        padding: "6px"
+        padding: "8px"
       }
     }, /*#__PURE__*/React.createElement(PtBar, {
       pts: e.pts
     })), /*#__PURE__*/React.createElement("td", {
       style: {
-        padding: "6px"
+        padding: "8px"
       }
     }, /*#__PURE__*/React.createElement("span", {
       style: {
-        fontSize: 12,
+        fontSize: 13,
         color: C.spark
       }
     }, "View \u25B6")));
@@ -3958,18 +3954,18 @@ function ManagerView({
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 14,
+      fontSize: 16,
       fontWeight: 700,
       color: C.t1
     }
   }, "Exceptions (", allExcs.length, ")"), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t4
     }
   }, "Auto-detected")), allExcs.length === 0 ? /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 11,
+      fontSize: 13,
       color: C.green
     }
   }, "All clear") : allExcs.slice(0, 8).map(function (x, i) {
@@ -3999,13 +3995,13 @@ function ManagerView({
       }
     }, /*#__PURE__*/React.createElement("div", {
       style: {
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: 600,
         color: C.t1
       }
     }, x.emp.fn, " ", x.emp.ln), /*#__PURE__*/React.createElement("div", {
       style: {
-        fontSize: 12,
+        fontSize: 13,
         color: x.color
       }
     }, x.label, " \u2014 ", x.detail)));
@@ -4018,7 +4014,7 @@ function ManagerView({
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 14,
+      fontSize: 16,
       fontWeight: 700,
       color: C.t1,
       marginBottom: 10
@@ -4043,13 +4039,13 @@ function ManagerView({
       }
     }, /*#__PURE__*/React.createElement("span", {
       style: {
-        fontSize: 12,
+        fontSize: 13,
         color: C.t2
       }
     }, e.fn, " ", e.ln[0], "."), /*#__PURE__*/React.createElement("span", {
       style: {
         fontFamily: Fm,
-        fontSize: 11,
+        fontSize: 13,
         color: barColor
       }
     }, actual.toFixed(1), "h/", expected, "h avg")), /*#__PURE__*/React.createElement("div", {
@@ -4076,7 +4072,7 @@ function ManagerView({
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 14,
+      fontSize: 16,
       fontWeight: 700,
       color: C.t1,
       marginBottom: 10
@@ -4097,14 +4093,14 @@ function ManagerView({
       }
     }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
       style: {
-        fontSize: 11,
+        fontSize: 13,
         fontWeight: 600,
         color: C.t2
       }
     }, e.fn, " ", e.ln[0], "."), /*#__PURE__*/React.createElement("div", {
       style: {
         fontFamily: Fm,
-        fontSize: 12,
+        fontSize: 13,
         color: C.t4
       }
     }, e.cost.regH.toFixed(1), "h reg", e.cost.otH > 0 ? " + " + e.cost.otH.toFixed(1) + "h OT" : "")), /*#__PURE__*/React.createElement("div", {
@@ -4121,7 +4117,7 @@ function ManagerView({
     }, "$", e.cost.total.toFixed(0)), /*#__PURE__*/React.createElement("div", {
       style: {
         fontFamily: Fm,
-        fontSize: 12,
+        fontSize: 13,
         color: C.t4
       }
     }, "$", e.rate || 16, "/hr")));
@@ -4142,7 +4138,7 @@ function ManagerView({
   }, "Week Total"), /*#__PURE__*/React.createElement("span", {
     style: {
       fontFamily: Fm,
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 700,
       color: C.spark
     }
@@ -4155,7 +4151,7 @@ function ManagerView({
     }
   }, "Live Attendance Board"), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t4,
       marginBottom: 16
     }
@@ -4182,7 +4178,7 @@ function ManagerView({
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 15,
+      fontSize: 17,
       fontWeight: 700,
       color: C.green
     }
@@ -4196,7 +4192,7 @@ function ManagerView({
     }
   })), clockedIn.length === 0 ? /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t4
     }
   }, "No one clocked in") : clockedIn.map(function (e) {
@@ -4227,7 +4223,7 @@ function ManagerView({
     }, e.fn, " ", e.ln), /*#__PURE__*/React.createElement("div", {
       style: {
         fontFamily: Fm,
-        fontSize: 12,
+        fontSize: 13,
         color: C.t4
       }
     }, e.dept, " \xB7 since ", sinceStr)), /*#__PURE__*/React.createElement("div", {
@@ -4254,7 +4250,7 @@ function ManagerView({
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 15,
+      fontSize: 17,
       fontWeight: 700,
       color: C.blue
     }
@@ -4264,7 +4260,7 @@ function ManagerView({
     }
   }, "\u2615")), onBreak.length === 0 ? /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t4
     }
   }, "No active breaks") : onBreak.map(function (e) {
@@ -4295,7 +4291,7 @@ function ManagerView({
     }, e.fn, " ", e.ln), /*#__PURE__*/React.createElement("div", {
       style: {
         fontFamily: Fm,
-        fontSize: 12,
+        fontSize: 13,
         color: C.t4
       }
     }, e.dept, " \xB7 break since ", sinceStr)));
@@ -4315,13 +4311,13 @@ function ManagerView({
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 15,
+      fontSize: 17,
       fontWeight: 700,
       color: C.t3
     }
   }, "Not Clocked In (", notIn.length, ")")), notIn.length === 0 ? /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 11,
+      fontSize: 13,
       color: C.green
     }
   }, "Everyone accounted for!") : notIn.map(function (e) {
@@ -4354,7 +4350,7 @@ function ManagerView({
     }, e.fn, " ", e.ln), /*#__PURE__*/React.createElement("div", {
       style: {
         fontFamily: Fm,
-        fontSize: 12,
+        fontSize: 13,
         color: C.t4
       }
     }, e.dept, " \xB7 ", e.shiftStart, "\u2013", e.shiftEnd)), isLate && /*#__PURE__*/React.createElement(Tag, {
@@ -4369,7 +4365,7 @@ function ManagerView({
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 14,
+      fontSize: 16,
       fontWeight: 700,
       color: C.t1,
       marginBottom: 10
@@ -4415,7 +4411,7 @@ function ManagerView({
     }, inCount, "/", total), /*#__PURE__*/React.createElement("div", {
       style: {
         fontFamily: Fm,
-        fontSize: 12,
+        fontSize: 13,
         color: C.t4
       }
     }, pct, "% present"));
@@ -4428,7 +4424,7 @@ function ManagerView({
     }
   }, "Weekly Timesheets"), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t4,
       marginBottom: 14
     }
@@ -4445,7 +4441,7 @@ function ManagerView({
     style: {
       padding: "8px 10px",
       textAlign: "left",
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 600,
       color: C.t4,
       borderBottom: "1px solid " + C.bd,
@@ -4457,7 +4453,7 @@ function ManagerView({
       style: {
         padding: "8px 6px",
         textAlign: "center",
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: 600,
         color: C.t4,
         borderBottom: "1px solid " + C.bd,
@@ -4468,7 +4464,7 @@ function ManagerView({
     style: {
       padding: "8px 6px",
       textAlign: "center",
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 600,
       color: C.spark,
       borderBottom: "1px solid " + C.bd,
@@ -4478,7 +4474,7 @@ function ManagerView({
     style: {
       padding: "8px 6px",
       textAlign: "center",
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 600,
       color: C.orange,
       borderBottom: "1px solid " + C.bd,
@@ -4488,7 +4484,7 @@ function ManagerView({
     style: {
       padding: "8px 6px",
       textAlign: "center",
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 600,
       color: C.t4,
       borderBottom: "1px solid " + C.bd,
@@ -4498,7 +4494,7 @@ function ManagerView({
     style: {
       padding: "8px 6px",
       textAlign: "center",
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 600,
       color: C.t4,
       borderBottom: "1px solid " + C.bd,
@@ -4528,7 +4524,7 @@ function ManagerView({
       }
     }, /*#__PURE__*/React.createElement("td", {
       style: {
-        padding: "6px 10px"
+        padding: "8px 12px"
       }
     }, /*#__PURE__*/React.createElement("div", {
       style: {
@@ -4550,34 +4546,34 @@ function ManagerView({
       return /*#__PURE__*/React.createElement("td", {
         key: di,
         style: {
-          padding: "6px",
+          padding: "8px",
           textAlign: "center",
           fontFamily: Fm,
-          fontSize: 11,
+          fontSize: 13,
           fontWeight: 600,
           color: dh.netH > P.otDaily ? C.orange : dh.netH > 0 ? C.t1 : C.t4
         }
       }, dh.netH > 0 ? dh.netH.toFixed(1) : "-");
     }), /*#__PURE__*/React.createElement("td", {
       style: {
-        padding: "6px",
+        padding: "8px",
         textAlign: "center",
         fontFamily: Fm,
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: 700,
         color: C.spark
       }
     }, e.weekH.toFixed(1)), /*#__PURE__*/React.createElement("td", {
       style: {
-        padding: "6px",
+        padding: "8px",
         textAlign: "center",
         fontFamily: Fm,
-        fontSize: 11,
+        fontSize: 13,
         color: C.orange
       }
     }, e.cost.otH > 0 ? e.cost.otH.toFixed(1) : "-"), /*#__PURE__*/React.createElement("td", {
       style: {
-        padding: "6px",
+        padding: "8px",
         textAlign: "center",
         fontFamily: Fm,
         fontSize: 13,
@@ -4585,7 +4581,7 @@ function ManagerView({
       }
     }, "$", e.cost.total.toFixed(0)), /*#__PURE__*/React.createElement("td", {
       style: {
-        padding: "6px",
+        padding: "8px",
         textAlign: "center"
       }
     }, approved ? /*#__PURE__*/React.createElement(Tag, {
@@ -4600,7 +4596,7 @@ function ManagerView({
       style: {
         padding: "4px 10px",
         borderRadius: 5,
-        fontSize: 11,
+        fontSize: 13,
         fontWeight: 700,
         color: C.bg,
         background: C.green,
@@ -4616,7 +4612,7 @@ function ManagerView({
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t4
     }
   }, Object.values(approvals).filter(function (v) {
@@ -4646,7 +4642,7 @@ function ManagerView({
     }
   }, "Alert Center"), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t4,
       marginBottom: 16
     }
@@ -4665,13 +4661,13 @@ function ManagerView({
     }
   }, "\u2705"), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 14,
+      fontSize: 16,
       fontWeight: 700,
       color: C.green
     }
   }, "All Clear"), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t4,
       marginTop: 4
     }
@@ -4701,7 +4697,7 @@ function ManagerView({
     return a.sev >= 3;
   }).length), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.red,
       fontWeight: 600
     }
@@ -4724,7 +4720,7 @@ function ManagerView({
     return a.sev === 2;
   }).length), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.orange,
       fontWeight: 600
     }
@@ -4747,7 +4743,7 @@ function ManagerView({
     return a.sev <= 1;
   }).length), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.spark,
       fontWeight: 600
     }
@@ -4797,7 +4793,7 @@ function ManagerView({
       }
     }, a.label)), /*#__PURE__*/React.createElement("div", {
       style: {
-        fontSize: 12,
+        fontSize: 13,
         color: C.t3
       }
     }, a.emp ? a.emp.fn + " " + a.emp.ln + " — " : "", a.detail)), a.emp && /*#__PURE__*/React.createElement("button", {
@@ -4808,7 +4804,7 @@ function ManagerView({
       style: {
         padding: "5px 10px",
         borderRadius: 6,
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: 600,
         color: C.spark,
         background: C.spark + "12",
@@ -4829,7 +4825,7 @@ function ManagerView({
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 700,
       color: C.spark,
       marginBottom: 8
@@ -4871,27 +4867,27 @@ function ManagerView({
       sz: 28
     }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
       style: {
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: 600,
         color: C.t1
       }
     }, emp2 ? emp2.fn + " " + emp2.ln : "Unknown"), /*#__PURE__*/React.createElement("div", {
       style: {
-        fontSize: 12,
+        fontSize: 13,
         color: C.t4
       }
     }, /*#__PURE__*/React.createElement(Tag, {
       color: pt2.c
     }, pt2.l), " \xB7 ", fmtTime(req.time), " \xB7 ", new Date(req.time).toLocaleDateString()), req.note && /*#__PURE__*/React.createElement("div", {
       style: {
-        fontSize: 12,
+        fontSize: 13,
         color: C.t3,
         marginTop: 2
       }
     }, "\"", req.note, "\""), req.ip && /*#__PURE__*/React.createElement("div", {
       style: {
         fontFamily: Fm,
-        fontSize: 12,
+        fontSize: 13,
         color: C.t4,
         marginTop: 1
       }
@@ -4920,7 +4916,7 @@ function ManagerView({
       style: {
         padding: "6px 14px",
         borderRadius: 6,
-        fontSize: 11,
+        fontSize: 13,
         fontWeight: 600,
         color: C.red,
         background: C.redD,
@@ -4929,7 +4925,7 @@ function ManagerView({
     }, "Deny")));
   })) : /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 11,
+      fontSize: 13,
       color: C.green,
       marginBottom: 16
     }
@@ -4948,14 +4944,14 @@ function ManagerView({
     }
   }, "+ Manual Punch Correction"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 14,
+      fontSize: 16,
       fontWeight: 700,
       color: C.t1,
       marginBottom: 8
     }
   }, "Recent Point Events"), recentEvents.length === 0 ? /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t4
     }
   }, "No events yet") : recentEvents.map(function (ev) {
@@ -4978,13 +4974,13 @@ function ManagerView({
       }
     }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
       style: {
-        fontSize: 11,
+        fontSize: 13,
         fontWeight: 600,
         color: C.t2
       }
     }, emp2 ? emp2.fn + " " + emp2.ln : "Unknown"), /*#__PURE__*/React.createElement("div", {
       style: {
-        fontSize: 12,
+        fontSize: 13,
         color: C.t4
       }
     }, rule.v, " \xB7 ", new Date(ev.date).toLocaleDateString())), /*#__PURE__*/React.createElement("span", {
@@ -5137,7 +5133,7 @@ function GeoMap({
       padding: "4px 10px",
       borderRadius: 6,
       background: "#22C55E",
-      fontSize: 11,
+      fontSize: 13,
       fontWeight: 700,
       color: "#0D0D0D",
       zIndex: 1000
@@ -5150,7 +5146,7 @@ function GeoMap({
       padding: "4px 10px",
       borderRadius: 6,
       background: "#3F3F46",
-      fontSize: 11,
+      fontSize: 13,
       fontWeight: 700,
       color: "#A1A1AA",
       zIndex: 1000
@@ -5161,21 +5157,21 @@ function GeoMap({
       bottom: 8,
       left: 8,
       right: 8,
-      padding: "6px 10px",
+      padding: "8px 12px",
       borderRadius: 6,
       background: "rgba(13,13,11,0.9)",
       zIndex: 1000
     }
   }, React.createElement("div", {
     style: {
-      fontSize: 11,
+      fontSize: 13,
       fontWeight: 600,
       color: "#FACC15",
       marginBottom: 2
     }
   }, gc.siteAddress || "Click map to set location"), React.createElement("div", {
     style: {
-      fontSize: 11,
+      fontSize: 13,
       color: "#A1A1AA",
       fontFamily: Fm
     }
@@ -5378,7 +5374,7 @@ function AdminView({
     color: C.t1,
     padding: "9px 12px",
     borderRadius: 8,
-    fontSize: 12,
+    fontSize: 13,
     outline: "none",
     width: "100%"
   };
@@ -5548,7 +5544,7 @@ function AdminView({
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 14,
+      fontSize: 16,
       fontWeight: 700,
       color: C.t1,
       marginBottom: 10
@@ -5564,13 +5560,13 @@ function AdminView({
       }
     }, /*#__PURE__*/React.createElement("span", {
       style: {
-        fontSize: 12,
+        fontSize: 13,
         color: C.t3
       }
     }, r[0]), /*#__PURE__*/React.createElement("span", {
       style: {
         fontFamily: Fm,
-        fontSize: 11,
+        fontSize: 13,
         fontWeight: 600,
         color: r[2]
       }
@@ -5584,7 +5580,7 @@ function AdminView({
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 14,
+      fontSize: 16,
       fontWeight: 700,
       color: C.t1,
       marginBottom: 10
@@ -5610,13 +5606,13 @@ function AdminView({
       }
     }, /*#__PURE__*/React.createElement("span", {
       style: {
-        fontSize: 11,
+        fontSize: 13,
         color: C.t2
       }
     }, d), /*#__PURE__*/React.createElement("span", {
       style: {
         fontFamily: Fm,
-        fontSize: 12,
+        fontSize: 13,
         color: C.spark
       }
     }, count, " (", pct, "%)")), /*#__PURE__*/React.createElement("div", {
@@ -5644,14 +5640,14 @@ function AdminView({
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 700,
       color: C.red,
       marginBottom: 8
     }
   }, "Danger Zone"), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t3,
       marginBottom: 10
     }
@@ -5680,7 +5676,7 @@ function AdminView({
       fontWeight: 700,
       color: C.t1
     }
-  }, "Employee Registry (", emps.length, ")"), /*#__PURE__*/React.createElement("button", {
+  }, "Active Employees (", emps.filter(function(e){return e.st==="active"}).length, ")"), /*#__PURE__*/React.createElement("button", {
     onClick: function () {
       setShowAdd(!showAdd);
     },
@@ -5709,7 +5705,7 @@ function AdminView({
     }
   }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 600,
       color: C.t4,
       fontFamily: Fb,
@@ -5729,7 +5725,7 @@ function AdminView({
     style: inp
   })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 600,
       color: C.t4,
       fontFamily: Fb,
@@ -5749,7 +5745,7 @@ function AdminView({
     style: inp
   })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 600,
       color: C.t4,
       fontFamily: Fb,
@@ -5770,7 +5766,7 @@ function AdminView({
     style: inp
   })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 600,
       color: C.t4,
       fontFamily: Fb,
@@ -5792,7 +5788,7 @@ function AdminView({
     maxLength: 4
   })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 600,
       color: C.t4,
       fontFamily: Fb,
@@ -5818,7 +5814,7 @@ function AdminView({
     }, d);
   }))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 600,
       color: C.t4,
       fontFamily: Fb,
@@ -5839,7 +5835,7 @@ function AdminView({
     style: inp
   })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 600,
       color: C.t4,
       fontFamily: Fb,
@@ -5860,7 +5856,7 @@ function AdminView({
     style: inp
   })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 600,
       color: C.t4,
       fontFamily: Fb,
@@ -5882,7 +5878,7 @@ function AdminView({
     style: inp
   })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 600,
       color: C.t4,
       fontFamily: Fb,
@@ -5909,13 +5905,13 @@ function AdminView({
     style: {
       padding: "9px 16px",
       borderRadius: 8,
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 700,
       color: C.bg,
       background: form.fn && form.ln ? C.green : C.t4,
       gridColumn: mo ? "1/-1" : undefined
     }
-  }, "Create"))), mo ? /*#__PURE__*/React.createElement("div", null, emps.map(function (e) {
+  }, "Create"))), mo ? /*#__PURE__*/React.createElement("div", null, emps.filter(function(e){return e.st==="active"}).map(function (e) {
     return /*#__PURE__*/React.createElement("div", {
       key: e.id,
       style: {
@@ -5951,7 +5947,7 @@ function AdminView({
       }
     }, e.fn, " ", e.ln), /*#__PURE__*/React.createElement("div", {
       style: {
-        fontSize: 12,
+        fontSize: 13,
         color: C.t4
       }
     }, e.badge, " \xB7 ", e.dept, " \xB7 ", e.shiftStart || "06:00", "\u2013", e.shiftEnd || "14:30"))), /*#__PURE__*/React.createElement("button", {
@@ -5994,7 +5990,7 @@ function AdminView({
         padding: "2px 8px",
         borderRadius: 4,
         fontFamily: Fm,
-        fontSize: 11,
+        fontSize: 13,
         color: C.spark,
         border: "1px solid " + C.bd
       }
@@ -6017,7 +6013,7 @@ function AdminView({
     }, "-"), /*#__PURE__*/React.createElement("span", {
       style: {
         fontFamily: Fm,
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: 700,
         color: e.pts >= 8 ? C.red : e.pts >= 6 ? C.orange : e.pts >= 4.5 ? C.spark : e.pts >= 2.5 ? "#EAB308" : C.green,
         minWidth: 24,
@@ -6046,7 +6042,7 @@ function AdminView({
       style: {
         padding: "4px 10px",
         borderRadius: 6,
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: 600,
         color: C.t3,
         background: C.bg,
@@ -6077,14 +6073,14 @@ function AdminView({
         padding: "8px 12px",
         textAlign: "left",
         fontFamily: Fb,
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: 600,
         color: C.t4,
         letterSpacing: 1.5,
         borderBottom: "1px solid " + C.bd
       }
     }, h);
-  }))), /*#__PURE__*/React.createElement("tbody", null, emps.map(function (e) {
+  }))), /*#__PURE__*/React.createElement("tbody", null, emps.filter(function(e){return e.st==="active"}).map(function (e) {
     return /*#__PURE__*/React.createElement("tr", {
       key: e.id,
       style: {
@@ -6131,7 +6127,7 @@ function AdminView({
         padding: "2px 8px",
         borderRadius: 4,
         fontFamily: Fm,
-        fontSize: 11,
+        fontSize: 13,
         color: C.spark,
         border: "1px solid " + C.bd
       }
@@ -6152,14 +6148,14 @@ function AdminView({
       style: {
         padding: "8px 12px",
         fontFamily: Fm,
-        fontSize: 11,
+        fontSize: 13,
         color: C.spark
       }
     }, "$", e.rate || 16, "/hr"), /*#__PURE__*/React.createElement("td", {
       style: {
         padding: "8px 12px",
         fontFamily: Fm,
-        fontSize: 11,
+        fontSize: 13,
         color: e.salary > 0 ? C.green : C.t4
       }
     }, e.salary > 0 ? "$" + Number(e.salary).toLocaleString() + "/yr" : "Hourly"), /*#__PURE__*/React.createElement("td", {
@@ -6191,7 +6187,7 @@ function AdminView({
     }, "-"), /*#__PURE__*/React.createElement("span", {
       style: {
         fontFamily: Fm,
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: 700,
         color: e.pts >= 8 ? C.red : e.pts >= 6 ? C.orange : e.pts >= 4.5 ? C.spark : e.pts >= 2.5 ? "#EAB308" : C.green,
         minWidth: 24,
@@ -6250,14 +6246,14 @@ function AdminView({
       style: {
         padding: "4px 10px",
         borderRadius: 6,
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: 600,
         color: C.t3,
         background: C.bg,
         border: "1px solid " + C.bd
       }
     }, "Reset")));
-  })))))), tab === "staff" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  })))))), /*#__PURE__*/React.createElement("div", {style:{marginTop:24,borderTop:"2px solid "+C.red+"33",paddingTop:16}}, /*#__PURE__*/React.createElement("div", {style:{fontSize:14,fontWeight:700,color:C.red,marginBottom:12}}, "Terminated / Inactive (", emps.filter(function(e){return e.st!=="active"}).length, ")"), emps.filter(function(e){return e.st!=="active"}).length===0 ? /*#__PURE__*/React.createElement("div", {style:{fontSize:12,color:C.t4,padding:16,background:C.sf,borderRadius:8,border:"1px solid "+C.bd,textAlign:"center"}}, "No inactive employees") : /*#__PURE__*/React.createElement("div", {style:{background:C.sf,border:"1px solid "+C.red+"22",borderRadius:12,overflow:"hidden"}}, /*#__PURE__*/React.createElement("table", {style:{width:"100%",borderCollapse:"collapse"}}, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, ["Badge","Name","Dept","Last Shift","Rate","Action"].map(function(h){return /*#__PURE__*/React.createElement("th",{key:h,style:{padding:"8px 12px",textAlign:"left",fontSize:12,fontWeight:600,color:C.t4,borderBottom:"1px solid "+C.bd,fontFamily:Fb}},h)}))), /*#__PURE__*/React.createElement("tbody", null, emps.filter(function(e){return e.st!=="active"}).map(function(e){return /*#__PURE__*/React.createElement("tr",{key:e.id,style:{opacity:0.7,borderBottom:"1px solid "+C.bd+"08"}}, /*#__PURE__*/React.createElement("td",{style:{padding:"8px 12px"}}, /*#__PURE__*/React.createElement("code",{style:{fontFamily:Fm,fontSize:13,color:C.t4,fontWeight:700}},e.badge)), /*#__PURE__*/React.createElement("td",{style:{padding:"8px 12px"}}, /*#__PURE__*/React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}}, /*#__PURE__*/React.createElement(Av,{fn:e.fn,ln:e.ln,sz:28}), /*#__PURE__*/React.createElement("span",{style:{fontSize:14,fontWeight:600,color:C.t3}},e.fn," ",e.ln))), /*#__PURE__*/React.createElement("td",{style:{padding:"8px 12px",fontSize:14,color:C.t4}},e.dept), /*#__PURE__*/React.createElement("td",{style:{padding:"8px 12px",fontFamily:Fm,fontSize:13,color:C.t4}},e.shiftStart||"06:00","–",e.shiftEnd||"14:30"), /*#__PURE__*/React.createElement("td",{style:{padding:"8px 12px",fontFamily:Fm,fontSize:11,color:C.t4}},"$",e.rate||16,"/hr"), /*#__PURE__*/React.createElement("td",{style:{padding:"8px 12px"}}, /*#__PURE__*/React.createElement(Tag,{color:C.red},e.st==="terminated"?"TERMINATED":"INACTIVE"), /*#__PURE__*/React.createElement("button",{onClick:function(){tog(e.id)},style:{marginLeft:8,padding:"4px 10px",borderRadius:6,fontSize:11,fontWeight:600,color:C.green,background:C.greenD,border:"1px solid "+C.greenB}},"Reactivate")))}))))), tab === "staff" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "space-between",
@@ -6266,13 +6262,13 @@ function AdminView({
     }
   }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 15,
+      fontSize: 17,
       fontWeight: 700,
       color: C.t1
     }
   }, "Manager & Admin Accounts"), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t4,
       marginTop: 2
     }
@@ -6311,7 +6307,7 @@ function AdminView({
     }
   }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t4,
       marginBottom: 4
     }
@@ -6334,7 +6330,7 @@ function AdminView({
     }
   })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t4,
       marginBottom: 4
     }
@@ -6357,7 +6353,7 @@ function AdminView({
     }
   })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t4,
       marginBottom: 4
     }
@@ -6384,7 +6380,7 @@ function AdminView({
     }
   })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t4,
       marginBottom: 4
     }
@@ -6457,7 +6453,7 @@ function AdminView({
       style: {
         padding: "10px 14px",
         textAlign: "left",
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: 600,
         color: C.t4,
         borderBottom: "1px solid " + C.bd,
@@ -6518,7 +6514,7 @@ function AdminView({
         if (window.confirm("Remove " + s.fn + " " + s.ln + "?")) removeStaffMember(s.id);
       },
       style: {
-        fontSize: 12,
+        fontSize: 13,
         color: C.red,
         background: "none",
         border: "none",
@@ -6535,17 +6531,17 @@ function AdminView({
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 600,
       color: C.t2,
       marginBottom: 4
     }
   }, "How Staff Login Works"), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t4
     }
-  }, "Staff tap the copyright text at the bottom of the kiosk screen 5 times quickly to open the login. Managers see the Manager Dashboard. Admins see this Administration panel. Each person has their own PIN \u2014 no shared codes. Employees cannot see or access this feature."))), tab === "schedules" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  }, "Staff tap the copyright text at the bottom of the kiosk screen to open the login. Managers see the Manager Dashboard. Admins see this Administration panel. Each person has their own PIN \u2014 no shared codes. Employees cannot see or access this feature."))), tab === "schedules" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       fontWeight: 700,
@@ -6554,7 +6550,7 @@ function AdminView({
     }
   }, "Shift Schedule Manager"), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t4,
       marginBottom: 14
     }
@@ -6586,13 +6582,13 @@ function AdminView({
     }, s.l), /*#__PURE__*/React.createElement("div", {
       style: {
         fontFamily: Fm,
-        fontSize: 11,
+        fontSize: 13,
         color: C.spark
       }
     }, s.start, " \u2013 ", s.end)), /*#__PURE__*/React.createElement("div", {
       style: {
         fontFamily: Fm,
-        fontSize: 12,
+        fontSize: 13,
         color: C.t4
       }
     }, emps.filter(function (e) {
@@ -6622,7 +6618,7 @@ function AdminView({
         padding: "8px 8px",
         textAlign: "center",
         fontFamily: Fb,
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: 600,
         color: C.t4,
         letterSpacing: 1,
@@ -6679,7 +6675,7 @@ function AdminView({
       style: {
         padding: "8px 6px",
         textAlign: "center",
-        fontSize: 12,
+        fontSize: 13,
         color: C.t3
       }
     }, e.dept), /*#__PURE__*/React.createElement("td", {
@@ -6698,7 +6694,7 @@ function AdminView({
         border: "1px solid " + C.bd,
         color: C.spark,
         fontFamily: Fm,
-        fontSize: 12,
+        fontSize: 13,
         padding: "3px 4px",
         borderRadius: 5,
         width: 70,
@@ -6721,7 +6717,7 @@ function AdminView({
         border: "1px solid " + C.bd,
         color: C.spark,
         fontFamily: Fm,
-        fontSize: 12,
+        fontSize: 13,
         padding: "3px 4px",
         borderRadius: 5,
         width: 70,
@@ -6744,7 +6740,7 @@ function AdminView({
           width: 26,
           height: 26,
           borderRadius: 5,
-          fontSize: 12,
+          fontSize: 13,
           fontWeight: 700,
           color: active2 ? C.bg : C.t4,
           background: active2 ? C.spark : "transparent",
@@ -6761,7 +6757,7 @@ function AdminView({
     }
   }, "Policy Configuration"), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t4,
       marginBottom: 16
     }
@@ -6780,7 +6776,7 @@ function AdminView({
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 14,
+      fontSize: 16,
       fontWeight: 700,
       color: C.t1,
       marginBottom: 12
@@ -6797,7 +6793,7 @@ function AdminView({
       }
     }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
       style: {
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: 600,
         color: C.t2
       }
@@ -6815,9 +6811,9 @@ function AdminView({
         border: "1px solid " + C.bd,
         color: C.spark,
         fontFamily: Fm,
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: 700,
-        padding: "6px 10px",
+        padding: "8px 12px",
         borderRadius: 6,
         textAlign: "center",
         outline: "none"
@@ -6832,14 +6828,14 @@ function AdminView({
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 600,
       color: C.t2
     }
   }, "Pay Period"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: Fm,
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 700,
       color: C.spark,
       background: C.spark + "10",
@@ -6855,7 +6851,7 @@ function AdminView({
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 14,
+      fontSize: 16,
       fontWeight: 700,
       color: C.t1,
       marginBottom: 12
@@ -6872,7 +6868,7 @@ function AdminView({
       }
     }, /*#__PURE__*/React.createElement("div", {
       style: {
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: 600,
         color: C.t2
       }
@@ -6890,9 +6886,9 @@ function AdminView({
         border: "1px solid " + C.bd,
         color: C.spark,
         fontFamily: Fm,
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: 700,
-        padding: "6px 10px",
+        padding: "8px 12px",
         borderRadius: 6,
         textAlign: "center",
         outline: "none"
@@ -6900,7 +6896,7 @@ function AdminView({
     }));
   }), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 14,
+      fontSize: 16,
       fontWeight: 700,
       color: C.t1,
       marginTop: 16,
@@ -6918,7 +6914,7 @@ function AdminView({
       }
     }, /*#__PURE__*/React.createElement("div", {
       style: {
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: 600,
         color: C.t2
       }
@@ -6936,9 +6932,9 @@ function AdminView({
         border: "1px solid " + C.bd,
         color: C.spark,
         fontFamily: Fm,
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: 700,
-        padding: "6px 10px",
+        padding: "8px 12px",
         borderRadius: 6,
         textAlign: "center",
         outline: "none"
@@ -6955,13 +6951,13 @@ function AdminView({
       }
     }, /*#__PURE__*/React.createElement("span", {
       style: {
-        fontSize: 12,
+        fontSize: 13,
         color: C.t2
       }
     }, r.v), /*#__PURE__*/React.createElement("span", {
       style: {
         fontFamily: Fm,
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: 700,
         color: C.orange
       }
@@ -6970,7 +6966,7 @@ function AdminView({
     return /*#__PURE__*/React.createElement("div", {
       key: t.r,
       style: {
-        fontSize: 12,
+        fontSize: 13,
         color: C.t4,
         marginTop: 4
       }
@@ -6990,7 +6986,7 @@ function AdminView({
     }
   }, "Geofence & IP Restrictions"), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t4,
       marginBottom: 16
     }
@@ -7018,21 +7014,21 @@ function AdminView({
     }
   }, /*#__PURE__*/React.createElement("span", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t3
     }
   }, "Geofence Radius"), /*#__PURE__*/React.createElement("span", {
     style: {
       fontFamily: Fm,
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 700,
       color: C.spark
     }
   }, GC.geoRadius, "m")), /*#__PURE__*/React.createElement("input", {
     type: "range",
-    min: 50,
-    max: 5000,
-    step: 50,
+    min: 15,
+    max: 2000,
+    step: 5,
     value: GC.geoRadius,
     onChange: function (e) {
       onUpdateGeo(Object.assign({}, GC, {
@@ -7052,15 +7048,15 @@ function AdminView({
     }
   }, /*#__PURE__*/React.createElement("span", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t4
     }
-  }, "50m"), /*#__PURE__*/React.createElement("span", {
+  }, "15m"), /*#__PURE__*/React.createElement("span", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t4
     }
-  }, "5km"))), /*#__PURE__*/React.createElement("button", {
+  }, "2km"))), /*#__PURE__*/React.createElement("button", {
     onClick: function () {
       onUpdateGeo(Object.assign({}, GC, {
         enforceGeo: !GC.enforceGeo
@@ -7102,7 +7098,7 @@ function AdminView({
     style: {
       padding: "10px 16px",
       borderRadius: 8,
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 700,
       color: C.blue,
       background: C.blueD,
@@ -7131,7 +7127,7 @@ function AdminView({
     }
   }, "Site Address"), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t4,
       marginBottom: 8
     }
@@ -7158,7 +7154,7 @@ function AdminView({
       color: C.t1,
       padding: "8px 10px",
       borderRadius: 6,
-      fontSize: 12,
+      fontSize: 13,
       outline: "none"
     }
   }), /*#__PURE__*/React.createElement("button", {
@@ -7167,7 +7163,7 @@ function AdminView({
     style: {
       padding: "8px 14px",
       borderRadius: 6,
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 700,
       color: C.bg,
       background: addrLoading ? C.t4 : C.spark,
@@ -7175,7 +7171,7 @@ function AdminView({
     }
   }, addrLoading ? "Searching..." : "Search")), addrError && /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 11,
+      fontSize: 13,
       color: C.orange,
       marginBottom: 6,
       padding: "6px 8px",
@@ -7200,7 +7196,7 @@ function AdminView({
       },
       style: {
         padding: "10px 12px",
-        fontSize: 12,
+        fontSize: 13,
         color: C.t1,
         cursor: "pointer",
         borderBottom: i < addrResults.length - 1 ? "1px solid " + C.bd : "none",
@@ -7219,7 +7215,7 @@ function AdminView({
       }
     }, r.display.split(",").slice(0, 2).join(",")), /*#__PURE__*/React.createElement("div", {
       style: {
-        fontSize: 12,
+        fontSize: 13,
         color: C.t4
       }
     }, r.display));
@@ -7235,7 +7231,7 @@ function AdminView({
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t4,
       fontFamily: Fm,
       letterSpacing: 1
@@ -7243,7 +7239,7 @@ function AdminView({
   }, "LAT"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: Fm,
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 700,
       color: C.spark
     }
@@ -7253,7 +7249,7 @@ function AdminView({
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t4,
       fontFamily: Fm,
       letterSpacing: 1
@@ -7261,7 +7257,7 @@ function AdminView({
   }, "LNG"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: Fm,
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 700,
       color: C.spark
     }
@@ -7294,7 +7290,7 @@ function AdminView({
     style: {
       padding: "5px 12px",
       borderRadius: 6,
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 700,
       color: GC.enforceIP ? C.bg : C.t3,
       background: GC.enforceIP ? C.green : C.bg,
@@ -7316,7 +7312,7 @@ function AdminView({
     }, /*#__PURE__*/React.createElement("code", {
       style: {
         fontFamily: Fm,
-        fontSize: 12,
+        fontSize: 13,
         color: C.spark
       }
     }, ip), /*#__PURE__*/React.createElement("button", {
@@ -7329,7 +7325,7 @@ function AdminView({
         }));
       },
       style: {
-        fontSize: 11,
+        fontSize: 13,
         color: C.red,
         background: "none",
         border: "none"
@@ -7354,7 +7350,7 @@ function AdminView({
       color: C.t1,
       padding: "7px 10px",
       borderRadius: 6,
-      fontSize: 12,
+      fontSize: 13,
       fontFamily: Fm,
       outline: "none"
     }
@@ -7370,7 +7366,7 @@ function AdminView({
     style: {
       padding: "7px 12px",
       borderRadius: 6,
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: 700,
       color: C.bg,
       background: C.spark
@@ -7388,7 +7384,7 @@ function AdminView({
       marginTop: 6,
       padding: "6px 12px",
       borderRadius: 6,
-      fontSize: 11,
+      fontSize: 13,
       fontWeight: 600,
       color: C.blue,
       background: C.blueD,
@@ -7429,7 +7425,7 @@ function AdminView({
       }
     }, x[0])), /*#__PURE__*/React.createElement("div", {
       style: {
-        fontSize: 12,
+        fontSize: 13,
         color: C.t4,
         marginBottom: 12
       }
@@ -7455,7 +7451,7 @@ function AdminView({
     }
   }, "Audit Log"), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t4,
       marginBottom: 12
     }
@@ -7478,7 +7474,7 @@ function AdminView({
       color: C.t1,
       padding: "7px 12px",
       borderRadius: 8,
-      fontSize: 12,
+      fontSize: 13,
       outline: "none",
       fontFamily: Fb,
       width: mo ? "100%" : 220
@@ -7494,7 +7490,7 @@ function AdminView({
       color: C.t1,
       padding: "7px 12px",
       borderRadius: 8,
-      fontSize: 12,
+      fontSize: 13,
       outline: "none",
       fontFamily: Fb,
       appearance: "none"
@@ -7521,7 +7517,7 @@ function AdminView({
       style: {
         padding: "8px 10px",
         textAlign: "left",
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: 600,
         color: C.t4,
         borderBottom: "1px solid " + C.bd,
@@ -7556,55 +7552,55 @@ function AdminView({
       }
     }, /*#__PURE__*/React.createElement("td", {
       style: {
-        padding: "6px 10px",
+        padding: "8px 12px",
         fontFamily: Fm,
         fontSize: 13,
         color: C.t2
       }
     }, new Date(p.time).toLocaleString()), /*#__PURE__*/React.createElement("td", {
       style: {
-        padding: "6px 10px",
-        fontSize: 11,
+        padding: "8px 12px",
+        fontSize: 13,
         color: C.t1
       }
     }, emp ? emp.fn + " " + emp.ln : "?"), /*#__PURE__*/React.createElement("td", {
       style: {
-        padding: "6px 10px",
+        padding: "8px 12px",
         fontFamily: Fm,
-        fontSize: 12,
+        fontSize: 13,
         color: C.t4
       }
     }, emp ? emp.badge : "?"), /*#__PURE__*/React.createElement("td", {
       style: {
-        padding: "6px 10px"
+        padding: "8px 12px"
       }
     }, /*#__PURE__*/React.createElement(Tag, {
       color: pt2.c
     }, pt2.l)), /*#__PURE__*/React.createElement("td", {
       style: {
-        padding: "6px 10px",
+        padding: "8px 12px",
         fontFamily: Fm,
-        fontSize: 12,
+        fontSize: 13,
         color: p.dev === "MANAGER" || p.dev === "APPROVED" ? C.orange : p.dev === "MOBILE" ? C.blue : C.t4
       }
     }, p.dev || "-"), /*#__PURE__*/React.createElement("td", {
       style: {
-        padding: "6px 10px",
+        padding: "8px 12px",
         fontFamily: Fm,
-        fontSize: 12,
+        fontSize: 13,
         color: C.t4
       }
     }, p.ip || "-"), /*#__PURE__*/React.createElement("td", {
       style: {
-        padding: "6px 10px",
+        padding: "8px 12px",
         fontFamily: Fm,
-        fontSize: 12,
+        fontSize: 13,
         color: p.lat ? C.green : C.t4
       }
     }, p.lat ? "◉ " + p.lat.toFixed(4) + "°, " + p.lng.toFixed(4) + "°" + (p.dist != null ? " (" + p.dist + "m)" : "") + (p.accuracy ? " ±" + p.accuracy + "m" : "") : "—"));
   })))), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 12,
+      fontSize: 13,
       color: C.t4,
       marginTop: 8
     }
