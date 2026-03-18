@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Spark TimeKeep</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%23FACC15'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -201,6 +204,7 @@ const SEED = [{
   shiftEnd: "14:30",
   workDays: [1, 2, 3, 4, 5],
   rate: 16.50,
+  salary: 0,
   st: "active"
 }, {
   id: "E002",
@@ -216,6 +220,7 @@ const SEED = [{
   shiftEnd: "14:30",
   workDays: [1, 2, 3, 4, 5],
   rate: 17.00,
+  salary: 0,
   st: "active"
 }, {
   id: "E003",
@@ -231,6 +236,7 @@ const SEED = [{
   shiftEnd: "14:30",
   workDays: [1, 2, 3, 4, 5],
   rate: 16.50,
+  salary: 0,
   st: "active"
 }, {
   id: "E004",
@@ -246,6 +252,7 @@ const SEED = [{
   shiftEnd: "15:30",
   workDays: [1, 2, 3, 4, 5],
   rate: 16.00,
+  salary: 0,
   st: "active"
 }, {
   id: "E005",
@@ -261,6 +268,7 @@ const SEED = [{
   shiftEnd: "14:00",
   workDays: [1, 2, 3, 4, 5],
   rate: 19.50,
+  salary: 0,
   st: "active"
 }, {
   id: "E006",
@@ -276,6 +284,7 @@ const SEED = [{
   shiftEnd: "14:30",
   workDays: [1, 2, 3, 4, 5],
   rate: 17.00,
+  salary: 0,
   st: "active"
 }, {
   id: "E007",
@@ -291,6 +300,7 @@ const SEED = [{
   shiftEnd: "15:30",
   workDays: [1, 2, 3, 4, 5],
   rate: 16.00,
+  salary: 0,
   st: "terminated"
 }, {
   id: "E008",
@@ -306,6 +316,7 @@ const SEED = [{
   shiftEnd: "14:30",
   workDays: [1, 2, 3, 4, 5],
   rate: 16.50,
+  salary: 0,
   st: "active"
 }, {
   id: "E009",
@@ -321,6 +332,7 @@ const SEED = [{
   shiftEnd: "15:30",
   workDays: [1, 2, 3, 4, 5],
   rate: 16.00,
+  salary: 0,
   st: "active"
 }, {
   id: "E010",
@@ -336,6 +348,7 @@ const SEED = [{
   shiftEnd: "14:30",
   workDays: [1, 2, 3, 4, 5],
   rate: 16.50,
+  salary: 0,
   st: "active"
 }];
 const DEFAULT_POLICY = {
@@ -353,14 +366,14 @@ const DEFAULT_GEO = {
   enforceIP: false,
   siteLat: 42.2526,
   siteLng: -83.2119,
-  geoRadius: 500,
+  geoRadius: 500, geoMaxAccuracy: 150,
   enforceGeo: false,
   siteAddress: "DFM Marshall Plant, Marshall, MI"
 };
 
 /* ═══ SUPABASE CONFIG — Set your project credentials here ═══ */
 var SUPABASE_URL = "https://rdyzvohphrmkkowdsoam.supabase.co";
-var SUPABASE_KEY = "sb_publishable_F1SY19w16Y4Frjd3C9RSGQ_6v4DmiO5";
+var SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkeXp2b2hwaHJta2tvd2Rzb2FtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3NTk0MjIsImV4cCI6MjA4OTMzNTQyMn0.7KxbdsTpQcOZDmrP125lga7sfdphpyTbG4jbDtHKE_E";
 var _sb = null;
 function getSb() {
   if (_sb) return _sb;
@@ -413,7 +426,8 @@ async function sbLoadEmployees() {
       shiftEnd: e.shift_end,
       workDays: e.work_days,
       rate: parseFloat(e.rate),
-      st: e.status
+      st: e.status,
+      salary: parseFloat(e.salary) || 0
     };
   });
 }
@@ -434,7 +448,11 @@ async function sbLoadPunches() {
       ip: p.ip,
       lat: p.lat ? parseFloat(p.lat) : null,
       lng: p.lng ? parseFloat(p.lng) : null,
-      dist: p.dist
+      dist: p.dist,
+      accuracy: p.accuracy ? parseFloat(p.accuracy) : null,
+      altitude: p.altitude ? parseFloat(p.altitude) : null,
+      speed: p.speed ? parseFloat(p.speed) : null,
+      flags: p.geo_flags || null
     };
   });
 }
@@ -508,7 +526,11 @@ async function sbSavePunch(p) {
     ip: p.ip,
     lat: p.lat,
     lng: p.lng,
-    dist: p.dist
+    dist: p.dist,
+    accuracy: p.accuracy || null,
+    altitude: p.altitude || null,
+    speed: p.speed || null,
+    geo_flags: p.flags || null
   });
 }
 async function sbSavePointEvent(ev) {
@@ -539,7 +561,8 @@ async function sbSaveEmployee(e) {
     shift_end: e.shiftEnd,
     work_days: e.workDays,
     rate: e.rate,
-    status: e.st
+    status: e.st,
+    salary: e.salary || 0
   });
 }
 async function sbSaveRequest(r) {
@@ -599,9 +622,9 @@ function haversine(lat1, lon1, lat2, lon2) {
   var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1 * p) * Math.cos(lat2 * p) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
-function checkGeoLocation(gc) {
+function checkGeoLocation(gc, lastPunches, eid, forceMobile) {
   return new Promise(function (resolve) {
-    if (!gc || !gc.enforceGeo) {
+    if (!gc || (!gc.enforceGeo && !forceMobile)) {
       resolve({
         ok: true,
         dist: 0
@@ -611,25 +634,107 @@ function checkGeoLocation(gc) {
     if (!navigator.geolocation) {
       resolve({
         ok: false,
-        reason: "Geolocation not supported by this device"
+        reason: "Geolocation not supported by this device. Use the on-site kiosk."
       });
       return;
     }
+    /* Layer 1: Get fresh GPS position — zero cache tolerance */
     navigator.geolocation.getCurrentPosition(function (pos) {
-      var dist = haversine(pos.coords.latitude, pos.coords.longitude, gc.siteLat, gc.siteLng);
+      var lat = pos.coords.latitude;
+      var lng = pos.coords.longitude;
+      var accuracy = pos.coords.accuracy || 9999;
+      var altitude = pos.coords.altitude;
+      var speed = pos.coords.speed;
+      var dist = haversine(lat, lng, gc.siteLat, gc.siteLng);
       var withinRadius = dist <= gc.geoRadius;
+      var flags = [];
+
+      /* Layer 2: Accuracy gate — reject low-quality readings */
+      var maxAccuracy = gc.geoMaxAccuracy || 150;
+      if (accuracy > maxAccuracy) {
+        resolve({
+          ok: false,
+          reason: "GPS signal too weak (accuracy: " + Math.round(accuracy) + "m). Move outdoors or closer to a window and try again.",
+          dist: Math.round(dist),
+          lat: lat,
+          lng: lng,
+          accuracy: accuracy
+        });
+        return;
+      }
+
+      /* Layer 3: Velocity/teleportation check — compare to last punch */
+      if (lastPunches && eid) {
+        var recentPunches = (lastPunches || []).filter(function(p) {
+          return p.eid === eid && p.lat && p.lat !== 0;
+        }).sort(function(a,b) { return new Date(b.time) - new Date(a.time); });
+        if (recentPunches.length > 0) {
+          var lastP = recentPunches[0];
+          var timeDiffSec = (Date.now() - new Date(lastP.time).getTime()) / 1000;
+          if (timeDiffSec > 0 && timeDiffSec < 3600) {
+            var distFromLast = haversine(lat, lng, lastP.lat, lastP.lng);
+            var speedMps = distFromLast / timeDiffSec;
+            var speedKmh = speedMps * 3.6;
+            if (speedKmh > 200 && timeDiffSec < 600) {
+              flags.push("TELEPORT");
+              resolve({
+                ok: false,
+                reason: "Location verification failed. Your position changed " + Math.round(distFromLast/1000) + "km in " + Math.round(timeDiffSec/60) + " min. Contact your supervisor.",
+                dist: Math.round(dist),
+                lat: lat,
+                lng: lng,
+                accuracy: accuracy,
+                flags: flags
+              });
+              return;
+            }
+            if (speedKmh > 120) flags.push("FAST_MOVE");
+          }
+        }
+      }
+
+      /* Layer 4: Coordinate precision check — spoofers often return exact round numbers */
+      var latStr = String(lat);
+      var lngStr = String(lng);
+      var latDecimals = latStr.indexOf(".") >= 0 ? latStr.split(".")[1].length : 0;
+      var lngDecimals = lngStr.indexOf(".") >= 0 ? lngStr.split(".")[1].length : 0;
+      if (latDecimals <= 2 || lngDecimals <= 2) {
+        flags.push("LOW_PRECISION");
+      }
+
+      /* Layer 5: Repeated exact coordinate check */
+      if (lastPunches && eid) {
+        var exactMatch = (lastPunches || []).filter(function(p) {
+          return p.eid === eid && p.lat === lat && p.lng === lng && p.lat !== null;
+        });
+        if (exactMatch.length >= 3) {
+          flags.push("REPEAT_COORDS");
+        }
+      }
+
+      /* Layer 6: Accuracy vs distance sanity check */
+      if (accuracy > dist && dist < gc.geoRadius) {
+        flags.push("ACCURACY_EXCEEDS_DIST");
+      }
+
+      if (accuracy < 30) flags.push("HIGH_ACCURACY");
+
       resolve({
         ok: withinRadius,
         dist: Math.round(dist),
-        lat: pos.coords.latitude,
-        lng: pos.coords.longitude,
+        lat: lat,
+        lng: lng,
+        accuracy: Math.round(accuracy),
+        altitude: altitude ? Math.round(altitude) : null,
+        speed: speed ? parseFloat(speed.toFixed(1)) : null,
+        flags: flags,
         reason: withinRadius ? "" : "You are " + Math.round(dist) + "m from the site (max " + gc.geoRadius + "m)"
       });
     }, function (err) {
       var reasons = {
-        "1": "Location permission denied. Enable location access and try again.",
-        "2": "Unable to determine your location. Check GPS/network.",
-        "3": "Location request timed out. Try again."
+        "1": "Location permission denied. You must allow location access to punch in remotely.",
+        "2": "Unable to determine your location. Check that GPS is enabled on your device.",
+        "3": "Location request timed out. Move to an area with better GPS signal and try again."
       };
       resolve({
         ok: false,
@@ -637,8 +742,8 @@ function checkGeoLocation(gc) {
       });
     }, {
       enableHighAccuracy: true,
-      timeout: 10000,
-      maximumAge: 60000
+      timeout: 15000,
+      maximumAge: 0
     });
   });
 }
@@ -1615,13 +1720,7 @@ function AccessGate({
       color: C.red,
       fontWeight: 700
     }
-  }, "ACCESS DENIED"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginTop: 16,
-      fontSize: 12,
-      color: C.t4
-    }
-  }, "Demo: ", role === "manager" ? "0000" : "9999")));
+  }, "ACCESS DENIED")));
 }
 function StaffLogin({
   staff,
@@ -2056,13 +2155,17 @@ function KioskView({
       setTimeout(reset, 8000);
       return;
     }
-    checkGeoLocation(gc).then(function (geoResult) {
+    var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent||"");
+    var deviceName = isMobile ? "MOBILE" : "KIOSK-MARSHALL-01";
+    checkGeoLocation(gc, punches, emp.id, isMobile).then(function (geoResult) {
       setGeoChecking(false);
       if (!geoResult.ok) {
         setGeoError(geoResult.reason);
         setGeoData({
           type: "geo",
-          dist: geoResult.dist
+          dist: geoResult.dist,
+          accuracy: geoResult.accuracy,
+          flags: geoResult.flags
         });
         setState("geo-denied");
         setTimeout(reset, 8000);
@@ -2073,11 +2176,15 @@ function KioskView({
         eid: emp.id,
         type: type,
         time: new Date().toISOString(),
-        dev: "KIOSK-MARSHALL-01",
+        dev: deviceName,
         ip: getIP(),
         lat: geoResult.lat || null,
         lng: geoResult.lng || null,
-        dist: geoResult.dist || 0
+        dist: geoResult.dist || 0,
+        accuracy: geoResult.accuracy || null,
+        altitude: geoResult.altitude || null,
+        speed: geoResult.speed || null,
+        flags: (geoResult.flags||[]).join(",") || null
       };
       onPunch(p);
       setPunchType(type);
@@ -2193,16 +2300,10 @@ function KioskView({
     onSubmit: lookupBadge,
     maxLen: 4,
     label: "SCAN OR ENTER BADGE NUMBER"
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginTop: 14,
-      fontSize: 12,
-      color: C.t4
-    }
-  }, "Demo badges: 0001\u20130010"), /*#__PURE__*/React.createElement("button", {
+  }), /*#__PURE__*/React.createElement("button", {
     onClick: reset,
     style: {
-      marginTop: 12,
+      marginTop: 16,
       padding: "8px 20px",
       borderRadius: 8,
       fontSize: 12,
@@ -2813,23 +2914,19 @@ function KioskView({
     style: {
       fontSize: mo ? 10 : 12,
       color: C.t4,
-      letterSpacing: 0.5
+      letterSpacing: 0.5,
+      WebkitUserSelect: "none",
+      userSelect: "none"
+    },
+    onClick: function() {
+      if (!onStaffLogin) return;
+      var now = Date.now();
+      if (!window._tkTaps) window._tkTaps = [];
+      window._tkTaps.push(now);
+      window._tkTaps = window._tkTaps.filter(function(t) { return now - t < 2000; });
+      if (window._tkTaps.length >= 5) { window._tkTaps = []; onStaffLogin(); }
     }
-  }, "\xA9 2026 Spark Companies \xB7 DFM Solutions"), onStaffLogin && /*#__PURE__*/React.createElement("button", {
-    onClick: onStaffLogin,
-    style: {
-      padding: "8px 18px",
-      borderRadius: 8,
-      background: C.spark + "15",
-      border: "1px solid " + C.spark + "44",
-      fontSize: 13,
-      color: C.spark,
-      fontWeight: 700,
-      display: "flex",
-      alignItems: "center",
-      gap: 6
-    }
-  }, "\u2699 Staff Login")));
+  }, "\xA9 2026 Spark Companies \xB7 DFM Solutions")));
 }
 
 /* ═══ MANAGER VIEW ═══ */
@@ -5119,7 +5216,8 @@ function AdminView({
       shiftStart: "06:00",
       shiftEnd: "14:30",
       workDays: [1, 2, 3, 4, 5],
-      rate: 16.50
+      rate: 16.50,
+      salary: 0
     }),
     form = r3[0],
     setForm = r3[1];
@@ -5238,6 +5336,7 @@ function AdminView({
       shiftEnd: form.shiftEnd,
       workDays: form.workDays,
       rate: parseFloat(form.rate) || 16.50,
+      salary: parseFloat(form.salary) || 0,
       st: "active",
       pts: 0
     };
@@ -5251,7 +5350,8 @@ function AdminView({
       shiftStart: "06:00",
       shiftEnd: "14:30",
       workDays: [1, 2, 3, 4, 5],
-      rate: 16.50
+      rate: 16.50,
+      salary: 0
     });
     setShowAdd(false);
   }
@@ -5329,14 +5429,14 @@ function AdminView({
       a2.click();
     }
     if (type === "audit") {
-      var rows3 = ["Employee,Badge,Type,Time,Device,IP,Lat,Lng,Distance"];
+      var rows3 = ["Employee,Badge,Type,Time,Device,IP,Lat,Lng,Distance,Accuracy,Altitude,Speed,Flags"];
       punches.slice().sort(function (a, b) {
         return new Date(b.time) - new Date(a.time);
       }).forEach(function (p) {
         var emp = emps.find(function (e) {
           return e.id === p.eid;
         });
-        rows3.push((emp ? emp.fn + " " + emp.ln : "?") + "," + (emp ? emp.badge : "?") + "," + p.type + "," + new Date(p.time).toLocaleString() + "," + (p.dev || "") + "," + (p.ip || "") + "," + (p.lat || "") + "," + (p.lng || "") + "," + (p.dist != null ? p.dist : ""));
+        rows3.push((emp ? emp.fn + " " + emp.ln : "?") + "," + (emp ? emp.badge : "?") + "," + p.type + "," + new Date(p.time).toLocaleString() + "," + (p.dev || "") + "," + (p.ip || "") + "," + (p.lat || "") + "," + (p.lng || "") + "," + (p.dist != null ? p.dist : "") + "," + (p.accuracy || "") + "," + (p.altitude || "") + "," + (p.speed || "") + "," + (p.flags || ""));
       });
       var blob3 = new Blob([rows3.join("\n")], {
         type: "text/csv"
@@ -5758,6 +5858,51 @@ function AdminView({
       });
     },
     style: inp
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: {
+      fontSize: 12,
+      fontWeight: 600,
+      color: C.t4,
+      fontFamily: Fb,
+      letterSpacing: 1.5,
+      display: "block",
+      marginBottom: 3
+    }
+  }, "RATE/HR"), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    step: "0.50",
+    value: form.rate,
+    onChange: function (e) {
+      setForm(function (f) {
+        return Object.assign({}, f, {
+          rate: e.target.value
+        });
+      });
+    },
+    style: inp
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: {
+      fontSize: 12,
+      fontWeight: 600,
+      color: C.t4,
+      fontFamily: Fb,
+      letterSpacing: 1.5,
+      display: "block",
+      marginBottom: 3
+    }
+  }, "SALARY/YR"), /*#__PURE__*/React.createElement("input", {
+    type: "number",
+    step: "1000",
+    value: form.salary || "",
+    onChange: function (e) {
+      setForm(function (f) {
+        return Object.assign({}, f, {
+          salary: e.target.value
+        });
+      });
+    },
+    placeholder: "0 = hourly",
+    style: inp
   })), /*#__PURE__*/React.createElement("button", {
     onClick: addEmp,
     disabled: !form.fn || !form.ln,
@@ -5925,7 +6070,7 @@ function AdminView({
       width: "100%",
       borderCollapse: "collapse"
     }
-  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, ["Badge", "Name", "PIN", "Dept", "Shift", "Rate", "Points", "Status", ""].map(function (h) {
+  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, ["Badge", "Name", "PIN", "Dept", "Shift", "Rate", "Salary", "Points", "Status", ""].map(function (h) {
     return /*#__PURE__*/React.createElement("th", {
       key: h,
       style: {
@@ -6011,6 +6156,13 @@ function AdminView({
         color: C.spark
       }
     }, "$", e.rate || 16, "/hr"), /*#__PURE__*/React.createElement("td", {
+      style: {
+        padding: "8px 12px",
+        fontFamily: Fm,
+        fontSize: 11,
+        color: e.salary > 0 ? C.green : C.t4
+      }
+    }, e.salary > 0 ? "$" + Number(e.salary).toLocaleString() + "/yr" : "Hourly"), /*#__PURE__*/React.createElement("td", {
       style: {
         padding: "8px 12px"
       }
@@ -6393,7 +6545,7 @@ function AdminView({
       fontSize: 12,
       color: C.t4
     }
-  }, "Staff tap the \u2699 gear icon on the kiosk screen, then enter their personal PIN. Managers see the Manager Dashboard. Admins see this Administration panel. Each person has their own PIN \u2014 no shared codes."))), tab === "schedules" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  }, "Staff tap the copyright text at the bottom of the kiosk screen 5 times quickly to open the login. Managers see the Manager Dashboard. Admins see this Administration panel. Each person has their own PIN \u2014 no shared codes. Employees cannot see or access this feature."))), tab === "schedules" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       fontWeight: 700,
@@ -7433,7 +7585,7 @@ function AdminView({
         padding: "6px 10px",
         fontFamily: Fm,
         fontSize: 12,
-        color: p.dev === "MANAGER" || p.dev === "APPROVED" ? C.orange : C.t4
+        color: p.dev === "MANAGER" || p.dev === "APPROVED" ? C.orange : p.dev === "MOBILE" ? C.blue : C.t4
       }
     }, p.dev || "-"), /*#__PURE__*/React.createElement("td", {
       style: {
@@ -7449,7 +7601,7 @@ function AdminView({
         fontSize: 12,
         color: p.lat ? C.green : C.t4
       }
-    }, p.lat ? "◉ " + p.lat.toFixed(4) + "°, " + p.lng.toFixed(4) + "°" + (p.dist != null ? " (" + p.dist + "m)" : "") : "—"));
+    }, p.lat ? "◉ " + p.lat.toFixed(4) + "°, " + p.lng.toFixed(4) + "°" + (p.dist != null ? " (" + p.dist + "m)" : "") + (p.accuracy ? " ±" + p.accuracy + "m" : "") : "—"));
   })))), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
