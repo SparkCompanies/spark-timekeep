@@ -4997,7 +4997,15 @@ function ManagerView({
         color: ev.pts > 0 ? C.orange : C.green
       }
     }, ev.pts > 0 ? "+" : "", ev.pts));
-  })))), showAddPunch && /*#__PURE__*/React.createElement(AddPunchModal, {
+  })))), ,mTab === "reports" && React.createElement(ReportsTab, {
+    emps: statuses,
+    punches: punches,
+    pointEvents: pEvents,
+    policy: P,
+    weekOffset: weekOffset,
+    mon: mon
+  })
+  ,showAddPunch && /*#__PURE__*/React.createElement(AddPunchModal, {
     emps: active,
     onAdd: onPunch,
     onClose: function () {
