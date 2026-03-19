@@ -2939,7 +2939,6 @@ function ReportsTab({ emps, punches, pointEvents, policy, weekOffset, mon }) {
   var P = policy || DEFAULT_POLICY;
   var hRef = useRef(null), dRef = useRef(null), oRef = useRef(null), tRef = useRef(null);
   var ci = useRef({});
-
   useEffect(function () {
     if (typeof window.Chart === "undefined") return;
     var Ch = window.Chart;
@@ -2950,7 +2949,6 @@ function ReportsTab({ emps, punches, pointEvents, policy, weekOffset, mon }) {
     Ch.defaults.plugins.tooltip.titleColor="#FAFAFA";
     Ch.defaults.plugins.tooltip.bodyColor="#A1A1AA";
     Ch.defaults.plugins.tooltip.padding=10; Ch.defaults.plugins.tooltip.cornerRadius=8;
-
     var depts=Object.keys(DC); var days=["Mon","Tue","Wed","Thu","Fri"];
     var hoursData=depts.map(function(dept){return days.map(function(_,di){
       var ds=new Date(mon);ds.setDate(ds.getDate()+di);ds.setHours(0,0,0,0);
@@ -2959,34 +2957,27 @@ function ReportsTab({ emps, punches, pointEvents, policy, weekOffset, mon }) {
         return s+calcDayHours(punches.filter(function(p){return p.eid===e.id&&new Date(p.time)>=ds&&new Date(p.time)<=de})).netH;
       },0);
     })});
-
     if(hRef.current){if(ci.current.h)ci.current.h.destroy();
       ci.current.h=new Ch(hRef.current,{type:"bar",data:{labels:days,datasets:depts.map(function(d,i){return{label:d,data:hoursData[i],backgroundColor:Object.values(DC)[i]+"CC",borderColor:Object.values(DC)[i],borderWidth:1,borderRadius:4}})},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"top"}},scales:{x:{grid:{color:"#27272A"}},y:{grid:{color:"#27272A"},ticks:{callback:function(v){return v+"h"}}}}}});}
-
     var deptTotals=depts.map(function(d){return emps.filter(function(e){return e.dept===d}).reduce(function(s,e){return s+e.weekH},0)});
     if(dRef.current){if(ci.current.d)ci.current.d.destroy();
       ci.current.d=new Ch(dRef.current,{type:"doughnut",data:{labels:depts,datasets:[{data:deptTotals,backgroundColor:Object.values(DC).map(function(c){return c+"CC"}),borderColor:Object.values(DC),borderWidth:2,hoverOffset:8}]},options:{responsive:true,maintainAspectRatio:false,cutout:"62%",plugins:{legend:{position:"bottom"}}}});}
-
     var otE=emps.filter(function(e){return e.weekH>0}).sort(function(a,b){return b.weekH-a.weekH}).slice(0,12);
     if(oRef.current){if(ci.current.o)ci.current.o.destroy();
       ci.current.o=new Ch(oRef.current,{type:"bar",data:{labels:otE.map(function(e){return e.fn+" "+e.ln[0]+"."}),datasets:[{label:"Regular",data:otE.map(function(e){return Math.min(e.weekH,P.otWeekly)}),backgroundColor:GREEN+"99",borderColor:GREEN,borderWidth:1,stack:"h"},{label:"Overtime",data:otE.map(function(e){return Math.max(0,e.weekH-P.otWeekly)}),backgroundColor:RED+"CC",borderColor:RED,borderWidth:1,stack:"h"}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"top"}},scales:{x:{stacked:true,grid:{color:"#27272A"},ticks:{callback:function(v){return v+"h"}}},y:{stacked:true,grid:{color:"#27272A"}}}}});}
-
     var pb={"0":0,"0.5-1.9":0,"2-4.4":0,"4.5-5.9":0,"6-7.9":0,"8+":0};
     emps.forEach(function(e){var p=e.pts||0;if(p===0)pb["0"]++;else if(p<2)pb["0.5-1.9"]++;else if(p<4.5)pb["2-4.4"]++;else if(p<6)pb["4.5-5.9"]++;else if(p<8)pb["6-7.9"]++;else pb["8+"]++});
     var pc=[GREEN,GOLD,ORANGE,ORANGE,RED,RED];
     if(tRef.current){if(ci.current.t)ci.current.t.destroy();
       ci.current.t=new Ch(tRef.current,{type:"bar",data:{labels:Object.keys(pb),datasets:[{data:Object.values(pb),backgroundColor:pc.map(function(c){return c+"BB"}),borderColor:pc,borderWidth:2,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:"#27272A"}},y:{grid:{color:"#27272A"},ticks:{stepSize:1}}}}});}
-
     return function(){Object.values(ci.current).forEach(function(c){if(c&&c.destroy)c.destroy()})};
   },[emps,punches,mon]);
-
   var tH=emps.reduce(function(s,e){return s+e.weekH},0);
   var tC=emps.reduce(function(s,e){return s+(e.cost?e.cost.total:0)},0);
   var tOH=emps.reduce(function(s,e){return s+(e.cost?e.cost.otH:0)},0);
   var tOC=emps.filter(function(e){return e.cost&&e.cost.otH>0}).reduce(function(s,e){return s+e.cost.ot},0);
   var DC2={Assembly:"#FACC15",Quality:"#3B82F6",Packaging:"#22C55E",Shipping:"#FB923C",Maintenance:"#A855F7"};
   var cc={background:C.sf,border:"1px solid "+C.bd,borderRadius:14,padding:16,marginBottom:16};
-
   return React.createElement("div",{style:{padding:16}},
     React.createElement("div",{style:{marginBottom:20}},
       React.createElement("div",{style:{fontSize:20,fontWeight:800,color:C.t1}},"Reports & Analytics"),
@@ -3010,24 +3001,22 @@ function ReportsTab({ emps, punches, pointEvents, policy, weekOffset, mon }) {
       React.createElement("div",{style:{fontWeight:700,fontSize:13,color:C.t1,marginBottom:12}},"Labor Cost by Department"),
       React.createElement("table",{style:{width:"100%",borderCollapse:"collapse"}},
         React.createElement("thead",null,React.createElement("tr",null,["Dept","Employees","Hours","OT Hours","Reg Cost","OT Cost","Total"].map(function(h){return React.createElement("th",{key:h,style:{padding:"6px 10px",textAlign:"left",fontSize:11,fontWeight:700,color:C.t4,letterSpacing:1,textTransform:"uppercase",borderBottom:"1px solid "+C.bd}},h)}))),
-        React.createElement("tbody",null,
-          ["Assembly","Quality","Packaging","Shipping","Maintenance"].map(function(dept){
-            var de=emps.filter(function(e){return e.dept===dept});
-            var hrs=de.reduce(function(s,e){return s+e.weekH},0);
-            var otH=de.reduce(function(s,e){return s+(e.cost?e.cost.otH:0)},0);
-            var reg=de.reduce(function(s,e){return s+(e.cost?e.cost.reg:0)},0);
-            var ot=de.reduce(function(s,e){return s+(e.cost?e.cost.ot:0)},0);
-            return React.createElement("tr",{key:dept,style:{borderBottom:"1px solid "+C.bd+"22"}},
-              React.createElement("td",{style:{padding:"8px 10px"}},React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},React.createElement("div",{style:{width:8,height:8,borderRadius:2,background:DC2[dept]}}),React.createElement("span",{style:{fontSize:13,fontWeight:600,color:C.t1}},dept))),
-              React.createElement("td",{style:{padding:"8px 10px",fontFamily:Fm,fontSize:13,color:C.t3}},de.length),
-              React.createElement("td",{style:{padding:"8px 10px",fontFamily:Fm,fontSize:13,fontWeight:700,color:C.t1}},hrs.toFixed(1)+"h"),
-              React.createElement("td",{style:{padding:"8px 10px",fontFamily:Fm,fontSize:13,color:otH>0?C.red:C.t4}},otH.toFixed(1)+"h"),
-              React.createElement("td",{style:{padding:"8px 10px",fontFamily:Fm,fontSize:13,color:C.spark}},"$"+Math.round(reg).toLocaleString()),
-              React.createElement("td",{style:{padding:"8px 10px",fontFamily:Fm,fontSize:13,color:ot>0?C.red:C.t4}},"$"+Math.round(ot).toLocaleString()),
-              React.createElement("td",{style:{padding:"8px 10px",fontFamily:Fm,fontSize:14,fontWeight:800,color:C.spark}},"$"+Math.round(reg+ot).toLocaleString())
-            );
-          })
-        )
+        React.createElement("tbody",null,["Assembly","Quality","Packaging","Shipping","Maintenance"].map(function(dept){
+          var de=emps.filter(function(e){return e.dept===dept});
+          var hrs=de.reduce(function(s,e){return s+e.weekH},0);
+          var otH=de.reduce(function(s,e){return s+(e.cost?e.cost.otH:0)},0);
+          var reg=de.reduce(function(s,e){return s+(e.cost?e.cost.reg:0)},0);
+          var ot=de.reduce(function(s,e){return s+(e.cost?e.cost.ot:0)},0);
+          return React.createElement("tr",{key:dept,style:{borderBottom:"1px solid "+C.bd+"22"}},
+            React.createElement("td",{style:{padding:"8px 10px"}},React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},React.createElement("div",{style:{width:8,height:8,borderRadius:2,background:DC2[dept]}}),React.createElement("span",{style:{fontSize:13,fontWeight:600,color:C.t1}},dept))),
+            React.createElement("td",{style:{padding:"8px 10px",fontFamily:Fm,fontSize:13,color:C.t3}},de.length),
+            React.createElement("td",{style:{padding:"8px 10px",fontFamily:Fm,fontSize:13,fontWeight:700,color:C.t1}},hrs.toFixed(1)+"h"),
+            React.createElement("td",{style:{padding:"8px 10px",fontFamily:Fm,fontSize:13,color:otH>0?C.red:C.t4}},otH.toFixed(1)+"h"),
+            React.createElement("td",{style:{padding:"8px 10px",fontFamily:Fm,fontSize:13,color:C.spark}},"$"+Math.round(reg).toLocaleString()),
+            React.createElement("td",{style:{padding:"8px 10px",fontFamily:Fm,fontSize:13,color:ot>0?C.red:C.t4}},"$"+Math.round(ot).toLocaleString()),
+            React.createElement("td",{style:{padding:"8px 10px",fontFamily:Fm,fontSize:14,fontWeight:800,color:C.spark}},"$"+Math.round(reg+ot).toLocaleString())
+          );
+        }))
       )
     )
   );
@@ -5098,8 +5087,8 @@ function ManagerView({
         color: ev.pts > 0 ? C.orange : C.green
       }
     }, ev.pts > 0 ? "+" : "", ev.pts));
-  })))), ,mTab === "reports" && React.createElement(ReportsTab, {emps:statuses,punches:punches,pointEvents:pEvents,policy:P,weekOffset:weekOffset,mon:mon})
-,showAddPunch && /*#__PURE__*/React.createElement(AddPunchModal, {
+  }))))
+  ,mTab === "reports" && /*#__PURE__*/React.createElement(ReportsTab, {emps:statuses,punches:punches,pointEvents:pEvents,policy:P,weekOffset:weekOffset,mon:mon}), showAddPunch && /*#__PURE__*/React.createElement(AddPunchModal, {
     emps: active,
     onAdd: onPunch,
     onClose: function () {
