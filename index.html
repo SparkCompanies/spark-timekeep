@@ -7691,29 +7691,44 @@ function App() {
           if (sbPol) setPolicy(sbPol);
           if (sbGeo) setGeoConfig(sbGeo);
           if (sbStf && sbStf.length > 0) setStaff(sbStf);
-          /* subscribe to realtime punch updates */
+          /* subscribe to realtime updates across ALL tables */
           var sb = getSb();
           if (sb) {
-            sb.channel("tk-punches").on("postgres_changes", {
-              event: "INSERT",
-              schema: "public",
-              table: "tk_punches"
-            }, function (payload) {
-              var p = payload.new;
-              setPunches(function (prev) {
-                return [{
-                  id: p.id,
-                  eid: p.eid,
-                  type: p.type,
-                  time: p.time,
-                  dev: p.dev,
-                  ip: p.ip,
-                  lat: p.lat ? parseFloat(p.lat) : null,
-                  lng: p.lng ? parseFloat(p.lng) : null,
-                  dist: p.dist
-                }].concat(prev);
-              });
+            sb.channel("tk-punches").on("postgres_changes", {event:"*",schema:"public",table:"tk_punches"}, function(payload) {
+              if (payload.eventType==="INSERT") {
+                var p=payload.new;
+                setPunches(function(prev) {
+                  if(prev.some(function(x){return x.id===p.id}))return prev;
+                  return [{id:p.id,eid:p.eid,type:p.type,time:p.time,dev:p.dev,ip:p.ip,lat:p.lat?parseFloat(p.lat):null,lng:p.lng?parseFloat(p.lng):null,dist:p.dist,accuracy:p.accuracy?parseFloat(p.accuracy):null,altitude:p.altitude?parseFloat(p.altitude):null,speed:p.speed?parseFloat(p.speed):null,flags:p.geo_flags||null}].concat(prev);
+                });
+              } else if (payload.eventType==="DELETE") {
+                setPunches(function(prev){return prev.filter(function(x){return x.id!==payload.old.id})});
+              }
             }).subscribe();
+            sb.channel("tk-employees").on("postgres_changes", {event:"*",schema:"public",table:"tk_employees"}, function(payload) {
+              if (payload.eventType==="DELETE") {
+                setEmps(function(prev){return prev.filter(function(x){return x.id!==payload.old.id})});
+              } else {
+                var e=payload.new;
+                var m={id:e.id,badge:e.badge,fn:e.fn,ln:e.ln,pin:e.pin,dept:e.dept,role:e.role,site:e.site,shift:e.shift,shiftStart:e.shift_start,shiftEnd:e.shift_end,workDays:e.work_days,rate:parseFloat(e.rate),st:e.status,salary:parseFloat(e.salary)||0};
+                setEmps(function(prev){var ex=prev.some(function(x){return x.id===m.id});if(ex)return prev.map(function(x){return x.id===m.id?Object.assign({},x,m):x});return prev.concat([m])});
+              }
+            }).subscribe();
+            sb.channel("tk-points").on("postgres_changes", {event:"*",schema:"public",table:"tk_point_events"}, function(payload) {
+              if(payload.eventType==="DELETE"){setPEvents(function(prev){return prev.filter(function(x){return x.id!==payload.old.id})})}
+              else{var ev=payload.new;var m={id:ev.id,eid:ev.eid,type:ev.type,pts:parseFloat(ev.pts),date:ev.date};setPEvents(function(prev){var ex=prev.some(function(x){return x.id===m.id});if(ex)return prev.map(function(x){return x.id===m.id?m:x});return[m].concat(prev)})}
+            }).subscribe();
+            sb.channel("tk-requests").on("postgres_changes", {event:"*",schema:"public",table:"tk_requests"}, function(payload) {
+              if(payload.eventType==="DELETE"){setRequests(function(prev){return prev.filter(function(x){return x.id!==payload.old.id})})}
+              else{var r=payload.new;var m={id:r.id,eid:r.eid,type:r.type,time:r.time,note:r.note,status:r.status,ip:r.ip};setRequests(function(prev){var ex=prev.some(function(x){return x.id===m.id});if(ex)return prev.map(function(x){return x.id===m.id?m:x});return[m].concat(prev)})}
+            }).subscribe();
+            sb.channel("tk-config").on("postgres_changes", {event:"*",schema:"public",table:"tk_config"}, function(payload) {
+              if(payload.eventType!=="DELETE"&&payload.new){var c=payload.new;if(c.key==="policy")setPolicy(c.value);if(c.key==="geo")setGeoConfig(c.value)}
+            }).subscribe();
+            sb.channel("tk-staff").on("postgres_changes", {event:"*",schema:"public",table:"tk_staff"}, function(payload) {
+              sbLoadStaff().then(function(s){if(s&&s.length>0)setStaff(s)});
+            }).subscribe();
+            console.log("Realtime subscriptions active on all tables");
           }
         } else {
           /* ── LOCALSTORAGE MODE ── */
