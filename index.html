@@ -587,7 +587,7 @@ async function sbSaveRequest(r) {
 async function sbSaveStaff(staff) {
   var sb = getSb();
   if (!sb) return;
-  await sb.from("tk_staff").delete().neq("id", "_none_");
+  await sb.from("tk_staff").delete().neq("id", "");
   for (var i = 0; i < staff.length; i++) {
     await sb.from("tk_staff").upsert({
       id: staff[i].id,
@@ -7909,16 +7909,24 @@ function App() {
     if (useSupa()) {
       var sb = getSb();
       if (sb) {
-        sb.from("tk_punches").delete().neq("id","_none_");
-        sb.from("tk_point_events").delete().neq("id","_none_");
-        sb.from("tk_requests").delete().neq("id","_none_");
-        sb.from("tk_employees").delete().neq("id","_none_").then(function() {
-          fresh.forEach(function(e) { sbSaveEmployee(e); });
-        });
-        sbSaveConfig("policy", DEFAULT_POLICY);
-        sbSaveConfig("geo", DEFAULT_GEO);
-        sbSaveStaff(DEFAULT_STAFF);
-        console.log("Supabase data reset and re-seeded");
+        (async function() {
+          try {
+            await sb.from("tk_punches").delete().neq("id","");
+            await sb.from("tk_point_events").delete().neq("id","");
+            await sb.from("tk_requests").delete().neq("id","");
+            await sb.from("tk_admin_log").delete().neq("id","");
+            await sb.from("tk_employees").delete().neq("id","");
+            for (var i = 0; i < fresh.length; i++) {
+              await sbSaveEmployee(fresh[i]);
+            }
+            await sbSaveConfig("policy", DEFAULT_POLICY);
+            await sbSaveConfig("geo", DEFAULT_GEO);
+            await sbSaveStaff(DEFAULT_STAFF);
+            console.log("Supabase data reset and re-seeded");
+          } catch(err) {
+            console.error("Reset error:", err);
+          }
+        })();
       }
     }
   }
