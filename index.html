@@ -5460,7 +5460,33 @@ function AdminView({
   function startEdit(e) { setEditForm({fn:e.fn,ln:e.ln,dept:e.dept,shiftStart:e.shiftStart||"06:00",shiftEnd:e.shiftEnd||"14:30",rate:e.rate||16,salary:e.salary||0,badge:e.badge,pin:e.pin}); setEditEmp2(e); }
   function saveEdit() { if(!editEmp2)return; onUpdateEmps(emps.map(function(x){return x.id===editEmp2.id?Object.assign({},x,{fn:editForm.fn||x.fn,ln:editForm.ln||x.ln,dept:editForm.dept||x.dept,shiftStart:editForm.shiftStart||x.shiftStart,shiftEnd:editForm.shiftEnd||x.shiftEnd,rate:parseFloat(editForm.rate)||x.rate,salary:parseFloat(editForm.salary)||0,badge:editForm.badge||x.badge,pin:editForm.pin||x.pin}):x})); logAdminAction("EDIT",editEmp2.fn+" "+editEmp2.ln+" ("+editEmp2.badge+")",staffName); setEditEmp2(null); }
   function termEmp(id) { var emp2=emps.find(function(e){return e.id===id}); if(window.confirm("Terminate this employee? They will be moved to the Inactive bucket.")) { onUpdateEmps(emps.map(function(x){return x.id===id?Object.assign({},x,{st:"terminated"}):x})); logAdminAction("TERMINATE",emp2.fn+" "+emp2.ln+" ("+emp2.badge+")",staffName); } }
-  function deleteEmp(id) { var emp=emps.find(function(e){return e.id===id}); if(window.confirm("PERMANENTLY DELETE "+emp.fn+" "+emp.ln+"? This cannot be undone.")) { if(window.confirm("Are you absolutely sure? All records for this employee will be removed.")) { onUpdateEmps(emps.filter(function(x){return x.id!==id})); logAdminAction("DELETE",emp.fn+" "+emp.ln+" ("+emp.badge+") — permanently removed",staffName); if(useSupa()){var sb=getSb();if(sb){sb.from("tk_employees").delete().eq("id",id);sb.from("tk_punches").delete().eq("eid",id);sb.from("tk_point_events").delete().eq("eid",id);sb.from("tk_requests").delete().eq("eid",id)}} } } }
+  function deleteEmp(id) {
+    var emp=emps.find(function(e){return e.id===id});
+    if(!emp) return;
+    if(!window.confirm("PERMANENTLY DELETE "+emp.fn+" "+emp.ln+"? This cannot be undone.")) return;
+    if(!window.confirm("Are you absolutely sure? All records for this employee will be removed.")) return;
+    /* Delete from Supabase FIRST, then update React state */
+    if(useSupa()){
+      var sb=getSb();
+      if(sb){
+        (async function(){
+          try {
+            var r1 = await sb.from("tk_employees").delete().eq("id",id);
+            console.log("DB DELETE employee:", id, r1.error ? "FAILED: "+r1.error.message : "OK");
+            await sb.from("tk_punches").delete().eq("eid",id);
+            await sb.from("tk_point_events").delete().eq("eid",id);
+            await sb.from("tk_requests").delete().eq("eid",id);
+            console.log("DB DELETE all records for:", emp.fn, emp.ln, "complete");
+          } catch(err) { console.error("Delete error:", err); }
+        })();
+      }
+    }
+    /* Then remove from React state WITHOUT triggering persist (which would re-upsert) */
+    setEmps(function(prev){ return prev.filter(function(x){return x.id!==id}); });
+    setPEvents(function(prev){ return prev.filter(function(x){return x.eid!==id}); });
+    sSet("tk-v7-data", { employees: emps.filter(function(x){return x.id!==id}), pointEvents: pEvents.filter(function(x){return x.eid!==id}) });
+    logAdminAction("DELETE",emp.fn+" "+emp.ln+" ("+emp.badge+") — permanently removed",staffName);
+  }
   function tog(id) {
     onUpdateEmps(emps.map(function (x) {
       return x.id === id ? Object.assign({}, x, {
