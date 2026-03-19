@@ -2934,11 +2934,12 @@ function KioskView({
 
 /* ═══ MANAGER VIEW ═══ */
 
-function BulkDeleteBar({selected, onDeleteSelected, onClearSelection}) {
+function BulkDeleteBar({selected, onTerminateSelected, onDeleteSelected, onClearSelection}) {
   if(selected.length === 0) return null;
-  return /*#__PURE__*/React.createElement("div", {style:{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:"#EF444415",border:"1px solid #EF444433",borderRadius:8,marginBottom:10}},
+  return /*#__PURE__*/React.createElement("div", {style:{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:"#EF444415",border:"1px solid #EF444433",borderRadius:8,marginBottom:10,flexWrap:"wrap"}},
     /*#__PURE__*/React.createElement("span",{style:{fontSize:13,fontWeight:600,color:"#EF4444"}},selected.length+" selected"),
-    /*#__PURE__*/React.createElement("button",{onClick:onDeleteSelected,style:{padding:"6px 14px",borderRadius:6,fontSize:13,fontWeight:700,color:"#fff",background:"#EF4444",border:"none"}}, "Delete Selected"),
+    /*#__PURE__*/React.createElement("button",{onClick:onTerminateSelected,style:{padding:"6px 14px",borderRadius:6,fontSize:13,fontWeight:700,color:"#fff",background:"#FB923C",border:"none"}}, "Terminate Selected"),
+    /*#__PURE__*/React.createElement("button",{onClick:onDeleteSelected,style:{padding:"6px 14px",borderRadius:6,fontSize:13,fontWeight:700,color:"#fff",background:"#EF4444",border:"none"}}, "Permanently Delete"),
     /*#__PURE__*/React.createElement("button",{onClick:onClearSelection,style:{padding:"6px 14px",borderRadius:6,fontSize:13,fontWeight:600,color:"#A1A1AA",background:"none",border:"1px solid #3F3F46"}}, "Clear")
   );
 }
@@ -6019,7 +6020,34 @@ function AdminView({
       background: form.fn && form.ln ? C.green : C.t4,
       gridColumn: mo ? "1/-1" : undefined
     }
-  }, "Create"))), mo ? /*#__PURE__*/React.createElement("div", null, emps.filter(function(e){return e.st==="active"}).map(function (e) {
+  }, "Create"))), /*#__PURE__*/React.createElement(BulkDeleteBar, {
+    selected: selEmps,
+    onTerminateSelected: function() {
+      if (!selEmps || selEmps.length === 0) return;
+      if (!window.confirm("Terminate " + selEmps.length + " selected employee(s)? They will be moved to Inactive.")) return;
+      var updated = emps.map(function(x) { return selEmps.includes(x.id) ? Object.assign({}, x, { st: "terminated" }) : x; });
+      onUpdateEmps(updated);
+      selEmps.forEach(function(id) {
+        var emp = emps.find(function(e) { return e.id === id; });
+        logAdminAction("BULK_TERMINATE", (emp ? emp.fn + " " + emp.ln : "ID:" + id), staffName);
+      });
+      setSelEmps([]);
+    },
+    onDeleteSelected: function() {
+      if (!selEmps || selEmps.length === 0) return;
+      if (!window.confirm("PERMANENTLY DELETE " + selEmps.length + " employee(s)? All records will be removed. This cannot be undone.")) return;
+      if (!window.confirm("Are you absolutely sure? This will delete all punch records, points, and requests for these employees.")) return;
+      var remaining = emps.filter(function(x) { return !selEmps.includes(x.id); });
+      onUpdateEmps(remaining);
+      selEmps.forEach(function(id) {
+        var emp = emps.find(function(e) { return e.id === id; });
+        logAdminAction("BULK_DELETE", (emp ? emp.fn + " " + emp.ln + " (" + emp.badge + ")" : "ID:" + id) + " — permanently removed", staffName);
+        if (useSupa()) { var sb = getSb(); if(sb) { sb.from("tk_employees").delete().eq("id",id); sb.from("tk_punches").delete().eq("eid",id); sb.from("tk_point_events").delete().eq("eid",id); sb.from("tk_requests").delete().eq("eid",id); } }
+      });
+      setSelEmps([]);
+    },
+    onClearSelection: function() { setSelEmps([]); }
+  }), mo ? /*#__PURE__*/React.createElement("div", null, emps.filter(function(e){return e.st==="active"}).map(function (e) {
     return /*#__PURE__*/React.createElement("div", {
       key: e.id,
       style: {
@@ -7646,12 +7674,17 @@ function App() {
             setEmps(withPts(sbEmps, sbPe || [], sbPol || DEFAULT_POLICY));
             setPEvents(sbPe || []);
           } else {
-            setEmps(SEED.map(function (e) {
-              return Object.assign({}, e, {
-                pts: 0
-              });
-            }));
+            /* First run — seed Supabase so other browsers/devices see the data */
+            var seeded = SEED.map(function (e) {
+              return Object.assign({}, e, { pts: 0 });
+            });
+            setEmps(seeded);
             setPEvents([]);
+            seeded.forEach(function(e) { sbSaveEmployee(e); });
+            sbSaveConfig("policy", DEFAULT_POLICY);
+            sbSaveConfig("geo", DEFAULT_GEO);
+            sbSaveStaff(DEFAULT_STAFF);
+            console.log("Seeded " + seeded.length + " employees to Supabase");
           }
           setPunches(sbPch || []);
           setRequests(sbReqs || []);
@@ -7872,6 +7905,22 @@ function App() {
     sSet("tk-v7-policy", DEFAULT_POLICY);
     sSet("tk-v7-geo", DEFAULT_GEO);
     sSet("tk-v7-staff", DEFAULT_STAFF);
+    /* Also clear and re-seed Supabase so all browsers reset */
+    if (useSupa()) {
+      var sb = getSb();
+      if (sb) {
+        sb.from("tk_punches").delete().neq("id","_none_");
+        sb.from("tk_point_events").delete().neq("id","_none_");
+        sb.from("tk_requests").delete().neq("id","_none_");
+        sb.from("tk_employees").delete().neq("id","_none_").then(function() {
+          fresh.forEach(function(e) { sbSaveEmployee(e); });
+        });
+        sbSaveConfig("policy", DEFAULT_POLICY);
+        sbSaveConfig("geo", DEFAULT_GEO);
+        sbSaveStaff(DEFAULT_STAFF);
+        console.log("Supabase data reset and re-seeded");
+      }
+    }
   }
   function handleStaffLogin(s) {
     setLoggedIn(s);
