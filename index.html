@@ -1885,6 +1885,76 @@ function LoadScreen() {
     }
   }, "LOADING DATA"));
 }
+
+function PunchEditorPanel(props) {
+  var emps = props.emps || [], punches = props.punches || [], onEdit = props.onEdit, onClose = props.onClose;
+  var r1 = React.useState(""), selEmp = r1[0], setSelEmp = r1[1];
+  var r2 = React.useState(""), selDate = r2[0], setSelDate = r2[1];
+  React.useEffect(function(){if(!selDate) setSelDate(new Date().toISOString().slice(0,10));},[]);
+  var filtered = punches.filter(function(p) {
+    if(selEmp && p.eid !== selEmp) return false;
+    if(selDate && p.time.slice(0,10) !== selDate) return false;
+    return true;
+  }).sort(function(a,b){return new Date(b.time)-new Date(a.time)});
+  var empName = function(eid){var e=emps.find(function(x){return x.id===eid});return e?(e.name||e.first+" "+e.last):eid};
+  var sty = {width:"100%",background:C.bg||"#09090B",border:"1px solid "+(C.bd||C.border||"#1E1E22"),color:C.t1||"#E4E4E7",padding:"8px 10px",borderRadius:6,fontSize:14,outline:"none",boxSizing:"border-box"};
+  return /*#__PURE__*/React.createElement("div", {style:{marginTop:16,background:C.srf||C.surface||"#111113",border:"1px solid "+(C.bd||C.border||"#1E1E22"),borderRadius:12,padding:20}},
+    /*#__PURE__*/React.createElement("div", {style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}},
+      /*#__PURE__*/React.createElement("div", {style:{fontSize:15,fontWeight:700,color:C.t1}}, "Punch Editor"),
+      /*#__PURE__*/React.createElement("button", {onClick:onClose,style:{background:"transparent",border:"none",color:C.t3,cursor:"pointer",fontSize:18}}, "\u2715")
+    ),
+    /*#__PURE__*/React.createElement("div", {style:{display:"flex",gap:12,marginBottom:16,flexWrap:"wrap"}},
+      /*#__PURE__*/React.createElement("select", {value:selEmp,onChange:function(e){setSelEmp(e.target.value)},style:Object.assign({},sty,{flex:"1 1 200px",appearance:"auto"})},
+        /*#__PURE__*/React.createElement("option", {value:""}, "All Employees"),
+        emps.filter(function(e){return e.st==="active"}).sort(function(a,b){return (a.name||a.first||"").localeCompare(b.name||b.first||"")}).map(function(e){
+          return /*#__PURE__*/React.createElement("option", {key:e.id,value:e.id}, e.name||e.first+" "+e.last);
+        })
+      ),
+      /*#__PURE__*/React.createElement("input", {type:"date",value:selDate,onChange:function(e){setSelDate(e.target.value)},style:Object.assign({},sty,{flex:"0 0 180px"})})
+    ),
+    /*#__PURE__*/React.createElement("div", {style:{fontSize:12,color:C.t3,marginBottom:8}}, filtered.length + " punch" + (filtered.length!==1?"es":"") + " found"),
+    filtered.length === 0
+      ? /*#__PURE__*/React.createElement("div", {style:{textAlign:"center",padding:24,color:C.t4}}, "No punches for this selection")
+      : /*#__PURE__*/React.createElement("div", {style:{maxHeight:400,overflowY:"auto"}},
+          filtered.map(function(p) {
+            var dt = new Date(p.time);
+            return /*#__PURE__*/React.createElement("div", {key:p.id,style:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 12px",borderBottom:"1px solid "+(C.bd||C.border||"#1E1E22"),gap:12}},
+              /*#__PURE__*/React.createElement("div", {style:{flex:1}},
+                /*#__PURE__*/React.createElement("div", {style:{fontSize:13,fontWeight:600,color:C.t1}}, empName(p.eid)),
+                /*#__PURE__*/React.createElement("div", {style:{fontSize:12,color:C.t3,marginTop:2}}, p.type==="in"?"Clock In":p.type==="out"?"Clock Out":p.type==="break-start"?"Break Start":"Break End")
+              ),
+              /*#__PURE__*/React.createElement("div", {style:{textAlign:"right"}},
+                /*#__PURE__*/React.createElement("div", {style:{fontSize:13,fontFamily:"monospace",color:C.t1}}, dt.toLocaleDateString()+" "+dt.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})),
+                p.edited && /*#__PURE__*/React.createElement("div", {style:{fontSize:10,color:C.spark||"#FACC15",marginTop:2}}, "Edited")
+              ),
+              /*#__PURE__*/React.createElement("button", {onClick:function(){onEdit(p)},style:{padding:"6px 12px",fontSize:12,background:"transparent",border:"1px solid "+(C.spark||"#FACC15"),color:C.spark||"#FACC15",borderRadius:6,cursor:"pointer",fontWeight:600,whiteSpace:"nowrap"}}, "Edit")
+            );
+          })
+        )
+  );
+}
+
+function EditPunchModal(props) {
+  var punch = props.punch, emp = props.emp, onSave = props.onSave, onClose = props.onClose;
+  var r = React.useState(punch ? new Date(punch.time).toISOString().slice(0,16) : "");
+  var newTime = r[0], setNewTime = r[1];
+  return /*#__PURE__*/React.createElement("div", {onClick:onClose,style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:9999}},
+    /*#__PURE__*/React.createElement("div", {onClick:function(e){e.stopPropagation()},style:{background:C.srf||C.surface||"#111113",border:"1px solid "+(C.bd||C.border||"#1E1E22"),borderRadius:12,padding:24,width:380,maxWidth:"90%"}},
+      /*#__PURE__*/React.createElement("div", {style:{fontSize:16,fontWeight:700,color:C.t1,marginBottom:16}}, "Edit Punch"),
+      /*#__PURE__*/React.createElement("div", {style:{fontSize:13,color:C.t3,marginBottom:12}}, emp?(emp.name||emp.first+" "+emp.last):"Unknown"," \u2014 ",punch.type==="in"?"Clock In":"Clock Out"),
+      /*#__PURE__*/React.createElement("div", {style:{marginBottom:4,fontSize:12,color:C.t3}}, "Original: "+new Date(punch.time).toLocaleString()),
+      /*#__PURE__*/React.createElement("div", {style:{marginBottom:16}},
+        /*#__PURE__*/React.createElement("label", {style:{fontSize:12,color:C.t3,display:"block",marginBottom:4}}, "New Date/Time"),
+        /*#__PURE__*/React.createElement("input", {type:"datetime-local",value:newTime,onChange:function(e){setNewTime(e.target.value)},style:{width:"100%",background:C.bg||"#09090B",border:"1px solid "+(C.bd||C.border||"#1E1E22"),color:C.t1||"#E4E4E7",padding:"8px 10px",borderRadius:6,fontSize:14,outline:"none",boxSizing:"border-box"}})
+      ),
+      /*#__PURE__*/React.createElement("div", {style:{display:"flex",gap:8,justifyContent:"flex-end"}},
+        /*#__PURE__*/React.createElement("button", {onClick:onClose,style:{padding:"8px 16px",background:"transparent",border:"1px solid "+(C.t4||"#3F3F46"),color:C.t2||"#A1A1AA",borderRadius:6,cursor:"pointer",fontSize:13}}, "Cancel"),
+        /*#__PURE__*/React.createElement("button", {onClick:function(){if(!newTime){alert("Please select a date and time.");return}var dt=new Date(newTime);if(isNaN(dt.getTime())){alert("Invalid date.");return}onSave(punch.id,dt.toISOString());onClose()},style:{padding:"8px 16px",background:C.spark||"#FACC15",border:"none",color:"#000",borderRadius:6,cursor:"pointer",fontSize:13,fontWeight:700}}, "Save Change")
+      )
+    )
+  );
+}
+
 function AddPunchModal({
   emps,
   onAdd,
@@ -3052,6 +3122,8 @@ function ManagerView({
   var r4 = useState(false),
     showAddPunch = r4[0],
     setShowAddPunch = r4[1];
+  var r4b = React.useState(null), editingPunch = r4b[0], setEditingPunch = r4b[1];
+  var r4c = React.useState(false), showPunchEditor = r4c[0], setShowPunchEditor = r4c[1];
   var rtab = useState("dashboard"),
     mTab = rtab[0],
     setMTab = rtab[1];
@@ -5041,7 +5113,7 @@ function ManagerView({
       background: C.spark,
       marginBottom: 20
     }
-  }, "+ Manual Punch Correction"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  }, "+ Manual Punch Correction"), /*#__PURE__*/React.createElement("button", {onClick:function(){setShowPunchEditor(!showPunchEditor)},style:{padding:"8px 16px",background:"transparent",border:"1px solid "+(C.spark||"#FACC15"),color:C.spark||"#FACC15",borderRadius:6,cursor:"pointer",fontSize:13,fontWeight:600,marginLeft:8}}, showPunchEditor?"Close Editor":"Edit Punches"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 16,
       fontWeight: 700,
@@ -5089,10 +5161,22 @@ function ManagerView({
         fontWeight: 700,
         color: ev.pts > 0 ? C.orange : C.green
       }
-    }, ev.pts > 0 ? "+" : "", ev.pts));
+    }, ev.pts > 0 ? "+" : "", ev.pts), ev.type === "no-show" && /*#__PURE__*/React.createElement("button", {onClick: function(){if(confirm("Downgrade this No-Show to Called In? Points will reduce from " + ev.pts + " to 1.")){props.downgradeEvent(ev.id)}}, style:{marginLeft:8,padding:"2px 8px",fontSize:11,background:"transparent",border:"1px solid "+(C.spark||"#FACC15"),color:C.spark||"#FACC15",borderRadius:4,cursor:"pointer",fontWeight:600}}, "\u2193 Called In"));
   }))))
   
   ,mTab === "reports" && /*#__PURE__*/React.createElement(ReportsTab, {emps:statuses,punches:punches,policy:P,weekOffset:weekOffset,mon:mon})
+  ,showPunchEditor && /*#__PURE__*/React.createElement(PunchEditorPanel, {
+    emps: props.emps||statuses||[],
+    punches: props.punches||punches||[],
+    onEdit: function(p){setEditingPunch(p)},
+    onClose: function(){setShowPunchEditor(false)}
+  })
+  ,editingPunch && /*#__PURE__*/React.createElement(EditPunchModal, {
+    punch: editingPunch,
+    emp: (props.emps||statuses||[]).find(function(e){return e.id===editingPunch.eid}),
+    onSave: function(pid,nt){props.editPunch(pid,nt);setEditingPunch(null)},
+    onClose: function(){setEditingPunch(null)}
+  })
   ,showAddPunch && /*#__PURE__*/React.createElement(AddPunchModal, {
     emps: active,
     onAdd: onPunch,
@@ -5725,7 +5809,7 @@ function AdminView({
       color: C.t1,
       marginBottom: 10
     }
-  }, "Department Breakdown"), DEPTS.map(function (d) {
+  }, "Department Breakdown"), emps.map(function(e){return e.dept}).filter(function(v,i,a){return v&&a.indexOf(v)===i}).sort().map(function (d) {
     var count = emps.filter(function (e) {
       return e.st === "active" && e.dept === d;
     }).length;
@@ -6288,7 +6372,7 @@ function AdminView({
   /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"Last Name"), /*#__PURE__*/React.createElement("input",{value:editForm.ln||"",onChange:function(ev){setEditForm(Object.assign({},editForm,{ln:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.t1,padding:"8px 10px",borderRadius:6,fontSize:14,outline:"none"}})),
   /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"Badge"), /*#__PURE__*/React.createElement("input",{value:editForm.badge||"",onChange:function(ev){setEditForm(Object.assign({},editForm,{badge:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px 10px",borderRadius:6,fontSize:14,fontFamily:Fm,outline:"none"}})),
   /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"PIN"), /*#__PURE__*/React.createElement("input",{value:editForm.pin||"",maxLength:4,onChange:function(ev){setEditForm(Object.assign({},editForm,{pin:ev.target.value.replace(/\D/g,"")}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px 10px",borderRadius:6,fontSize:14,fontFamily:Fm,fontWeight:700,letterSpacing:4,outline:"none"}})),
-  /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"Department"), /*#__PURE__*/React.createElement("select",{value:editForm.dept||"Assembly",onChange:function(ev){setEditForm(Object.assign({},editForm,{dept:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.t1,padding:"8px 10px",borderRadius:6,fontSize:14,outline:"none",appearance:"none"}}, DEPTS.map(function(d){return /*#__PURE__*/React.createElement("option",{key:d,value:d},d)}))),
+  /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"Department"), /*#__PURE__*/React.createElement("select",{value:editForm.dept||"Assembly",onChange:function(ev){setEditForm(Object.assign({},editForm,{dept:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.t1,padding:"8px 10px",borderRadius:6,fontSize:14,outline:"none",appearance:"none"}}, (function(){var allDepts=DEPTS.slice();emps.forEach(function(e){if(e.dept&&allDepts.indexOf(e.dept)===-1)allDepts.push(e.dept)});return allDepts.sort()})().map(function(d){return /*#__PURE__*/React.createElement("option",{key:d,value:d},d)}))),
   /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"Rate/HR"), /*#__PURE__*/React.createElement("input",{type:"number",step:"0.50",value:editForm.rate||"",onChange:function(ev){setEditForm(Object.assign({},editForm,{rate:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px 10px",borderRadius:6,fontSize:14,fontFamily:Fm,outline:"none"}})),
   /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"Shift Start"), /*#__PURE__*/React.createElement("input",{type:"time",value:editForm.shiftStart||"06:00",onChange:function(ev){setEditForm(Object.assign({},editForm,{shiftStart:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px 10px",borderRadius:6,fontSize:14,fontFamily:Fm,outline:"none"}})),
   /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"Shift End"), /*#__PURE__*/React.createElement("input",{type:"time",value:editForm.shiftEnd||"14:30",onChange:function(ev){setEditForm(Object.assign({},editForm,{shiftEnd:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px 10px",borderRadius:6,fontSize:14,fontFamily:Fm,outline:"none"}})),
@@ -7903,6 +7987,32 @@ function App() {
     setEmps(updated);
     persist(updated, pEvents);
   }
+  function downgradeEvent(evId) {
+    var updated = pEvents.map(function(ev) {
+      if (ev.id === evId && ev.type === "no-show") {
+        return Object.assign({}, ev, { type: "called-in", pts: 1, detail: "Downgraded from No-Show to Called In", originalType: "no-show" });
+      }
+      return ev;
+    });
+    setPEvents(updated);
+    var ne = withPts(emps, updated, policy);
+    setEmps(ne);
+    persist(ne, updated);
+    if (useSupa()) {
+      var changed = updated.find(function(ev){return ev.id===evId});
+      if(changed) sbSavePointEvent(changed);
+    }
+  }
+  function editPunch(punchId, newTime) {
+    var updated = punches.map(function(p) {
+      if (p.id === punchId) {
+        return Object.assign({}, p, { time: newTime, edited: true, editedAt: new Date().toISOString() });
+      }
+      return p;
+    });
+    setPunches(updated);
+    safeStorage.setItem("spark-tk-punches", JSON.stringify(updated));
+  }
   function handleUpdatePolicy(np) {
     setPolicy(np);
     sSet("tk-v7-policy", np);
@@ -7999,6 +8109,8 @@ function App() {
     emps: emps,
     punches: punches,
     pointEvents: pEvents,
+    downgradeEvent: downgradeEvent,
+    editPunch: editPunch,
     onIssuePoint: handleIssuePoint,
     onPunch: handlePunch,
     requests: requests,
@@ -8011,6 +8123,8 @@ function App() {
     emps: emps,
     punches: punches,
     pointEvents: pEvents,
+    downgradeEvent: downgradeEvent,
+    editPunch: editPunch,
     onUpdateEmps: handleUpdateEmps,
     onIssuePoint: handleIssuePoint,
     onClearData: handleClearData,
