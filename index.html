@@ -1636,7 +1636,7 @@ function Header({
     }
   }, staffName)), /*#__PURE__*/React.createElement(SparkLogo, {
     size: "sm"
-  }), onSwitchView && /*#__PURE__*/React.createElement("button", {onClick:onSwitchView,style:{padding:"6px 14px",borderRadius:6,fontSize:12,fontWeight:700,color:C.spark||"#FACC15",background:"transparent",border:"1px solid "+(C.spark||"#FACC15"),letterSpacing:0.5}}, "SWITCH VIEW"), onLogout && /*#__PURE__*/React.createElement("button", {
+  }), onLogout && /*#__PURE__*/React.createElement("button", {
     onClick: onLogout,
     style: {
       padding: "6px 14px",
@@ -3105,10 +3105,7 @@ function ManagerView({
   onDenyRequest,
   policy,
   onLogout,
-  staffName,
-  downgradeEvent,
-  editPunch,
-  onSwitchView
+  staffName
 }) {
   var mo = useMobile();
   var P = policy || DEFAULT_POLICY;
@@ -3264,8 +3261,7 @@ function ManagerView({
     title: "Manager Dashboard",
     sub: "Monitoring " + active.length + " employees",
     onLogout: onLogout,
-    staffName: staffName,
-    onSwitchView: onSwitchView
+    staffName: staffName
   }), /*#__PURE__*/React.createElement("div", {
     style: {
       padding: mo ? 12 : 28
@@ -8013,9 +8009,6 @@ function App() {
     setPunches(updated);
     safeStorage.setItem("spark-tk-punches", JSON.stringify(updated));
   }
-  function switchView() {
-    if (view === "admin") setView("manager"); else if (view === "manager") setView("admin");
-  }
   function handleUpdatePolicy(np) {
     setPolicy(np);
     sSet("tk-v7-policy", np);
@@ -8121,7 +8114,6 @@ function App() {
     onDenyRequest: handleDenyRequest,
     policy: policy,
     onLogout: handleLogout,
-    onSwitchView: switchView,
     staffName: loggedIn.fn + " " + loggedIn.ln
   }), view === "admin" && loggedIn && /*#__PURE__*/React.createElement(AdminView, {
     emps: emps,
