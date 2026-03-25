@@ -1889,49 +1889,64 @@ function LoadScreen() {
 }
 
 function PunchEditorPanel(props) {
-  var pEmps = props.emps || [], pPunches = props.punches || [], onEdit = props.onEdit, onClose = props.onClose;
-  var r1 = React.useState(""), selEmp = r1[0], setSelEmp = r1[1];
-  var r2 = React.useState(new Date().toISOString().slice(0,10)), selDate = r2[0], setSelDate = r2[1];
-  var filtered = pPunches.filter(function(p) {
-    if(selEmp && p.eid !== selEmp) return false;
-    if(selDate && p.time.slice(0,10) !== selDate) return false;
-    return true;
-  }).sort(function(a,b){return new Date(b.time)-new Date(a.time)});
-  var empName = function(eid){var e=pEmps.find(function(x){return x.id===eid});return e?(e.name||e.first+" "+e.last):eid};
-  var sty = {width:"100%",background:C.bg||"#09090B",border:"1px solid "+(C.bd||C.border||"#1E1E22"),color:C.t1||"#E4E4E7",padding:"8px 10px",borderRadius:6,fontSize:14,outline:"none",boxSizing:"border-box"};
-  return /*#__PURE__*/React.createElement("div", {style:{marginTop:16,background:C.srf||C.surface||"#111113",border:"1px solid "+(C.bd||C.border||"#1E1E22"),borderRadius:12,padding:20}},
-    /*#__PURE__*/React.createElement("div", {style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}},
-      /*#__PURE__*/React.createElement("div", {style:{fontSize:15,fontWeight:700,color:C.t1}}, "Punch Editor"),
-      /*#__PURE__*/React.createElement("button", {onClick:onClose,style:{background:"transparent",border:"none",color:C.t3,cursor:"pointer",fontSize:18}}, "\u2715")
+  var pEmps=props.emps||[],pPunches=props.punches||[],onEdit=props.onEdit,onClose=props.onClose,onPunchOut=props.onPunchOut;
+  var r1=React.useState(""),selEmp=r1[0],setSelEmp=r1[1];
+  var r2=React.useState(new Date().toISOString().slice(0,10)),selDate=r2[0],setSelDate=r2[1];
+  var r3=React.useState(null),expandedEmp=r3[0],setExpandedEmp=r3[1];
+  var activeEmps=pEmps.filter(function(e){return e.st==="active"}).sort(function(a,b){return(a.name||a.first||"").localeCompare(b.name||b.first||"")});
+  if(selEmp)activeEmps=activeEmps.filter(function(e){return e.id===selEmp});
+  var sty={width:"100%",background:C.bg||"#09090B",border:"1px solid "+(C.bd||C.border||"#1E1E22"),color:C.t1||"#E4E4E7",padding:"8px 10px",borderRadius:6,fontSize:14,outline:"none",boxSizing:"border-box"};
+  var thd={padding:"8px 12px",textAlign:"left",fontSize:11,fontWeight:700,color:C.t4||"#3F3F46",textTransform:"uppercase",borderBottom:"1px solid "+(C.bd||"#1E1E22")};
+  var tds={padding:"8px 12px",fontSize:13,borderBottom:"1px solid "+(C.bd||"#1E1E22")};
+  var base=new Date(selDate+"T12:00:00");var dow=base.getDay();var moff=dow===0?-6:1-dow;
+  var mn=new Date(base);mn.setDate(base.getDate()+moff);
+  var weekDates=[];for(var i=0;i<7;i++){var dd=new Date(mn);dd.setDate(mn.getDate()+i);weekDates.push(dd.toISOString().slice(0,10))}
+  var todayStr=new Date().toISOString().slice(0,10);
+  var clockedInIds={};pPunches.filter(function(p){return p.time.slice(0,10)===todayStr}).sort(function(a,b){return new Date(a.time)-new Date(b.time)}).forEach(function(p){if(p.type==="in")clockedInIds[p.eid]=true;else if(p.type==="out")delete clockedInIds[p.eid]});
+  return React.createElement("div",{style:{marginTop:16,background:C.srf||C.surface||"#111113",border:"1px solid "+(C.bd||"#1E1E22"),borderRadius:12,padding:20}},
+    React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}},React.createElement("div",{style:{fontSize:15,fontWeight:700,color:C.t1}},"Punch Editor"),React.createElement("button",{onClick:onClose,style:{background:"transparent",border:"none",color:C.t3,cursor:"pointer",fontSize:18}},"\u2715")),
+    React.createElement("div",{style:{display:"flex",gap:12,marginBottom:16,flexWrap:"wrap",alignItems:"center"}},
+      React.createElement("select",{value:selEmp,onChange:function(ev){setSelEmp(ev.target.value);setExpandedEmp(ev.target.value||null)},style:Object.assign({},sty,{flex:"1 1 200px",appearance:"auto"})},React.createElement("option",{value:""},"All Employees"),pEmps.filter(function(ee){return ee.st==="active"}).sort(function(a,b){return(a.name||a.first||"").localeCompare(b.name||b.first||"")}).map(function(ee){return React.createElement("option",{key:ee.id,value:ee.id},ee.name||ee.first+" "+ee.last)})),
+      React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},React.createElement("button",{onClick:function(){var d=new Date(selDate+"T12:00:00");d.setDate(d.getDate()-7);setSelDate(d.toISOString().slice(0,10))},style:{background:"transparent",border:"1px solid "+(C.bd||"#1E1E22"),color:C.t2,borderRadius:6,padding:"6px 10px",cursor:"pointer",fontSize:14}},"\u25C0"),React.createElement("input",{type:"date",value:selDate,onChange:function(ev){setSelDate(ev.target.value)},style:Object.assign({},sty,{width:160})}),React.createElement("button",{onClick:function(){var d=new Date(selDate+"T12:00:00");d.setDate(d.getDate()+7);setSelDate(d.toISOString().slice(0,10))},style:{background:"transparent",border:"1px solid "+(C.bd||"#1E1E22"),color:C.t2,borderRadius:6,padding:"6px 10px",cursor:"pointer",fontSize:14}},"\u25B6")),
+      React.createElement("div",{style:{fontSize:12,color:C.t3}},"Week of "+new Date(weekDates[0]+"T12:00:00").toLocaleDateString(undefined,{month:"short",day:"numeric"})+" \u2013 "+new Date(weekDates[6]+"T12:00:00").toLocaleDateString(undefined,{month:"short",day:"numeric"}))
     ),
-    /*#__PURE__*/React.createElement("div", {style:{display:"flex",gap:12,marginBottom:16,flexWrap:"wrap"}},
-      /*#__PURE__*/React.createElement("select", {value:selEmp,onChange:function(e){setSelEmp(e.target.value)},style:Object.assign({},sty,{flex:"1 1 200px",appearance:"auto"})},
-        /*#__PURE__*/React.createElement("option", {value:""}, "All Employees"),
-        pEmps.filter(function(e){return e.st==="active"}).sort(function(a,b){return (a.name||a.first||"").localeCompare(b.name||b.first||"")}).map(function(e){
-          return /*#__PURE__*/React.createElement("option", {key:e.id,value:e.id}, e.name||e.first+" "+e.last);
-        })
-      ),
-      /*#__PURE__*/React.createElement("input", {type:"date",value:selDate,onChange:function(e){setSelDate(e.target.value)},style:Object.assign({},sty,{flex:"0 0 180px"})})
-    ),
-    /*#__PURE__*/React.createElement("div", {style:{fontSize:12,color:C.t3,marginBottom:8}}, filtered.length + " punch" + (filtered.length!==1?"es":"") + " found"),
-    filtered.length === 0
-      ? /*#__PURE__*/React.createElement("div", {style:{textAlign:"center",padding:24,color:C.t4||"#3F3F46"}}, "No punches for this selection")
-      : /*#__PURE__*/React.createElement("div", {style:{maxHeight:400,overflowY:"auto"}},
-          filtered.map(function(p) {
-            var dt = new Date(p.time);
-            return /*#__PURE__*/React.createElement("div", {key:p.id,style:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 12px",borderBottom:"1px solid "+(C.bd||C.border||"#1E1E22"),gap:12}},
-              /*#__PURE__*/React.createElement("div", {style:{flex:1}},
-                /*#__PURE__*/React.createElement("div", {style:{fontSize:13,fontWeight:600,color:C.t1}}, empName(p.eid)),
-                /*#__PURE__*/React.createElement("div", {style:{fontSize:12,color:C.t3,marginTop:2}}, p.type==="in"?"Clock In":p.type==="out"?"Clock Out":p.type==="break-start"?"Break Start":"Break End")
-              ),
-              /*#__PURE__*/React.createElement("div", {style:{textAlign:"right"}},
-                /*#__PURE__*/React.createElement("div", {style:{fontSize:13,fontFamily:"monospace",color:C.t1}}, dt.toLocaleDateString()+" "+dt.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})),
-                p.edited && /*#__PURE__*/React.createElement("div", {style:{fontSize:10,color:C.spark||"#FACC15",marginTop:2}}, "Edited")
-              ),
-              /*#__PURE__*/React.createElement("button", {onClick:function(){onEdit(p)},style:{padding:"6px 12px",fontSize:12,background:"transparent",border:"1px solid "+(C.spark||"#FACC15"),color:C.spark||"#FACC15",borderRadius:6,cursor:"pointer",fontWeight:600,whiteSpace:"nowrap"}}, "Edit")
-            );
-          })
+    React.createElement("div",{style:{maxHeight:500,overflowY:"auto"}},activeEmps.length===0?React.createElement("div",{style:{textAlign:"center",padding:24,color:C.t4}},"No employees"):activeEmps.map(function(emp){
+      var eid=emp.id;var empP=pPunches.filter(function(p){return p.eid===eid&&weekDates.indexOf(p.time.slice(0,10))>-1});
+      var totalMins=0;weekDates.forEach(function(ds){var dp=empP.filter(function(p){return p.time.slice(0,10)===ds}).sort(function(a,b){return new Date(a.time)-new Date(b.time)});var ins=dp.filter(function(p){return p.type==="in"});var outs=dp.filter(function(p){return p.type==="out"});for(var j=0;j<Math.min(ins.length,outs.length);j++)totalMins+=(new Date(outs[j].time)-new Date(ins[j].time))/60000});
+      var totalHrs=(totalMins/60).toFixed(1);var isExp=expandedEmp===eid;
+      var isClockedIn=!!clockedInIds[eid];
+      var hasIssue=empP.some(function(p){var dp=empP.filter(function(pp){return pp.time.slice(0,10)===p.time.slice(0,10)});return dp.filter(function(pp){return pp.type==="in"}).length!==dp.filter(function(pp){return pp.type==="out"}).length});
+      return React.createElement("div",{key:eid,style:{borderBottom:"1px solid "+(C.bd||"#1E1E22")}},
+        React.createElement("div",{onClick:function(){setExpandedEmp(isExp?null:eid)},style:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px",cursor:"pointer",background:isExp?"rgba(250,204,21,0.08)":"transparent"}},
+          React.createElement("div",{style:{display:"flex",alignItems:"center",gap:12}},
+            React.createElement("div",{style:{width:8,height:8,borderRadius:"50%",background:isClockedIn?(C.green||"#22C55E"):hasIssue?(C.red||"#EF4444"):(C.t4||"#3F3F46")}},null),
+            React.createElement("div",null,React.createElement("div",{style:{fontSize:14,fontWeight:600,color:C.t1}},emp.name||emp.first+" "+emp.last),React.createElement("div",{style:{fontSize:12,color:C.t3}},emp.dept||"No Dept",isClockedIn?" \u2022 Clocked In":""))
+          ),
+          React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
+            isClockedIn&&onPunchOut&&React.createElement("button",{onClick:function(ev){ev.stopPropagation();if(confirm("Clock out "+(emp.name||emp.first+" "+emp.last)+" now?")){onPunchOut(eid)}},style:{padding:"4px 12px",fontSize:12,background:C.red||"#EF4444",border:"none",color:"#fff",borderRadius:6,cursor:"pointer",fontWeight:600}},"Clock Out"),
+            hasIssue&&React.createElement("span",{style:{fontSize:11,color:C.red||"#EF4444",fontWeight:600,padding:"2px 8px",background:"rgba(239,68,68,0.08)",borderRadius:4}},"Mismatch"),
+            React.createElement("div",{style:{fontFamily:"monospace",fontSize:14,fontWeight:700,color:parseFloat(totalHrs)>40?(C.red||"#EF4444"):(C.t1||"#E4E4E7")}},totalHrs+"h"),
+            React.createElement("span",{style:{fontSize:14,color:C.t3,transform:isExp?"rotate(180deg)":"none",transition:"transform 0.2s",display:"inline-block"}},"\u25BC")
+          )
+        ),
+        isExp&&React.createElement("div",{style:{padding:"0 12px 16px 12px",background:"rgba(250,204,21,0.08)"}},
+          React.createElement("table",{style:{width:"100%",borderCollapse:"collapse"}},
+            React.createElement("thead",null,React.createElement("tr",null,["Day","In","Out","Hrs",""].map(function(hh){return React.createElement("th",{key:hh,style:thd},hh)}))),
+            React.createElement("tbody",null,weekDates.map(function(dateStr){
+              var dayP=empP.filter(function(p){return p.time.slice(0,10)===dateStr}).sort(function(a,b){return new Date(a.time)-new Date(b.time)});
+              var ins=dayP.filter(function(p){return p.type==="in"});var outs=dayP.filter(function(p){return p.type==="out"});
+              var dayLabel=new Date(dateStr+"T12:00:00").toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric"});
+              var isToday=dateStr===new Date().toISOString().slice(0,10);
+              if(dayP.length===0)return React.createElement("tr",{key:dateStr,style:{opacity:0.5}},React.createElement("td",{style:Object.assign({},tds,{color:isToday?C.spark:C.t4})},dayLabel),React.createElement("td",{style:tds,colSpan:4},React.createElement("span",{style:{fontSize:12,color:C.t4,fontStyle:"italic"}},"No punches")));
+              var pairs=Math.max(ins.length,outs.length);var rows=[];
+              for(var pi=0;pi<pairs;pi++){(function(pi){var inP=ins[pi]||null;var outP=outs[pi]||null;var hrs=(inP&&outP)?((new Date(outP.time)-new Date(inP.time))/3600000).toFixed(1):"--";var mm=(inP&&!outP)||(!inP&&outP);
+              rows.push(React.createElement("tr",{key:dateStr+"-"+pi,style:{background:mm?"rgba(239,68,68,0.08)":"transparent"}},pi===0&&React.createElement("td",{rowSpan:pairs,style:Object.assign({},tds,{color:isToday?C.spark:C.t2})},dayLabel),React.createElement("td",{style:tds},inP?React.createElement("span",{style:{fontFamily:"monospace",color:C.t1,cursor:"pointer",borderBottom:"1px dashed "+(C.t4||"#3F3F46")},onClick:function(){onEdit(inP)}},new Date(inP.time).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}),inP.edited&&React.createElement("span",{style:{color:C.spark,fontSize:10,marginLeft:4}},"*")):React.createElement("span",{style:{color:C.t4,fontSize:12}},mm?"Missing":"--")),React.createElement("td",{style:tds},outP?React.createElement("span",{style:{fontFamily:"monospace",color:C.t1,cursor:"pointer",borderBottom:"1px dashed "+(C.t4||"#3F3F46")},onClick:function(){onEdit(outP)}},new Date(outP.time).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}),outP.edited&&React.createElement("span",{style:{color:C.spark,fontSize:10,marginLeft:4}},"*")):React.createElement("span",{style:{color:C.t4,fontSize:12}},mm?"Missing":"--")),React.createElement("td",{style:Object.assign({},tds,{fontFamily:"monospace",fontWeight:600,color:parseFloat(hrs)>10?C.red:C.t1})},hrs==="--"?"":hrs+"h"),React.createElement("td",{style:Object.assign({},tds,{textAlign:"center"})},(inP||outP)&&React.createElement("button",{onClick:function(){onEdit(inP||outP)},style:{padding:"3px 10px",fontSize:11,background:"transparent",border:"1px solid "+(C.spark||"#FACC15"),color:C.spark,borderRadius:4,cursor:"pointer",fontWeight:600}},"Edit"))))})(pi)}
+              return rows;
+            }).reduce(function(a,b){return a.concat(b)},[]))
+          )
         )
+      );
+    }))
   );
 }
 function EditPunchModal(props) {
