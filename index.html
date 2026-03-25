@@ -1893,7 +1893,7 @@ function PunchEditorPanel(props) {
   var r1=React.useState(""),selEmp=r1[0],setSelEmp=r1[1];
   var r2=React.useState(new Date().toISOString().slice(0,10)),selDate=r2[0],setSelDate=r2[1];
   var r3=React.useState(null),expandedEmp=r3[0],setExpandedEmp=r3[1];
-  var activeEmps=pEmps.filter(function(e){return e.st==="active"}).sort(function(a,b){return(a.name||a.first||"").localeCompare(b.name||b.first||"")});
+  var activeEmps=pEmps.filter(function(e){return e.st==="active"}).sort(function(a,b){return(a.name||a.fn||"").localeCompare(b.name||b.fn||"")});
   if(selEmp)activeEmps=activeEmps.filter(function(e){return e.id===selEmp});
   var sty={width:"100%",background:C.bg||"#09090B",border:"1px solid "+(C.bd||C.border||"#1E1E22"),color:C.t1||"#E4E4E7",padding:"8px 10px",borderRadius:6,fontSize:14,outline:"none",boxSizing:"border-box"};
   var thd={padding:"8px 12px",textAlign:"left",fontSize:11,fontWeight:700,color:C.t4||"#3F3F46",textTransform:"uppercase",borderBottom:"1px solid "+(C.bd||"#1E1E22")};
@@ -1906,7 +1906,7 @@ function PunchEditorPanel(props) {
   return React.createElement("div",{style:{marginTop:16,background:C.srf||C.surface||"#111113",border:"1px solid "+(C.bd||"#1E1E22"),borderRadius:12,padding:20}},
     React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}},React.createElement("div",{style:{fontSize:15,fontWeight:700,color:C.t1}},"Punch Editor"),React.createElement("button",{onClick:onClose,style:{background:"transparent",border:"none",color:C.t3,cursor:"pointer",fontSize:18}},"\u2715")),
     React.createElement("div",{style:{display:"flex",gap:12,marginBottom:16,flexWrap:"wrap",alignItems:"center"}},
-      React.createElement("select",{value:selEmp,onChange:function(ev){setSelEmp(ev.target.value);setExpandedEmp(ev.target.value||null)},style:Object.assign({},sty,{flex:"1 1 200px",appearance:"auto"})},React.createElement("option",{value:""},"All Employees"),pEmps.filter(function(ee){return ee.st==="active"}).sort(function(a,b){return(a.name||a.first||"").localeCompare(b.name||b.first||"")}).map(function(ee){return React.createElement("option",{key:ee.id,value:ee.id},ee.name||ee.first+" "+ee.last)})),
+      React.createElement("select",{value:selEmp,onChange:function(ev){setSelEmp(ev.target.value);setExpandedEmp(ev.target.value||null)},style:Object.assign({},sty,{flex:"1 1 200px",appearance:"auto"})},React.createElement("option",{value:""},"All Employees"),pEmps.filter(function(ee){return ee.st==="active"}).sort(function(a,b){return(a.name||a.fn||"").localeCompare(b.name||b.fn||"")}).map(function(ee){return React.createElement("option",{key:ee.id,value:ee.id},ee.name||ee.fn+" "+ee.ln)})),
       React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},React.createElement("button",{onClick:function(){var d=new Date(selDate+"T12:00:00");d.setDate(d.getDate()-7);setSelDate(d.toISOString().slice(0,10))},style:{background:"transparent",border:"1px solid "+(C.bd||"#1E1E22"),color:C.t2,borderRadius:6,padding:"6px 10px",cursor:"pointer",fontSize:14}},"\u25C0"),React.createElement("input",{type:"date",value:selDate,onChange:function(ev){setSelDate(ev.target.value)},style:Object.assign({},sty,{width:160})}),React.createElement("button",{onClick:function(){var d=new Date(selDate+"T12:00:00");d.setDate(d.getDate()+7);setSelDate(d.toISOString().slice(0,10))},style:{background:"transparent",border:"1px solid "+(C.bd||"#1E1E22"),color:C.t2,borderRadius:6,padding:"6px 10px",cursor:"pointer",fontSize:14}},"\u25B6")),
       React.createElement("div",{style:{fontSize:12,color:C.t3}},"Week of "+new Date(weekDates[0]+"T12:00:00").toLocaleDateString(undefined,{month:"short",day:"numeric"})+" \u2013 "+new Date(weekDates[6]+"T12:00:00").toLocaleDateString(undefined,{month:"short",day:"numeric"}))
     ),
@@ -1920,10 +1920,10 @@ function PunchEditorPanel(props) {
         React.createElement("div",{onClick:function(){setExpandedEmp(isExp?null:eid)},style:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px",cursor:"pointer",background:isExp?"rgba(250,204,21,0.08)":"transparent"}},
           React.createElement("div",{style:{display:"flex",alignItems:"center",gap:12}},
             React.createElement("div",{style:{width:8,height:8,borderRadius:"50%",background:isClockedIn?(C.green||"#22C55E"):hasIssue?(C.red||"#EF4444"):(C.t4||"#3F3F46")}},null),
-            React.createElement("div",null,React.createElement("div",{style:{fontSize:14,fontWeight:600,color:C.t1}},emp.name||emp.first+" "+emp.last),React.createElement("div",{style:{fontSize:12,color:C.t3}},emp.dept||"No Dept",isClockedIn?" \u2022 Clocked In":""))
+            React.createElement("div",null,React.createElement("div",{style:{fontSize:14,fontWeight:600,color:C.t1}},emp.name||emp.fn+" "+emp.ln),React.createElement("div",{style:{fontSize:12,color:C.t3}},emp.dept||"No Dept",isClockedIn?" \u2022 Clocked In":""))
           ),
           React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
-            isClockedIn&&onPunchOut&&React.createElement("button",{onClick:function(ev){ev.stopPropagation();if(confirm("Clock out "+(emp.name||emp.first+" "+emp.last)+" now?")){onPunchOut(eid)}},style:{padding:"4px 12px",fontSize:12,background:C.red||"#EF4444",border:"none",color:"#fff",borderRadius:6,cursor:"pointer",fontWeight:600}},"Clock Out"),
+            isClockedIn&&onPunchOut&&React.createElement("button",{onClick:function(ev){ev.stopPropagation();if(confirm("Clock out "+(emp.name||emp.fn+" "+emp.ln)+" now?")){onPunchOut(eid)}},style:{padding:"4px 12px",fontSize:12,background:C.red||"#EF4444",border:"none",color:"#fff",borderRadius:6,cursor:"pointer",fontWeight:600}},"Clock Out"),
             hasIssue&&React.createElement("span",{style:{fontSize:11,color:C.red||"#EF4444",fontWeight:600,padding:"2px 8px",background:"rgba(239,68,68,0.08)",borderRadius:4}},"Mismatch"),
             React.createElement("div",{style:{fontFamily:"monospace",fontSize:14,fontWeight:700,color:parseFloat(totalHrs)>40?(C.red||"#EF4444"):(C.t1||"#E4E4E7")}},totalHrs+"h"),
             React.createElement("span",{style:{fontSize:14,color:C.t3,transform:isExp?"rotate(180deg)":"none",transition:"transform 0.2s",display:"inline-block"}},"\u25BC")
@@ -1956,7 +1956,7 @@ function EditPunchModal(props) {
   return /*#__PURE__*/React.createElement("div", {onClick:onClose,style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:9999}},
     /*#__PURE__*/React.createElement("div", {onClick:function(e){e.stopPropagation()},style:{background:C.srf||C.surface||"#111113",border:"1px solid "+(C.bd||C.border||"#1E1E22"),borderRadius:12,padding:24,width:380,maxWidth:"90%"}},
       /*#__PURE__*/React.createElement("div", {style:{fontSize:16,fontWeight:700,color:C.t1,marginBottom:16}}, "Edit Punch"),
-      /*#__PURE__*/React.createElement("div", {style:{fontSize:13,color:C.t3,marginBottom:12}}, emp?(emp.name||emp.first+" "+emp.last):"Unknown"," \u2014 ",punch.type==="in"?"Clock In":"Clock Out"),
+      /*#__PURE__*/React.createElement("div", {style:{fontSize:13,color:C.t3,marginBottom:12}}, emp?(emp.name||emp.fn+" "+emp.ln):"Unknown"," \u2014 ",punch.type==="in"?"Clock In":"Clock Out"),
       /*#__PURE__*/React.createElement("div", {style:{marginBottom:4,fontSize:12,color:C.t3}}, "Original: "+new Date(punch.time).toLocaleString()),
       /*#__PURE__*/React.createElement("div", {style:{marginBottom:16}},
         /*#__PURE__*/React.createElement("label", {style:{fontSize:12,color:C.t3,display:"block",marginBottom:4}}, "New Date/Time"),
