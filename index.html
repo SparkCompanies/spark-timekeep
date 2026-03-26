@@ -8031,7 +8031,7 @@ function App() {
     if(!confirm("Delete this punch? This cannot be undone.")) return;
     var updated=punches.filter(function(p){return p.id!==punchId});
     setPunches(updated);safeStorage.setItem("spark-tk-punches",JSON.stringify(updated));
-    if(useSupa()){var sb=getSb();if(sb)sb.from("tk_punches").delete().eq("id",punchId)}
+    if(useSupa()){(async function(){var sb=getSb();if(sb){var r=await sb.from("tk_punches").delete().eq("id",punchId);if(r.error)console.error("Delete failed:",r.error)}})()}
   }
   function switchView(){if(view==="admin")setView("manager");else if(view==="manager")setView("admin")}
   function handleUpdatePolicy(np) {
