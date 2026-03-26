@@ -1584,9 +1584,7 @@ function Header({
   onLogout,
   staffName,
   downgradeEvent,
-  editPunch,
-  deletePunch,
-  onSwitchView
+  editPunch
 }) {
   var mo = useMobile();
   return /*#__PURE__*/React.createElement("div", {
@@ -1891,7 +1889,7 @@ function LoadScreen() {
 }
 
 function PunchEditorPanel(props) {
-  var pEmps=props.emps||[],pPunches=props.punches||[],onEdit=props.onEdit,onClose=props.onClose,onPunchOut=props.onPunchOut,onDelete=props.onDelete;
+  var pEmps=props.emps||[],pPunches=props.punches||[],onEdit=props.onEdit,onClose=props.onClose,onPunchOut=props.onPunchOut;
   var r1=React.useState(""),selEmp=r1[0],setSelEmp=r1[1];
   var r2=React.useState(new Date().toISOString().slice(0,10)),selDate=r2[0],setSelDate=r2[1];
   var r3=React.useState(null),expandedEmp=r3[0],setExpandedEmp=r3[1];
@@ -1942,7 +1940,7 @@ function PunchEditorPanel(props) {
               if(dayP.length===0)return React.createElement("tr",{key:dateStr,style:{opacity:0.5}},React.createElement("td",{style:Object.assign({},tds,{color:isToday?C.spark:C.t4})},dayLabel),React.createElement("td",{style:tds,colSpan:4},React.createElement("span",{style:{fontSize:12,color:C.t4,fontStyle:"italic"}},"No punches")));
               var pairs=Math.max(ins.length,outs.length);var rows=[];
               for(var pi=0;pi<pairs;pi++){(function(pi){var inP=ins[pi]||null;var outP=outs[pi]||null;var hrs=(inP&&outP)?((new Date(outP.time)-new Date(inP.time))/3600000).toFixed(1):"--";var mm=(inP&&!outP)||(!inP&&outP);
-              rows.push(React.createElement("tr",{key:dateStr+"-"+pi,style:{background:mm?"rgba(239,68,68,0.08)":"transparent"}},pi===0&&React.createElement("td",{rowSpan:pairs,style:Object.assign({},tds,{color:isToday?C.spark:C.t2})},dayLabel),React.createElement("td",{style:tds},inP?React.createElement("span",{style:{fontFamily:"monospace",color:C.t1,cursor:"pointer",borderBottom:"1px dashed "+(C.t4||"#3F3F46")},onClick:function(){onEdit(inP)}},new Date(inP.time).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}),inP.edited&&React.createElement("span",{style:{color:C.spark,fontSize:10,marginLeft:4}},"*")):React.createElement("span",{style:{color:C.t4,fontSize:12}},mm?"Missing":"--")),React.createElement("td",{style:tds},outP?React.createElement("span",{style:{fontFamily:"monospace",color:C.t1,cursor:"pointer",borderBottom:"1px dashed "+(C.t4||"#3F3F46")},onClick:function(){onEdit(outP)}},new Date(outP.time).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}),outP.edited&&React.createElement("span",{style:{color:C.spark,fontSize:10,marginLeft:4}},"*")):React.createElement("span",{style:{color:C.t4,fontSize:12}},mm?"Missing":"--")),React.createElement("td",{style:Object.assign({},tds,{fontFamily:"monospace",fontWeight:600,color:parseFloat(hrs)>10?C.red:C.t1})},hrs==="--"?"":hrs+"h"),React.createElement("td",{style:Object.assign({},tds,{textAlign:"center"})},(inP||outP)&&React.createElement("span",{style:{display:"flex",gap:4}},React.createElement("button",{onClick:function(){onEdit(inP||outP)},style:{padding:"3px 10px",fontSize:11,background:"transparent",border:"1px solid "+(C.spark||"#FACC15"),color:C.spark,borderRadius:4,cursor:"pointer",fontWeight:600}},"Edit"),onDelete&&React.createElement("button",{onClick:function(){onDelete((inP||outP).id)},style:{padding:"3px 10px",fontSize:11,background:"transparent",border:"1px solid "+(C.red||"#EF4444"),color:C.red||"#EF4444",borderRadius:4,cursor:"pointer",fontWeight:600}},"Del")))))})(pi)}
+              rows.push(React.createElement("tr",{key:dateStr+"-"+pi,style:{background:mm?"rgba(239,68,68,0.08)":"transparent"}},pi===0&&React.createElement("td",{rowSpan:pairs,style:Object.assign({},tds,{color:isToday?C.spark:C.t2})},dayLabel),React.createElement("td",{style:tds},inP?React.createElement("span",{style:{fontFamily:"monospace",color:C.t1,cursor:"pointer",borderBottom:"1px dashed "+(C.t4||"#3F3F46")},onClick:function(){onEdit(inP)}},new Date(inP.time).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}),inP.edited&&React.createElement("span",{style:{color:C.spark,fontSize:10,marginLeft:4}},"*")):React.createElement("span",{style:{color:C.t4,fontSize:12}},mm?"Missing":"--")),React.createElement("td",{style:tds},outP?React.createElement("span",{style:{fontFamily:"monospace",color:C.t1,cursor:"pointer",borderBottom:"1px dashed "+(C.t4||"#3F3F46")},onClick:function(){onEdit(outP)}},new Date(outP.time).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}),outP.edited&&React.createElement("span",{style:{color:C.spark,fontSize:10,marginLeft:4}},"*")):React.createElement("span",{style:{color:C.t4,fontSize:12}},mm?"Missing":"--")),React.createElement("td",{style:Object.assign({},tds,{fontFamily:"monospace",fontWeight:600,color:parseFloat(hrs)>10?C.red:C.t1})},hrs==="--"?"":hrs+"h"),React.createElement("td",{style:Object.assign({},tds,{textAlign:"center"})},(inP||outP)&&React.createElement("button",{onClick:function(){onEdit(inP||outP)},style:{padding:"3px 10px",fontSize:11,background:"transparent",border:"1px solid "+(C.spark||"#FACC15"),color:C.spark,borderRadius:4,cursor:"pointer",fontWeight:600}},"Edit"))))})(pi)}
               return rows;
             }).reduce(function(a,b){return a.concat(b)},[]))
           )
@@ -3279,7 +3277,7 @@ function ManagerView({
     sub: "Monitoring " + active.length + " employees",
     onLogout: onLogout,
     staffName: staffName
-  }), onSwitchView && /*#__PURE__*/React.createElement("div",{style:{padding:"0 28px",marginTop:-8,marginBottom:8}},/*#__PURE__*/React.createElement("button",{onClick:onSwitchView,style:{padding:"6px 16px",background:"transparent",border:"1px solid "+(C.spark||"#FACC15"),color:C.spark||"#FACC15",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:600}},"Switch to Admin View")), /*#__PURE__*/React.createElement("div", {
+  }), /*#__PURE__*/React.createElement("div", {
     style: {
       padding: mo ? 12 : 28
     }
@@ -5184,7 +5182,7 @@ function ManagerView({
   ,showPunchEditor && /*#__PURE__*/React.createElement(PunchEditorPanel, {
     emps: emps,
     punches: punches,
-    onEdit: function(p){setEditingPunch(p)},onDelete: function(pid){deletePunch(pid)},
+    onEdit: function(p){setEditingPunch(p)},
     onClose: function(){setShowPunchEditor(false)}
   })
   ,editingPunch && /*#__PURE__*/React.createElement(EditPunchModal, {
@@ -5394,8 +5392,7 @@ function AdminView({
   onLogout,
   staffName,
   staff,
-  onUpdateStaff,
-  onSwitchView
+  onUpdateStaff
 }) {
   var mo = useMobile();
   var P = policy || DEFAULT_POLICY;
@@ -5702,7 +5699,7 @@ function AdminView({
     sub: "System Configuration",
     onLogout: onLogout,
     staffName: staffName
-  }), onSwitchView && /*#__PURE__*/React.createElement("div",{style:{padding:"0 28px",marginTop:-8,marginBottom:8}},/*#__PURE__*/React.createElement("button",{onClick:onSwitchView,style:{padding:"6px 16px",background:"transparent",border:"1px solid "+(C.spark||"#FACC15"),color:C.spark||"#FACC15",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:600}},"Switch to Manager View")), /*#__PURE__*/React.createElement("div", {
+  }), /*#__PURE__*/React.createElement("div", {
     style: {
       padding: mo ? 12 : 28
     }
@@ -8027,16 +8024,6 @@ function App() {
     setPunches(updated);
     safeStorage.setItem("spark-tk-punches", JSON.stringify(updated));
   }
-  function deletePunch(punchId) {
-    if(!confirm("Delete this punch? This cannot be undone.")) return;
-    var updated=punches.filter(function(p){return p.id!==punchId});
-    setPunches(updated);
-    safeStorage.setItem("spark-tk-punches",JSON.stringify(updated));
-    if(useSupa()){var sb=getSb();if(sb)sb.from("tk_punches").delete().eq("id",punchId)}
-  }
-  function switchView() {
-    if(view==="admin")setView("manager");else if(view==="manager")setView("admin");
-  }
   function handleUpdatePolicy(np) {
     setPolicy(np);
     sSet("tk-v7-policy", np);
@@ -8135,8 +8122,6 @@ function App() {
     pointEvents: pEvents,
     downgradeEvent: downgradeEvent,
     editPunch: editPunch,
-    deletePunch: deletePunch,
-    onSwitchView: switchView,
     onIssuePoint: handleIssuePoint,
     onPunch: handlePunch,
     requests: requests,
@@ -8160,7 +8145,6 @@ function App() {
     onUpdateGeo: handleUpdateGeo,
     requests: requests,
     onLogout: handleLogout,
-    onSwitchView: switchView,
     staffName: loggedIn.fn + " " + loggedIn.ln,
     staff: staff,
     onUpdateStaff: handleUpdateStaff
