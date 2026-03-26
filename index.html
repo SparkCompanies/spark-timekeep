@@ -5444,7 +5444,7 @@ function AdminView({
   function addStaffMember() {
     if (!staffForm.fn || !staffForm.pin || staffForm.pin.length !== 4) return;
     var ns = staff.concat([{
-      id: "S" + String(staff.length + 1).padStart(3, "0"),
+      id: "S" + Date.now().toString(36),
       fn: staffForm.fn,
       ln: staffForm.ln,
       pin: staffForm.pin,
