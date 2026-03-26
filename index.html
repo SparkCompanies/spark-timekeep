@@ -3171,9 +3171,9 @@ function ManagerView({
     day: "numeric",
     year: "numeric"
   });
-  var storedDismissed = JSON.parse(safeStorage.getItem("spark-tk-dismissed") || "{}"); var rdismissed = useState(storedDismissed),
+  var storedDismissed = JSON.parse(localStorage.getItem("spark-tk-dismissed") || "{}"); var rdismissed = useState(storedDismissed),
     dismissed = rdismissed[0],
-    _setDismissed = rdismissed[1]; var setDismissed = function(val){_setDismissed(val);safeStorage.setItem("spark-tk-dismissed",JSON.stringify(val))};
+    _setDismissed = rdismissed[1]; var setDismissed = function(val){_setDismissed(val);localStorage.setItem("spark-tk-dismissed",JSON.stringify(val))};
   var violations = detectViolations(emps, punches, pointEvents, P, mon).filter(function (v) {
     return !dismissed[v.id];
   });
