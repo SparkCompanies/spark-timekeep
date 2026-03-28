@@ -1893,8 +1893,10 @@ function PunchEditorPanel(props) {
   var r1=React.useState(""),selEmp=r1[0],setSelEmp=r1[1];
   var r2=React.useState(new Date().toISOString().slice(0,10)),selDate=r2[0],setSelDate=r2[1];
   var r3=React.useState(null),expandedEmp=r3[0],setExpandedEmp=r3[1];
+  var r4s=React.useState(""),searchTerm=r4s[0],setSearchTerm=r4s[1];
   var activeEmps=pEmps.filter(function(e){return e.st==="active"}).sort(function(a,b){return(a.name||a.fn||"").localeCompare(b.name||b.fn||"")});
   if(selEmp)activeEmps=activeEmps.filter(function(e){return e.id===selEmp});
+  if(searchTerm){var st=searchTerm.toLowerCase();activeEmps=activeEmps.filter(function(e){var nm=(e.name||e.fn+" "+e.ln).toLowerCase();return nm.indexOf(st)>-1||e.badge&&e.badge.indexOf(st)>-1||(e.dept||"").toLowerCase().indexOf(st)>-1})}
   var sty={width:"100%",background:C.bg||"#09090B",border:"1px solid "+(C.bd||C.border||"#1E1E22"),color:C.t1||"#E4E4E7",padding:"8px 10px",borderRadius:6,fontSize:14,outline:"none",boxSizing:"border-box"};
   var thd={padding:"8px 12px",textAlign:"left",fontSize:11,fontWeight:700,color:C.t4||"#3F3F46",textTransform:"uppercase",borderBottom:"1px solid "+(C.bd||"#1E1E22")};
   var tds={padding:"8px 12px",fontSize:13,borderBottom:"1px solid "+(C.bd||"#1E1E22")};
@@ -1908,6 +1910,7 @@ function PunchEditorPanel(props) {
     React.createElement("div",{style:{display:"flex",gap:12,marginBottom:16,flexWrap:"wrap",alignItems:"center"}},
       React.createElement("select",{value:selEmp,onChange:function(ev){setSelEmp(ev.target.value);setExpandedEmp(ev.target.value||null)},style:Object.assign({},sty,{flex:"1 1 200px",appearance:"auto"})},React.createElement("option",{value:""},"All Employees"),pEmps.filter(function(ee){return ee.st==="active"}).sort(function(a,b){return(a.name||a.fn||"").localeCompare(b.name||b.fn||"")}).map(function(ee){return React.createElement("option",{key:ee.id,value:ee.id},ee.name||ee.fn+" "+ee.ln)})),
       React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},React.createElement("button",{onClick:function(){var d=new Date(selDate+"T12:00:00");d.setDate(d.getDate()-7);setSelDate(d.toISOString().slice(0,10))},style:{background:"transparent",border:"1px solid "+(C.bd||"#1E1E22"),color:C.t2,borderRadius:6,padding:"6px 10px",cursor:"pointer",fontSize:14}},"\u25C0"),React.createElement("input",{type:"date",value:selDate,onChange:function(ev){setSelDate(ev.target.value)},style:Object.assign({},sty,{width:160})}),React.createElement("button",{onClick:function(){var d=new Date(selDate+"T12:00:00");d.setDate(d.getDate()+7);setSelDate(d.toISOString().slice(0,10))},style:{background:"transparent",border:"1px solid "+(C.bd||"#1E1E22"),color:C.t2,borderRadius:6,padding:"6px 10px",cursor:"pointer",fontSize:14}},"\u25B6")),
+      React.createElement("input",{value:searchTerm,onChange:function(ev){setSearchTerm(ev.target.value)},placeholder:"Search name, badge, dept...",style:Object.assign({},sty,{flex:"1 1 200px",fontSize:13})}),
       React.createElement("div",{style:{fontSize:12,color:C.t3}},"Week of "+new Date(weekDates[0]+"T12:00:00").toLocaleDateString(undefined,{month:"short",day:"numeric"})+" \u2013 "+new Date(weekDates[6]+"T12:00:00").toLocaleDateString(undefined,{month:"short",day:"numeric"}))
     ),
     React.createElement("div",{style:{maxHeight:500,overflowY:"auto"}},activeEmps.length===0?React.createElement("div",{style:{textAlign:"center",padding:24,color:C.t4}},"No employees"):activeEmps.map(function(emp){
@@ -1950,21 +1953,40 @@ function PunchEditorPanel(props) {
   );
 }
 function EditPunchModal(props) {
-  var punch = props.punch, emp = props.emp, onSave = props.onSave, onClose = props.onClose;
-  var r = React.useState(punch ? new Date(punch.time).toISOString().slice(0,16) : "");
-  var newTime = r[0], setNewTime = r[1];
-  return /*#__PURE__*/React.createElement("div", {onClick:onClose,style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:9999}},
-    /*#__PURE__*/React.createElement("div", {onClick:function(e){e.stopPropagation()},style:{background:C.srf||C.surface||"#111113",border:"1px solid "+(C.bd||C.border||"#1E1E22"),borderRadius:12,padding:24,width:380,maxWidth:"90%"}},
-      /*#__PURE__*/React.createElement("div", {style:{fontSize:16,fontWeight:700,color:C.t1,marginBottom:16}}, "Edit Punch"),
-      /*#__PURE__*/React.createElement("div", {style:{fontSize:13,color:C.t3,marginBottom:12}}, emp?(emp.name||emp.fn+" "+emp.ln):"Unknown"," \u2014 ",punch.type==="in"?"Clock In":"Clock Out"),
-      /*#__PURE__*/React.createElement("div", {style:{marginBottom:4,fontSize:12,color:C.t3}}, "Original: "+new Date(punch.time).toLocaleString()),
-      /*#__PURE__*/React.createElement("div", {style:{marginBottom:16}},
-        /*#__PURE__*/React.createElement("label", {style:{fontSize:12,color:C.t3,display:"block",marginBottom:4}}, "New Date/Time"),
-        /*#__PURE__*/React.createElement("input", {type:"datetime-local",value:newTime,onChange:function(e){setNewTime(e.target.value)},style:{width:"100%",background:C.bg||"#09090B",border:"1px solid "+(C.bd||C.border||"#1E1E22"),color:C.t1||"#E4E4E7",padding:"8px 10px",borderRadius:6,fontSize:14,outline:"none",boxSizing:"border-box"}})
+  var punch=props.punch,emp=props.emp,onSave=props.onSave,onClose=props.onClose;
+  var origDate=new Date(punch.time);
+  var r=React.useState(origDate.toISOString().slice(0,16));
+  var newTime=r[0],setNewTime=r[1];
+  var punchLabel=punch.type==="in"?"CLOCK IN":punch.type==="out"?"CLOCK OUT":punch.type==="break-start"?"BREAK START":"BREAK END";
+  var empName=emp?(emp.name||emp.fn+" "+emp.ln):"Unknown Employee";
+  var dayStr=origDate.toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric",year:"numeric"});
+  var timeStr=origDate.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  return React.createElement("div",{onClick:onClose,style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:9999}},
+    React.createElement("div",{onClick:function(e){e.stopPropagation()},style:{background:C.sf||"#111113",border:"1px solid "+(C.bd||"#1E1E22"),borderRadius:12,padding:28,width:440,maxWidth:"92%"}},
+      React.createElement("div",{style:{fontSize:18,fontWeight:700,color:C.t1,marginBottom:20}},"Edit Punch"),
+      React.createElement("div",{style:{background:C.bg||"#09090B",border:"1px solid "+(C.bd||"#1E1E22"),borderRadius:8,padding:16,marginBottom:20}},
+        React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}},
+          React.createElement("div",{style:{fontSize:15,fontWeight:700,color:C.t1}},empName),
+          React.createElement("div",{style:{padding:"4px 12px",borderRadius:6,fontSize:12,fontWeight:700,color:punch.type==="in"?"#22C55E":"#EF4444",background:punch.type==="in"?"rgba(34,197,94,0.1)":"rgba(239,68,68,0.1)",border:"1px solid "+(punch.type==="in"?"rgba(34,197,94,0.2)":"rgba(239,68,68,0.2)")}},punchLabel)
+        ),
+        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
+          React.createElement("div",null,
+            React.createElement("div",{style:{fontSize:11,color:C.t4||"#3F3F46",textTransform:"uppercase",fontWeight:700,letterSpacing:1,marginBottom:4}},"Date"),
+            React.createElement("div",{style:{fontSize:14,color:C.t2||"#A1A1AA"}},dayStr)
+          ),
+          React.createElement("div",null,
+            React.createElement("div",{style:{fontSize:11,color:C.t4||"#3F3F46",textTransform:"uppercase",fontWeight:700,letterSpacing:1,marginBottom:4}},"Original Time"),
+            React.createElement("div",{style:{fontSize:14,color:C.t2||"#A1A1AA",fontFamily:"monospace"}},timeStr)
+          )
+        )
       ),
-      /*#__PURE__*/React.createElement("div", {style:{display:"flex",gap:8,justifyContent:"flex-end"}},
-        /*#__PURE__*/React.createElement("button", {onClick:onClose,style:{padding:"8px 16px",background:"transparent",border:"1px solid "+(C.t4||"#3F3F46"),color:C.t2||"#A1A1AA",borderRadius:6,cursor:"pointer",fontSize:13}}, "Cancel"),
-        /*#__PURE__*/React.createElement("button", {onClick:function(){if(!newTime){alert("Please select a date and time.");return}var dt=new Date(newTime);if(isNaN(dt.getTime())){alert("Invalid date.");return}onSave(punch.id,dt.toISOString());onClose()},style:{padding:"8px 16px",background:C.spark||"#FACC15",border:"none",color:"#000",borderRadius:6,cursor:"pointer",fontSize:13,fontWeight:700}}, "Save Change")
+      React.createElement("div",{style:{marginBottom:20}},
+        React.createElement("label",{style:{fontSize:12,fontWeight:600,color:C.t2||"#A1A1AA",display:"block",marginBottom:6}},"New Date & Time"),
+        React.createElement("input",{type:"datetime-local",value:newTime,onChange:function(e){setNewTime(e.target.value)},style:{width:"100%",background:C.bg||"#09090B",border:"2px solid "+(C.spark||"#FACC15"),color:C.t1||"#E4E4E7",padding:"12px",borderRadius:8,fontSize:16,fontFamily:"monospace",fontWeight:600,outline:"none",boxSizing:"border-box"}})
+      ),
+      React.createElement("div",{style:{display:"flex",gap:10,justifyContent:"flex-end"}},
+        React.createElement("button",{onClick:onClose,style:{padding:"10px 20px",background:"transparent",border:"1px solid "+(C.t4||"#3F3F46"),color:C.t2||"#A1A1AA",borderRadius:8,cursor:"pointer",fontSize:13,fontWeight:600}},"Cancel"),
+        React.createElement("button",{onClick:function(){if(!newTime){alert("Please select a date and time.");return}var dt=new Date(newTime);if(isNaN(dt.getTime())){alert("Invalid date.");return}onSave(punch.id,dt.toISOString());onClose()},style:{padding:"10px 24px",background:C.spark||"#FACC15",border:"none",color:"#000",borderRadius:8,cursor:"pointer",fontSize:14,fontWeight:700}},"Save Change")
       )
     )
   );
@@ -8025,7 +8047,8 @@ function App() {
       return p;
     });
     setPunches(updated);
-    safeStorage.setItem("spark-tk-punches", JSON.stringify(updated));
+    localStorage.setItem("spark-tk-punches", JSON.stringify(updated));
+    if(useSupa()){(async function(){var sb=getSb();if(sb){var edited=updated.find(function(p){return p.id===punchId});if(edited){var r=await sb.from("tk_punches").upsert({id:edited.id,eid:edited.eid,type:edited.type,time:edited.time,dev:edited.dev||"manager",ip:edited.ip||""});if(r.error)console.error("Edit sync failed:",r.error)}}})()}
   }
   function deletePunch(punchId) {
     if(!confirm("Delete this punch? This cannot be undone.")) return;
