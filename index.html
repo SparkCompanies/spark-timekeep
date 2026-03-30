@@ -415,10 +415,10 @@ async function sbLoadEmployees() {
   return r.data.map(function (e) {
     return {
       id: e.id,
-      badge: e.badge,
+      badge: String(e.badge || ""),
       fn: e.fn,
       ln: e.ln,
-      pin: e.pin,
+      pin: String(e.pin || ""),
       dept: e.dept,
       role: e.role,
       site: e.site,
@@ -555,10 +555,10 @@ async function sbSaveEmployee(e) {
   if (!sb) return;
   await sb.from("tk_employees").upsert({
     id: e.id,
-    badge: e.badge,
+    badge: String(e.badge || ""),
     fn: e.fn,
     ln: e.ln,
-    pin: e.pin,
+    pin: String(e.pin || ""),
     dept: e.dept,
     role: e.role,
     site: e.site,
