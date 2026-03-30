@@ -3094,7 +3094,7 @@ function ReportsTab({emps,punches,policy,mon}){
   var cc={background:C.sf,border:"1px solid "+C.bd,borderRadius:12,padding:16,marginBottom:14};
   return /*#__PURE__*/React.createElement("div",{style:{padding:16}},
     /*#__PURE__*/React.createElement("div",{style:{marginBottom:18}},
-      /*#__PURE__*/React.createElement("div",{style:{fontSize:20,fontWeight:800,color:C.t1}},"Reports & Analytics"),
+      /*#__PURE__*/React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center"}},/*#__PURE__*/React.createElement("div",{style:{fontSize:20,fontWeight:800,color:C.t1}},"Reports & Analytics"),/*#__PURE__*/React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},/*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t2||"#A1A1AA"}},mon.toLocaleDateString(undefined,{month:"short",day:"numeric"})+" \u2013 "+new Date(mon.getTime()+6*86400000).toLocaleDateString(undefined,{month:"short",day:"numeric"})))),
       /*#__PURE__*/React.createElement("div",{style:{color:C.t4,fontSize:12,marginTop:3}},"Week of "+mon.toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})+" · "+emps.length+" employees")
     ),
     /*#__PURE__*/React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:14}},
@@ -3604,7 +3604,7 @@ function ManagerView({
       setSearch(e.target.value);
     },
     style: Object.assign({}, inp, {
-      width: mo ? "100%" : 180,
+      width: mo ? "100%" : 260,
       flex: mo ? "1 1 auto" : undefined
     })
   }), /*#__PURE__*/React.createElement("select", {
@@ -4714,7 +4714,7 @@ function ManagerView({
       borderBottom: "1px solid " + C.bd,
       fontFamily: Fb
     }
-  }, "Status"))), /*#__PURE__*/React.createElement("tbody", null, statuses.map(function (e) {
+  }, "Status"))), /*#__PURE__*/React.createElement("tbody", null, statuses.filter(function(e){if(!search)return true;var s=search.toLowerCase();var nm=(e.fn+" "+e.ln).toLowerCase();return nm.indexOf(s)>-1||(e.badge||"").indexOf(s)>-1||(e.dept||"").toLowerCase().indexOf(s)>-1}).map(function (e) {
     var days = dayNames.map(function (dn, i) {
       var ds = new Date(mon);
       ds.setDate(ds.getDate() + i);
