@@ -819,8 +819,11 @@ function calcDayHours(punches) {
   var sorted = punches.slice().sort(function (a, b) {
     return new Date(a.time) - new Date(b.time);
   });
-  var gross = 0,
-    breakMs = 0;
+  var gross = 0, breakMs = 0;
+  var now = new Date();
+  var todayStr = now.toISOString().slice(0,10);
+  // Determine if these punches are from today
+  var isToday = sorted.length > 0 && new Date(sorted[0].time).toISOString().slice(0,10) === todayStr;
   for (var i = 0; i < sorted.length; i++) {
     var p = sorted[i];
     if (p.type === "in") {
@@ -833,9 +836,11 @@ function calcDayHours(punches) {
       }
       if (outP) {
         gross += new Date(outP.time) - new Date(p.time);
-      } else {
+      } else if (isToday) {
+        // Only count running time for today's open punches
         gross += Date.now() - new Date(p.time).getTime();
       }
+      // Past days with no clock-out: skip (0 hours) — shows as mismatch
     }
     if (p.type === "break-out") {
       var bIn = null;
@@ -847,7 +852,7 @@ function calcDayHours(punches) {
       }
       if (bIn) {
         breakMs += new Date(bIn.time) - new Date(p.time);
-      } else {
+      } else if (isToday) {
         breakMs += Date.now() - new Date(p.time).getTime();
       }
     }
@@ -869,7 +874,7 @@ function calcDayHours(punches) {
         }
         if (outP2) {
           gross += new Date(outP2.time) - new Date(p.time);
-        } else {
+        } else if (isToday) {
           gross += Date.now() - new Date(p.time).getTime();
         }
       }
