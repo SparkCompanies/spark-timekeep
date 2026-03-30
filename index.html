@@ -4636,7 +4636,7 @@ function ManagerView({
       color: C.t1,
       marginBottom: 4
     }
-  }, "Weekly Timesheets"), /*#__PURE__*/React.createElement("div", {
+  }, "Weekly Timesheets"), /*#__PURE__*/React.createElement("div",{style:{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap",alignItems:"center"}},/*#__PURE__*/React.createElement("input",{placeholder:"Search employee name or badge...",value:search,onChange:function(e){setSearch(e.target.value)},style:{padding:"8px 12px",background:C.bg,border:"1px solid "+C.bd,color:C.t1,borderRadius:6,fontSize:13,outline:"none",width:280,fontFamily:"inherit"}}),/*#__PURE__*/React.createElement("select",{value:dept,onChange:function(e){setDept(e.target.value)},style:{padding:"8px 12px",background:C.bg,border:"1px solid "+C.bd,color:C.t1,borderRadius:6,fontSize:13,outline:"none",fontFamily:"inherit",appearance:"auto"}},/*#__PURE__*/React.createElement("option",{value:"all"},"All Departments"),emps.filter(function(e){return e.st==="active"}).map(function(e){return e.dept}).filter(function(v,i,a){return v&&a.indexOf(v)===i}).sort().map(function(d){return /*#__PURE__*/React.createElement("option",{key:d,value:d},d)})),/*#__PURE__*/React.createElement("div",{style:{fontSize:12,color:C.t3,marginLeft:8}},statuses.filter(function(e){if(search){var s=search.toLowerCase();var nm=(e.fn+" "+e.ln).toLowerCase();if(nm.indexOf(s)===-1&&(e.badge||"").indexOf(s)===-1&&(e.dept||"").toLowerCase().indexOf(s)===-1)return false}if(dept!=="all"&&e.dept!==dept)return false;return true}).length+" of "+statuses.length+" employees")), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       color: C.t4,
@@ -4714,7 +4714,7 @@ function ManagerView({
       borderBottom: "1px solid " + C.bd,
       fontFamily: Fb
     }
-  }, "Status"))), /*#__PURE__*/React.createElement("tbody", null, statuses.filter(function(e){if(!search)return true;var s=search.toLowerCase();var nm=(e.fn+" "+e.ln).toLowerCase();return nm.indexOf(s)>-1||(e.badge||"").indexOf(s)>-1||(e.dept||"").toLowerCase().indexOf(s)>-1}).map(function (e) {
+  }, "Status"))), /*#__PURE__*/React.createElement("tbody", null, statuses.filter(function(e){var show=true;if(search){var s=search.toLowerCase();var nm=(e.fn+" "+e.ln).toLowerCase();if(nm.indexOf(s)===-1&&(e.badge||"").indexOf(s)===-1&&(e.dept||"").toLowerCase().indexOf(s)===-1)show=false}if(dept!=="all"&&e.dept!==dept)show=false;return show}).map(function (e) {
     var days = dayNames.map(function (dn, i) {
       var ds = new Date(mon);
       ds.setDate(ds.getDate() + i);
@@ -4860,7 +4860,7 @@ function ManagerView({
       color: C.t4,
       marginBottom: 16
     }
-  }, "Real-time notifications for attendance issues, overtime, and compliance"), alerts.length === 0 ? /*#__PURE__*/React.createElement("div", {
+  }, "Real-time notifications for attendance issues, overtime, and compliance. Resolved items auto-clear."), alerts.length === 0 ? /*#__PURE__*/React.createElement("div", {
     style: {
       background: C.green + "10",
       border: "1px solid " + C.green + "33",
