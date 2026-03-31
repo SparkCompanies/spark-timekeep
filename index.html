@@ -963,8 +963,9 @@ function getDailyBreakdownForWeek(allPunches, eid, monday) {
   });
 }
 function getCurrentState(emp, punches) {
+  var cutoff = new Date(Date.now() - 24*60*60*1000);
   var ep = punches.filter(function (p) {
-    return p.eid === emp.id;
+    return p.eid === emp.id && new Date(p.time) >= cutoff;
   }).sort(function (a, b) {
     return new Date(b.time) - new Date(a.time);
   });
@@ -4458,7 +4459,7 @@ function ManagerView({
         fontWeight: 600,
         color: C.t1
       }
-    }, e.fn, " ", e.ln), /*#__PURE__*/React.createElement("div", {
+    onClick:function(){setSelEmp(e);setMTab("timesheets")},style:{cursor:"pointer"}}, e.fn, " ", e.ln), /*#__PURE__*/React.createElement("div", {
       style: {
         fontFamily: Fm,
         fontSize: 13,
