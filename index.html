@@ -5522,6 +5522,7 @@ function AdminView({
   var raddrE = useState(""),
     addrError = raddrE[0],
     setAddrError = raddrE[1];
+  var rEmpSearch = useState(""), empSearch = rEmpSearch[0], setEmpSearch = rEmpSearch[1];
   var rRepWk = useState(0), reportWeekOffset = rRepWk[0], setReportWeekOffset = rRepWk[1];
   var reportMon = getMonday(new Date(Date.now() + reportWeekOffset * 7 * 86400000));
   function searchAddr() {
@@ -5964,7 +5965,7 @@ function AdminView({
       fontWeight: 700,
       color: C.t1
     }
-  }, "Active Employees (", emps.filter(function(e){return e.st==="active"}).length, ")"), /*#__PURE__*/React.createElement("button", {
+  }, "Active Employees (", emps.filter(function(e){return e.st==="active"}).length, ")"), /*#__PURE__*/React.createElement("div",{style:{display:"flex",gap:8,marginBottom:12,marginTop:12}},/*#__PURE__*/React.createElement("input",{placeholder:"Search employees...",value:empSearch,onChange:function(e){setEmpSearch(e.target.value)},style:{padding:"8px 12px",background:C.bg,border:"1px solid "+C.bd,color:C.t1,borderRadius:6,fontSize:13,outline:"none",width:280,fontFamily:"inherit"}}),empSearch&&/*#__PURE__*/React.createElement("button",{onClick:function(){setEmpSearch("")},style:{padding:"6px 12px",background:"transparent",border:"1px solid "+C.bd,color:C.t3,borderRadius:6,fontSize:12,cursor:"pointer"}},"Clear")), /*#__PURE__*/React.createElement("button", {
     onClick: function () {
       setShowAdd(!showAdd);
     },
@@ -6221,7 +6222,7 @@ function AdminView({
       setSelEmps([]);
     },
     onClearSelection: function() { setSelEmps([]); }
-  }), mo ? /*#__PURE__*/React.createElement("div", null, emps.filter(function(e){return e.st==="active"}).map(function (e) {
+  }), mo ? /*#__PURE__*/React.createElement("div", null, emps.filter(function(e){if(e.st!=="active")return false;if(empSearch){var s=empSearch.toLowerCase();if((e.fn+" "+e.ln).toLowerCase().indexOf(s)===-1&&(e.badge||"").indexOf(s)===-1&&(e.dept||"").toLowerCase().indexOf(s)===-1)return false}return true}).map(function (e) {
     return /*#__PURE__*/React.createElement("div", {
       key: e.id,
       style: {
@@ -6293,7 +6294,7 @@ function AdminView({
         borderBottom: "1px solid " + C.bd
       }
     }, h);
-  })))), /*#__PURE__*/React.createElement("tbody", null, emps.filter(function(e){return e.st==="active"}).map(function (e) {
+  })))), /*#__PURE__*/React.createElement("tbody", null, emps.filter(function(e){if(e.st!=="active")return false;if(empSearch){var s=empSearch.toLowerCase();if((e.fn+" "+e.ln).toLowerCase().indexOf(s)===-1&&(e.badge||"").indexOf(s)===-1&&(e.dept||"").toLowerCase().indexOf(s)===-1)return false}return true}).map(function (e) {
     return /*#__PURE__*/React.createElement("tr", {
       key: e.id,
       style: {
