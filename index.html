@@ -819,67 +819,46 @@ function calcDayHours(punches) {
   var sorted = punches.slice().sort(function (a, b) {
     return new Date(a.time) - new Date(b.time);
   });
-  var gross = 0, breakMs = 0;
   var now = new Date();
   var todayStr = now.toISOString().slice(0,10);
-  // Determine if these punches are from today
   var isToday = sorted.length > 0 && new Date(sorted[0].time).toISOString().slice(0,10) === todayStr;
+
+  // Step 1: Pair each clock-in with next clock-out ONLY
+  var gross = 0;
+  var usedOut = {};
   for (var i = 0; i < sorted.length; i++) {
-    var p = sorted[i];
-    if (p.type === "in") {
-      var outP = null;
+    if (sorted[i].type === "in") {
+      var paired = null;
       for (var j = i + 1; j < sorted.length; j++) {
-        if (sorted[j].type === "out" || sorted[j].type === "break-out") {
-          outP = sorted[j];
+        if (sorted[j].type === "out" && !usedOut[j]) {
+          paired = sorted[j];
+          usedOut[j] = true;
           break;
         }
       }
-      if (outP) {
-        gross += new Date(outP.time) - new Date(p.time);
+      if (paired) {
+        gross += new Date(paired.time) - new Date(sorted[i].time);
       } else if (isToday) {
-        // Only count running time for today's open punches
-        gross += Date.now() - new Date(p.time).getTime();
-      }
-      // Past days with no clock-out: skip (0 hours) — shows as mismatch
-    }
-    if (p.type === "break-out") {
-      var bIn = null;
-      for (var j2 = i + 1; j2 < sorted.length; j2++) {
-        if (sorted[j2].type === "break-in") {
-          bIn = sorted[j2];
-          break;
-        }
-      }
-      if (bIn) {
-        breakMs += new Date(bIn.time) - new Date(p.time);
-      } else if (isToday) {
-        breakMs += Date.now() - new Date(p.time).getTime();
+        gross += Date.now() - new Date(sorted[i].time).getTime();
       }
     }
-    if (p.type === "break-in" && i > 0) {
-      var prevOut = null;
-      for (var j3 = i - 1; j3 >= 0; j3--) {
-        if (sorted[j3].type === "break-out") {
-          prevOut = sorted[j3];
+  }
+
+  // Step 2: Pair each break-out with next break-in
+  var breakMs = 0;
+  var usedBI = {};
+  for (var k = 0; k < sorted.length; k++) {
+    if (sorted[k].type === "break-out") {
+      for (var m = k + 1; m < sorted.length; m++) {
+        if (sorted[m].type === "break-in" && !usedBI[m]) {
+          breakMs += new Date(sorted[m].time) - new Date(sorted[k].time);
+          usedBI[m] = true;
           break;
-        }
-      }
-      if (!prevOut) {
-        var outP2 = null;
-        for (var j4 = i + 1; j4 < sorted.length; j4++) {
-          if (sorted[j4].type === "out" || sorted[j4].type === "break-out") {
-            outP2 = sorted[j4];
-            break;
-          }
-        }
-        if (outP2) {
-          gross += new Date(outP2.time) - new Date(p.time);
-        } else if (isToday) {
-          gross += Date.now() - new Date(p.time).getTime();
         }
       }
     }
   }
+
   var net = gross - breakMs;
   return {
     grossH: gross / 3600000,
@@ -914,7 +893,7 @@ function getDayPunchesWithCarryOver(allPunches, eid, dayStart, dayEnd) {
       var lastPrev = prevPunches[prevPunches.length - 1];
       if (lastPrev.type === "in") {
         // Carry this clock-in into today's punches
-        dp = [lastPrev].concat(dp);
+        var prevHour = new Date(lastPrev.time).getHours(); if (prevHour >= 18) { dp = [lastPrev].concat(dp); }
       }
     }
   }
