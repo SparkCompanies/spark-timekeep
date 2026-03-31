@@ -3193,6 +3193,11 @@ function ManagerView({
     setShowAddPunch = r4[1];
   var r4b = useState(null), editingPunch = r4b[0], setEditingPunch = r4b[1];
   var r4c = useState(false), showPunchEditor = r4c[0], setShowPunchEditor = r4c[1];
+  var r5a = useState("all"), alertFilter = r5a[0], setAlertFilter = r5a[1];
+  var r5b = useState(""), alertSearch = r5b[0], setAlertSearch = r5b[1];
+  var storedDismAlerts = JSON.parse(localStorage.getItem("spark-tk-dismissed-alerts") || "{}");
+  var r5c = useState(storedDismAlerts), dismissedAlerts = r5c[0], _setDismAlerts = r5c[1];
+  var setDismissedAlerts = function(val){_setDismAlerts(val);localStorage.setItem("spark-tk-dismissed-alerts",JSON.stringify(val))};
   var rtab = useState("dashboard"),
     mTab = rtab[0],
     setMTab = rtab[1];
@@ -3320,7 +3325,7 @@ function ManagerView({
     return (b.sev || 0) - (a.sev || 0);
   });
   var totalBadges = pending.length;
-  var tabDef = [["dashboard", "Dashboard" + (violations.length > 0 ? " (" + violations.length + ")" : "")], ["whos-in", "Who's In"], ["reports", "Reports"], ["timesheets", "Timesheets"], ["alerts", "Alerts" + (alerts.length > 0 ? " (" + alerts.length + ")" : "")], ["approvals", "Approvals" + (pending.length > 0 ? " (" + pending.length + ")" : "")]];
+  var tabDef = [["dashboard", "Dashboard" + (violations.length > 0 ? " (" + violations.length + ")" : "")], ["whos-in", "Who's In"], ["reports", "Reports"], ["timesheets", "Timesheets"], ["alerts", "Alerts" + (function(){var c=alerts.filter(function(a,i){return !dismissedAlerts[a.id||"a"+i]}).length;return c>0?" ("+c+")":""}())], ["approvals", "Approvals" + (pending.length > 0 ? " (" + pending.length + ")" : "")]];
   return /*#__PURE__*/React.createElement("div", {
     style: {
       minHeight: "100vh",
@@ -4880,13 +4885,7 @@ function ManagerView({
       color: C.t1,
       marginBottom: 4
     }
-  }, "Alert Center"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      color: C.t4,
-      marginBottom: 16
-    }
-  }, "Real-time notifications for attendance issues, overtime, and compliance. Resolved items auto-clear."), alerts.length === 0 ? /*#__PURE__*/React.createElement("div", {
+  }, "Alert Center"), /*#__PURE__*/React.createElement("div",{style:{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap",alignItems:"center"}},/*#__PURE__*/React.createElement("input",{placeholder:"Search employee...",value:alertSearch,onChange:function(e){setAlertSearch(e.target.value)},style:{padding:"8px 12px",background:C.bg,border:"1px solid "+C.bd,color:C.t1,borderRadius:6,fontSize:13,outline:"none",width:200,fontFamily:"inherit"}}),/*#__PURE__*/React.createElement("select",{value:alertFilter,onChange:function(e){setAlertFilter(e.target.value)},style:{padding:"8px 12px",background:C.bg,border:"1px solid "+C.bd,color:C.t1,borderRadius:6,fontSize:13,outline:"none",fontFamily:"inherit",appearance:"auto"}},/*#__PURE__*/React.createElement("option",{value:"all"},"All Severity"),/*#__PURE__*/React.createElement("option",{value:"3"},"Critical Only"),/*#__PURE__*/React.createElement("option",{value:"2"},"Warning Only"),/*#__PURE__*/React.createElement("option",{value:"1"},"Info Only")),/*#__PURE__*/React.createElement("button",{onClick:function(){var visible=alerts.filter(function(a){if(dismissedAlerts[a.id||"a"+alerts.indexOf(a)])return false;if(alertFilter!=="all"&&String(a.sev||0)!==alertFilter)return false;if(alertSearch){var s=alertSearch.toLowerCase();if(!a.emp||(a.emp.fn+" "+a.emp.ln).toLowerCase().indexOf(s)===-1)return false}return true});if(visible.length===0)return;if(!confirm("Dismiss "+visible.length+" visible alerts?"))return;var nd=Object.assign({},dismissedAlerts);visible.forEach(function(a,i){nd[a.id||"a"+alerts.indexOf(a)]=true});setDismissedAlerts(nd)},style:{padding:"8px 14px",background:C.bg,border:"1px solid "+C.red,color:C.red,borderRadius:6,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}},"Dismiss Visible"),/*#__PURE__*/React.createElement("div",{style:{fontSize:12,color:C.t3,marginLeft:4}},alerts.filter(function(a){return !dismissedAlerts[a.id||"a"+alerts.indexOf(a)]}).length+" active")), alerts.length === 0 ? /*#__PURE__*/React.createElement("div", {
     style: {
       background: C.green + "10",
       border: "1px solid " + C.green + "33",
@@ -4987,7 +4986,7 @@ function ManagerView({
       color: C.spark,
       fontWeight: 600
     }
-  }, "INFO"))), alerts.map(function (a, i) {
+  }, "INFO"))), alerts.filter(function(a,i){if(dismissedAlerts[a.id||"a"+i])return false;if(alertFilter!=="all"&&String(a.sev||0)!==alertFilter)return false;if(alertSearch){var s=alertSearch.toLowerCase();if(!a.emp||(a.emp.fn+" "+a.emp.ln).toLowerCase().indexOf(s)===-1)return false}return true}).map(function (a, i) {
     var sevColors = [C.spark, C.spark, C.orange, C.red];
     var sevLabels = ["INFO", "INFO", "WARNING", "CRITICAL"];
     return /*#__PURE__*/React.createElement("div", {
@@ -5051,7 +5050,7 @@ function ManagerView({
         border: "1px solid " + C.spark + "33",
         flexShrink: 0
       }
-    }, "View"));
+    }, "View"), /*#__PURE__*/React.createElement("button",{onClick:function(){var nd=Object.assign({},dismissedAlerts);nd[a.id||"a"+alerts.indexOf(a)]=true;setDismissedAlerts(nd)},style:{padding:"5px 10px",borderRadius:6,fontSize:13,fontWeight:600,color:C.t3,background:"transparent",border:"1px solid "+C.bd,flexShrink:0,cursor:"pointer"}},"Dismiss"));
   }))), mTab === "approvals" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
