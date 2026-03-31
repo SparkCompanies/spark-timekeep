@@ -4169,218 +4169,7 @@ function ManagerView({
         color: C.spark
       }
     }, "View \u25B6")));
-  })))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: mo ? "1fr" : "1fr 1fr 1fr",
-      gap: mo ? 12 : 16,
-      marginTop: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: C.sf,
-      border: "1px solid " + (allExcs.length > 0 ? C.orange + "44" : C.bd),
-      borderRadius: 12,
-      padding: mo ? 12 : 16
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: 10
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 16,
-      fontWeight: 700,
-      color: C.t1
-    }
-  }, "Exceptions (", allExcs.length, ")"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      color: C.t4
-    }
-  }, "Auto-detected")), allExcs.length === 0 ? /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      color: C.green
-    }
-  }, "All clear") : allExcs.slice(0, 8).map(function (x, i) {
-    return /*#__PURE__*/React.createElement("div", {
-      key: i,
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        padding: "8px 10px",
-        background: x.color + "08",
-        border: "1px solid " + x.color + "22",
-        borderRadius: 8,
-        marginBottom: 6
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        width: 5,
-        height: 5,
-        borderRadius: "50%",
-        background: x.color,
-        flexShrink: 0
-      }
-    }), /*#__PURE__*/React.createElement("div", {
-      style: {
-        flex: 1
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 13,
-        fontWeight: 600,
-        color: C.t1
-      }
-    }, x.emp.fn, " ", x.emp.ln), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 13,
-        color: x.color
-      }
-    }, x.label, " \u2014 ", x.detail)));
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: C.sf,
-      border: "1px solid " + C.bd,
-      borderRadius: 12,
-      padding: mo ? 12 : 16
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 16,
-      fontWeight: 700,
-      color: C.t1,
-      marginBottom: 10
-    }
-  }, "Schedule Compliance"), statuses.filter(function (e) {
-    return e.weekH > 0;
-  }).slice(0, 6).map(function (e) {
-    var expected = parseFloat(((e.shiftEnd || "14:30").split(":")[0] - (e.shiftStart || "06:00").split(":")[0]).toFixed(1)) || 8.5;
-    var actual = e.weekH / Math.max(1, (e.workDays || [1, 2, 3, 4, 5]).length);
-    var pct = expected > 0 ? Math.min(Math.round(actual / expected * 100), 150) : 0;
-    var barColor = pct >= 95 ? C.green : pct >= 80 ? C.spark : C.red;
-    return /*#__PURE__*/React.createElement("div", {
-      key: e.id,
-      style: {
-        marginBottom: 8
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        justifyContent: "space-between",
-        marginBottom: 2
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 13,
-        color: C.t2
-      }
-    }, e.fn, " ", e.ln[0], "."), /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontFamily: Fm,
-        fontSize: 13,
-        color: barColor
-      }
-    }, actual.toFixed(1), "h/", expected, "h avg")), /*#__PURE__*/React.createElement("div", {
-      style: {
-        height: 4,
-        borderRadius: 2,
-        background: C.bd,
-        overflow: "hidden"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        width: Math.min(pct, 100) + "%",
-        height: "100%",
-        borderRadius: 2,
-        background: barColor
-      }
-    })));
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: C.sf,
-      border: "1px solid " + C.bd,
-      borderRadius: 12,
-      padding: mo ? 12 : 16
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 16,
-      fontWeight: 700,
-      color: C.t1,
-      marginBottom: 10
-    }
-  }, "Labor Breakdown"), statuses.filter(function (e) {
-    return e.weekH > 0;
-  }).sort(function (a, b) {
-    return b.cost.total - a.cost.total;
-  }).slice(0, 6).map(function (e) {
-    return /*#__PURE__*/React.createElement("div", {
-      key: e.id,
-      style: {
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "6px 0",
-        borderBottom: "1px solid " + C.bd + "06"
-      }
-    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 13,
-        fontWeight: 600,
-        color: C.t2
-      }
-    }, e.fn, " ", e.ln[0], "."), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontFamily: Fm,
-        fontSize: 13,
-        color: C.t4
-      }
-    }, e.cost.regH.toFixed(1), "h reg", e.cost.otH > 0 ? " + " + e.cost.otH.toFixed(1) + "h OT" : "")), /*#__PURE__*/React.createElement("div", {
-      style: {
-        textAlign: "right"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontFamily: Fm,
-        fontSize: 13,
-        fontWeight: 700,
-        color: C.spark
-      }
-    }, "$", e.cost.total.toFixed(0)), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontFamily: Fm,
-        fontSize: 13,
-        color: C.t4
-      }
-    }, "$", e.rate || 16, "/hr")));
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      borderTop: "1px solid " + C.bd,
-      marginTop: 8,
-      paddingTop: 8,
-      display: "flex",
-      justifyContent: "space-between"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 13,
-      fontWeight: 700,
-      color: C.t1
-    }
-  }, "Week Total"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontFamily: Fm,
-      fontSize: 13,
-      fontWeight: 700,
-      color: C.spark
-    }
-  }, "$", Math.round(totalLabor).toLocaleString()))))), mTab === "whos-in" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  })))),  mTab === "whos-in" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       fontWeight: 700,
@@ -5226,6 +5015,218 @@ function ManagerView({
   }))))
   
   ,mTab === "reports" && /*#__PURE__*/React.createElement(ReportsTab, {emps:statuses,punches:punches,policy:P,weekOffset:weekOffset,mon:mon})
+  ,mTab === "reports" && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: mo ? "1fr" : "1fr 1fr 1fr",
+      gap: mo ? 12 : 16,
+      marginTop: 20
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: C.sf,
+      border: "1px solid " + (allExcs.length > 0 ? C.orange + "44" : C.bd),
+      borderRadius: 12,
+      padding: mo ? 12 : 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 16,
+      fontWeight: 700,
+      color: C.t1
+    }
+  }, "Exceptions (", allExcs.length, ")"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: C.t4
+    }
+  }, "Auto-detected")), allExcs.length === 0 ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: C.green
+    }
+  }, "All clear") : allExcs.slice(0, 8).map(function (x, i) {
+    return /*#__PURE__*/React.createElement("div", {
+      key: i,
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        padding: "8px 10px",
+        background: x.color + "08",
+        border: "1px solid " + x.color + "22",
+        borderRadius: 8,
+        marginBottom: 6
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: 5,
+        height: 5,
+        borderRadius: "50%",
+        background: x.color,
+        flexShrink: 0
+      }
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 13,
+        fontWeight: 600,
+        color: C.t1
+      }
+    }, x.emp.fn, " ", x.emp.ln), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 13,
+        color: x.color
+      }
+    }, x.label, " \u2014 ", x.detail)));
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: C.sf,
+      border: "1px solid " + C.bd,
+      borderRadius: 12,
+      padding: mo ? 12 : 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 16,
+      fontWeight: 700,
+      color: C.t1,
+      marginBottom: 10
+    }
+  }, "Schedule Compliance"), statuses.filter(function (e) {
+    return e.weekH > 0;
+  }).slice(0, 6).map(function (e) {
+    var expected = parseFloat(((e.shiftEnd || "14:30").split(":")[0] - (e.shiftStart || "06:00").split(":")[0]).toFixed(1)) || 8.5;
+    var actual = e.weekH / Math.max(1, (e.workDays || [1, 2, 3, 4, 5]).length);
+    var pct = expected > 0 ? Math.min(Math.round(actual / expected * 100), 150) : 0;
+    var barColor = pct >= 95 ? C.green : pct >= 80 ? C.spark : C.red;
+    return /*#__PURE__*/React.createElement("div", {
+      key: e.id,
+      style: {
+        marginBottom: 8
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        justifyContent: "space-between",
+        marginBottom: 2
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 13,
+        color: C.t2
+      }
+    }, e.fn, " ", e.ln[0], "."), /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontFamily: Fm,
+        fontSize: 13,
+        color: barColor
+      }
+    }, actual.toFixed(1), "h/", expected, "h avg")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        height: 4,
+        borderRadius: 2,
+        background: C.bd,
+        overflow: "hidden"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: Math.min(pct, 100) + "%",
+        height: "100%",
+        borderRadius: 2,
+        background: barColor
+      }
+    })));
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: C.sf,
+      border: "1px solid " + C.bd,
+      borderRadius: 12,
+      padding: mo ? 12 : 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 16,
+      fontWeight: 700,
+      color: C.t1,
+      marginBottom: 10
+    }
+  }, "Labor Breakdown"), statuses.filter(function (e) {
+    return e.weekH > 0;
+  }).sort(function (a, b) {
+    return b.cost.total - a.cost.total;
+  }).slice(0, 6).map(function (e) {
+    return /*#__PURE__*/React.createElement("div", {
+      key: e.id,
+      style: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: "6px 0",
+        borderBottom: "1px solid " + C.bd + "06"
+      }
+    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: 13,
+        fontWeight: 600,
+        color: C.t2
+      }
+    }, e.fn, " ", e.ln[0], "."), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontFamily: Fm,
+        fontSize: 13,
+        color: C.t4
+      }
+    }, e.cost.regH.toFixed(1), "h reg", e.cost.otH > 0 ? " + " + e.cost.otH.toFixed(1) + "h OT" : "")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        textAlign: "right"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontFamily: Fm,
+        fontSize: 13,
+        fontWeight: 700,
+        color: C.spark
+      }
+    }, "$", e.cost.total.toFixed(0)), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontFamily: Fm,
+        fontSize: 13,
+        color: C.t4
+      }
+    }, "$", e.rate || 16, "/hr")));
+  }), /*#__PURE__*/React.createElement("div", {
+    style: {
+      borderTop: "1px solid " + C.bd,
+      marginTop: 8,
+      paddingTop: 8,
+      display: "flex",
+      justifyContent: "space-between"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13,
+      fontWeight: 700,
+      color: C.t1
+    }
+  }, "Week Total"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontFamily: Fm,
+      fontSize: 13,
+      fontWeight: 700,
+      color: C.spark
+    }
+  }, "$", Math.round(totalLabor).toLocaleString()))))),
   ,showPunchEditor && /*#__PURE__*/React.createElement(PunchEditorPanel, {
     emps: emps,
     punches: punches,
@@ -5522,6 +5523,7 @@ function AdminView({
   var raddrE = useState(""),
     addrError = raddrE[0],
     setAddrError = raddrE[1];
+  var rEmpSearch = useState(""), empSearch = rEmpSearch[0], setEmpSearch = rEmpSearch[1];
   var rRepWk = useState(0), reportWeekOffset = rRepWk[0], setReportWeekOffset = rRepWk[1];
   var reportMon = getMonday(new Date(Date.now() + reportWeekOffset * 7 * 86400000));
   function searchAddr() {
@@ -5964,7 +5966,7 @@ function AdminView({
       fontWeight: 700,
       color: C.t1
     }
-  }, "Active Employees (", emps.filter(function(e){return e.st==="active"}).length, ")"), /*#__PURE__*/React.createElement("button", {
+  }, "Active Employees (", emps.filter(function(e){return e.st==="active"}).length, ")"), /*#__PURE__*/React.createElement("div",{style:{display:"flex",gap:8,marginBottom:12,marginTop:12}},/*#__PURE__*/React.createElement("input",{placeholder:"Search employees...",value:empSearch,onChange:function(e){setEmpSearch(e.target.value)},style:{padding:"8px 12px",background:C.bg,border:"1px solid "+C.bd,color:C.t1,borderRadius:6,fontSize:13,outline:"none",width:280,fontFamily:"inherit"}}),empSearch&&/*#__PURE__*/React.createElement("button",{onClick:function(){setEmpSearch("")},style:{padding:"6px 12px",background:"transparent",border:"1px solid "+C.bd,color:C.t3,borderRadius:6,fontSize:12,cursor:"pointer"}},"Clear")), /*#__PURE__*/React.createElement("button", {
     onClick: function () {
       setShowAdd(!showAdd);
     },
@@ -6221,7 +6223,7 @@ function AdminView({
       setSelEmps([]);
     },
     onClearSelection: function() { setSelEmps([]); }
-  }), mo ? /*#__PURE__*/React.createElement("div", null, emps.filter(function(e){return e.st==="active"}).map(function (e) {
+  }), mo ? /*#__PURE__*/React.createElement("div", null, emps.filter(function(e){if(e.st!=="active")return false;if(empSearch){var s=empSearch.toLowerCase();if((e.fn+" "+e.ln).toLowerCase().indexOf(s)===-1&&(e.badge||"").indexOf(s)===-1&&(e.dept||"").toLowerCase().indexOf(s)===-1)return false}return true}).map(function (e) {
     return /*#__PURE__*/React.createElement("div", {
       key: e.id,
       style: {
@@ -6293,7 +6295,7 @@ function AdminView({
         borderBottom: "1px solid " + C.bd
       }
     }, h);
-  })))), /*#__PURE__*/React.createElement("tbody", null, emps.filter(function(e){return e.st==="active"}).map(function (e) {
+  })))), /*#__PURE__*/React.createElement("tbody", null, emps.filter(function(e){if(e.st!=="active")return false;if(empSearch){var s=empSearch.toLowerCase();if((e.fn+" "+e.ln).toLowerCase().indexOf(s)===-1&&(e.badge||"").indexOf(s)===-1&&(e.dept||"").toLowerCase().indexOf(s)===-1)return false}return true}).map(function (e) {
     return /*#__PURE__*/React.createElement("tr", {
       key: e.id,
       style: {
