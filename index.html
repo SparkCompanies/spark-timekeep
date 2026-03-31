@@ -887,6 +887,40 @@ function calcDayHours(punches) {
     netH: Math.max(0, net / 3600000)
   };
 }
+// Overnight shift handler: get day punches + carry-over from previous night
+function getDayPunchesWithCarryOver(allPunches, eid, dayStart, dayEnd) {
+  // Get punches that fall within this day
+  var dp = allPunches.filter(function(p) {
+    return p.eid === eid && new Date(p.time) >= dayStart && new Date(p.time) <= dayEnd;
+  });
+  // Check if the first punch of the day is a clock-out with no clock-in before it
+  var firstOut = dp.length > 0 && dp.sort(function(a,b){return new Date(a.time)-new Date(b.time)})[0];
+  var hasOrphanOut = firstOut && firstOut.type === "out" && !dp.some(function(p){return p.type === "in" && new Date(p.time) < new Date(firstOut.time)});
+  // Also check if there are NO clock-ins at all but there is a clock-out
+  if (!hasOrphanOut) {
+    var ins = dp.filter(function(p){return p.type === "in"});
+    var outs = dp.filter(function(p){return p.type === "out"});
+    hasOrphanOut = outs.length > 0 && ins.length === 0;
+  }
+  if (hasOrphanOut) {
+    // Look at previous day for an unmatched clock-in
+    var prevStart = new Date(dayStart.getTime() - 86400000);
+    var prevEnd = new Date(dayStart.getTime() - 1);
+    var prevPunches = allPunches.filter(function(p) {
+      return p.eid === eid && new Date(p.time) >= prevStart && new Date(p.time) <= prevEnd;
+    }).sort(function(a,b){return new Date(a.time)-new Date(b.time)});
+    // Find last punch of previous day
+    if (prevPunches.length > 0) {
+      var lastPrev = prevPunches[prevPunches.length - 1];
+      if (lastPrev.type === "in") {
+        // Carry this clock-in into today's punches
+        dp = [lastPrev].concat(dp);
+      }
+    }
+  }
+  return dp.sort(function(a,b){return new Date(a.time)-new Date(b.time)});
+}
+
 function calcWeekHours(allPunches, eid) {
   var monday = getMonday();
   var total = 0;
@@ -896,9 +930,7 @@ function calcWeekHours(allPunches, eid) {
     ds.setHours(0, 0, 0, 0);
     var de = new Date(ds);
     de.setHours(23, 59, 59, 999);
-    var dp = allPunches.filter(function (p) {
-      return p.eid === eid && new Date(p.time) >= ds && new Date(p.time) <= de;
-    });
+    var dp = getDayPunchesWithCarryOver(allPunches, eid, ds, de);
     total += calcDayHours(dp).netH;
   }
   return parseFloat(total.toFixed(1));
@@ -911,9 +943,7 @@ function calcWeekHoursForWeek(allPunches, eid, monday) {
     ds.setHours(0, 0, 0, 0);
     var de = new Date(ds);
     de.setHours(23, 59, 59, 999);
-    var dp = allPunches.filter(function (p) {
-      return p.eid === eid && new Date(p.time) >= ds && new Date(p.time) <= de;
-    });
+    var dp = getDayPunchesWithCarryOver(allPunches, eid, ds, de);
     total += calcDayHours(dp).netH;
   }
   return parseFloat(total.toFixed(1));
@@ -926,9 +956,7 @@ function getDailyBreakdown(allPunches, eid) {
     ds.setHours(0, 0, 0, 0);
     var de = new Date(ds);
     de.setHours(23, 59, 59, 999);
-    var dp = allPunches.filter(function (p) {
-      return p.eid === eid && new Date(p.time) >= ds && new Date(p.time) <= de;
-    });
+    var dp = getDayPunchesWithCarryOver(allPunches, eid, ds, de);
     return {
       day: d,
       hrs: parseFloat(calcDayHours(dp).netH.toFixed(1)),
@@ -943,9 +971,7 @@ function getDailyBreakdownForWeek(allPunches, eid, monday) {
     ds.setHours(0, 0, 0, 0);
     var de = new Date(ds);
     de.setHours(23, 59, 59, 999);
-    var dp = allPunches.filter(function (p) {
-      return p.eid === eid && new Date(p.time) >= ds && new Date(p.time) <= de;
-    });
+    var dp = getDayPunchesWithCarryOver(allPunches, eid, ds, de);
     return {
       day: d,
       date: new Date(ds),
