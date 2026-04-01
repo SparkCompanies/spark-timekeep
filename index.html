@@ -5134,7 +5134,7 @@ function AdminView({
     return p;
   }
   function genBadge() {
-    return String(emps.length + 1).padStart(4, "0");
+    var b;do{b=String(Math.floor(1000+Math.random()*9000))}while(emps.some(function(e){return e.badge===b}));return b;
   }
   function addEmp() {
     var sh = SHIFTS.find(function (s) {
@@ -5160,7 +5160,7 @@ function AdminView({
       st: "active",
       pts: 0
     };
-    onUpdateEmps(emps.concat([ne]));
+    onUpdateEmps(emps.concat([ne]), ne.id);
     logAdminAction("ADD_EMPLOYEE",ne.fn+" "+ne.ln+" ("+ne.badge+")",staffName);
     setForm({
       fn: "",
@@ -7517,16 +7517,22 @@ function App() {
       }, 500);
     })();
   }, []);
-  function persist(ne, npe) {
+  function persist(ne, npe, changedId) {
     if (!saveOk.current) return;
     sSet("tk-v7-data", {
       employees: ne,
       pointEvents: npe
     });
     if (useSupa()) {
-      ne.forEach(function (e) {
-        sbSaveEmployee(e);
-      });
+      if (changedId) {
+        var changed = ne.find(function(e){return e.id===changedId});
+        if (changed) sbSaveEmployee(changed);
+      } else {
+        /* Batch save — only on initial seed or clear, throttled */
+        ne.forEach(function(e,i){
+          setTimeout(function(){sbSaveEmployee(e)},i*50);
+        });
+      }
     }
   }
   function persistP(np, newPunch) {
@@ -7611,10 +7617,10 @@ function App() {
       sbSavePointEvent(ev);
     }
   }
-  function handleUpdateEmps(ne) {
+  function handleUpdateEmps(ne, changedId) {
     var updated = withPts(ne, pEvents, policy);
     setEmps(updated);
-    persist(updated, pEvents);
+    persist(updated, pEvents, changedId);
   }
   function downgradeEvent(evId) {
     var updated = pEvents.map(function(ev) {
