@@ -5203,8 +5203,8 @@ function AdminView({
       }
     }
     /* Then remove from React state WITHOUT triggering persist (which would re-upsert) */
-    setEmps(function(prev){ return prev.filter(function(x){return x.id!==id}); });
-    setPEvents(function(prev){ return prev.filter(function(x){return x.eid!==id}); });
+    onUpdateEmps(emps.filter(function(x){return x.id!==id}));
+    
     sSet("tk-v7-data", { employees: emps.filter(function(x){return x.id!==id}), pointEvents: pEvents.filter(function(x){return x.eid!==id}) });
     logAdminAction("DELETE",emp.fn+" "+emp.ln+" ("+emp.badge+") — permanently removed",staffName);
   }
