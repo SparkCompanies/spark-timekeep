@@ -7386,7 +7386,7 @@ function App() {
   var r2 = useState("kiosk"),
     view = r2[0],
     setView = r2[1];
-  var rStaff = useState(DEFAULT_STAFF),
+  var rStaff = useState([]),
     staff = rStaff[0],
     setStaff = rStaff[1];
   var rLogged = useState(null),
@@ -7427,17 +7427,10 @@ function App() {
             setEmps(withPts(sbEmps, sbPe || [], sbPol || DEFAULT_POLICY));
             setPEvents(sbPe || []);
           } else {
-            /* First run — seed Supabase so other browsers/devices see the data */
-            var seeded = SEED.map(function (e) {
-              return Object.assign({}, e, { pts: 0 });
-            });
-            setEmps(seeded);
+            /* Supabase returned empty — do NOT seed over real data */
+            console.warn("Supabase returned 0 employees — possible network issue. NOT seeding.");
+            setEmps([]);
             setPEvents([]);
-            seeded.forEach(function(e) { sbSaveEmployee(e); });
-            sbSaveConfig("policy", DEFAULT_POLICY);
-            sbSaveConfig("geo", DEFAULT_GEO);
-            sbSaveStaff(DEFAULT_STAFF);
-            console.log("Seeded " + seeded.length + " employees to Supabase");
           }
           setPunches(sbPch || []);
           setRequests(sbReqs || []);
@@ -7504,11 +7497,8 @@ function App() {
               pointEvents: store.pointEvents || []
             });
           } else {
-            setEmps(SEED.map(function (e) {
-              return Object.assign({}, e, {
-                pts: 0
-              });
-            }));
+            console.warn("No local data found and Supabase not active");
+            setEmps([]);
             setPEvents([]);
           }
           setPunches(pch || []);
@@ -7518,12 +7508,8 @@ function App() {
           if (stf && stf.length > 0) setStaff(stf);
         }
       } catch (e) {
-        console.error(e);
-        setEmps(SEED.map(function (e) {
-          return Object.assign({}, e, {
-            pts: 0
-          });
-        }));
+        console.error("Load error:",e);
+        /* Do NOT fall back to SEED */
       }
       setLoading(false);
       setTimeout(function () {
@@ -7683,11 +7669,9 @@ function App() {
     }
   }
   function handleClearData() {
-    var fresh = SEED.map(function (e) {
-      return Object.assign({}, e, {
-        pts: 0
-      });
-    });
+    if(!confirm("⚠ WARNING: This will delete ALL punch data, points, and requests. Employee roster will NOT be affected. Continue?")){return}
+    /* Keep existing employees — only clear punch data */
+    var fresh = emps.map(function(e){return Object.assign({},e,{pts:0})});
     setEmps(fresh);
     setPunches([]);
     setPEvents([]);
