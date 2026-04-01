@@ -4144,280 +4144,88 @@ function ManagerView({
       fontWeight: 700,
       color: C.spark
     }
-  }, "$", Math.round(totalLabor).toLocaleString()))))), mTab === "whos-in" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      fontWeight: 700,
-      color: C.t1,
-      marginBottom: 4
+  }, "$", Math.round(totalLabor).toLocaleString()))))), mTab === "whos-in" && React.createElement("div",null,
+  // ── SEARCH + FILTER ──
+  React.createElement("div",{style:{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap",alignItems:"center"}},
+    React.createElement("input",{placeholder:"Search employees...",value:search,onChange:function(e){setSearch(e.target.value)},style:{padding:"8px 12px",background:C.bg,border:"1px solid "+C.bd,color:C.t1,borderRadius:6,fontSize:13,outline:"none",width:260,fontFamily:"inherit"}}),
+    React.createElement("select",{value:dept,onChange:function(e){setDept(e.target.value)},style:{padding:"8px 12px",background:C.bg,border:"1px solid "+C.bd,color:C.t1,borderRadius:6,fontSize:13,outline:"none",fontFamily:"inherit",appearance:"auto"}},
+      React.createElement("option",{value:"all"},"All Departments"),
+      emps.filter(function(e){return e.st==="active"}).map(function(e){return e.dept}).filter(function(v,i,a){return v&&a.indexOf(v)===i}).sort().map(function(d){return React.createElement("option",{key:d,value:d},d)})
+    ),
+    search&&React.createElement("button",{onClick:function(){setSearch("");setDept("all")},style:{padding:"6px 12px",background:"transparent",border:"1px solid "+C.bd,color:C.t3,borderRadius:6,fontSize:12,cursor:"pointer"}},"Clear"),
+    React.createElement("div",{style:{fontSize:12,color:C.t3,marginLeft:8}},statuses.filter(function(e){return e.st==="active"}).length," total employees")
+  ),
+
+  // ── KANBAN BOARD ──
+  (function(){
+    var srch=search?search.toLowerCase():"";
+    var filterFn=function(e){
+      if(dept!=="all"&&e.dept!==dept)return false;
+      if(srch){var nm=(e.fn+" "+e.ln).toLowerCase();if(nm.indexOf(srch)===-1&&(e.badge||"").indexOf(srch)===-1&&(e.dept||"").toLowerCase().indexOf(srch)===-1)return false}
+      return true;
+    };
+    var fWorking=clockedIn.filter(filterFn);
+    var fBreak=onBreak.filter(filterFn);
+    var fNotIn=notIn.filter(filterFn);
+
+    function empCard(e,borderColor){
+      var sinceStr=e.cs&&e.cs.since?fmtTime(e.cs.since):"";
+      var weekH=calcWeekHoursForWeek(punches,e.id,mon);
+      return React.createElement("div",{key:e.id,onClick:function(){setSelEmp(e);setMTab("timesheets")},style:{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:C.bg,border:"1px solid "+C.bd,borderLeft:"3px solid "+borderColor,borderRadius:8,cursor:"pointer",marginBottom:6,transition:"background 0.15s"},onMouseEnter:function(ev){ev.currentTarget.style.background=C.sf},onMouseLeave:function(ev){ev.currentTarget.style.background=C.bg}},
+        React.createElement(Av,{fn:e.fn,ln:e.ln,sz:32}),
+        React.createElement("div",{style:{flex:1,minWidth:0}},
+          React.createElement("div",{style:{fontSize:14,fontWeight:600,color:C.t1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}},e.fn," ",e.ln),
+          React.createElement("div",{style:{fontSize:12,color:C.t4}},e.dept||"",sinceStr?" · since "+sinceStr:"")
+        ),
+        React.createElement("div",{style:{textAlign:"right",flexShrink:0}},
+          React.createElement("div",{style:{fontSize:14,fontWeight:700,fontFamily:"'JetBrains Mono',monospace",color:C.t1}},weekH.toFixed(1)+"h"),
+          React.createElement("div",{style:{fontSize:11,color:C.t4}},"this week")
+        )
+      )
     }
-  }, "Live Attendance Board"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      color: C.t4,
-      marginBottom: 16
-    }
-  }, "Real-time status of all active employees \xB7 Auto-refreshes every minute"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: mo ? "1fr" : "repeat(3,1fr)",
-      gap: 12,
-      marginBottom: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: C.green + "10",
-      border: "1px solid " + C.green + "33",
-      borderRadius: 12,
-      padding: 14
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: 10
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 17,
-      fontWeight: 700,
-      color: C.green
-    }
-  }, "Working (", clockedIn.length, ")"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      width: 8,
-      height: 8,
-      borderRadius: 4,
-      background: C.green,
-      animation: "pulse 2s ease infinite"
-    }
-  })), clockedIn.length === 0 ? /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      color: C.t4
-    }
-  }, "No one clocked in") : clockedIn.map(function (e) {
-    var sinceStr = e.cs.since ? fmtTime(e.cs.since) : "";
-    return /*#__PURE__*/React.createElement("div", {
-      key: e.id,
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-        padding: "6px 0",
-        borderBottom: "1px solid " + C.bd + "06"
-      }
-    }, /*#__PURE__*/React.createElement(Av, {
-      fn: e.fn,
-      ln: e.ln,
-      sz: 28
-    }), /*#__PURE__*/React.createElement("div", {
-      style: {
-        flex: 1
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 14,
-        fontWeight: 600,
-        color: C.t1
-      }
-    ,onClick:function(){setSelEmp(e);setMTab("timesheets")}}, e.fn, " ", e.ln), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontFamily: Fm,
-        fontSize: 13,
-        color: C.t4
-      }
-    }, e.dept, " \xB7 since ", sinceStr)), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontFamily: Fm,
-        fontSize: 13,
-        fontWeight: 700,
-        color: C.spark
-      }
-    }, e.weekH.toFixed(1), "h"));
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: C.blue + "10",
-      border: "1px solid " + C.blue + "33",
-      borderRadius: 12,
-      padding: 14
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: 10
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 17,
-      fontWeight: 700,
-      color: C.blue
-    }
-  }, "On Break (", onBreak.length, ")"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 14
-    }
-  }, "\u2615")), onBreak.length === 0 ? /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      color: C.t4
-    }
-  }, "No active breaks") : onBreak.map(function (e) {
-    var sinceStr = e.cs.since ? fmtTime(e.cs.since) : "";
-    return /*#__PURE__*/React.createElement("div", {
-      key: e.id,
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-        padding: "6px 0",
-        borderBottom: "1px solid " + C.bd + "06"
-      }
-    }, /*#__PURE__*/React.createElement(Av, {
-      fn: e.fn,
-      ln: e.ln,
-      sz: 28
-    }), /*#__PURE__*/React.createElement("div", {
-      style: {
-        flex: 1
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 14,
-        fontWeight: 600,
-        color: C.t1
-      }
-    }, e.fn, " ", e.ln), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontFamily: Fm,
-        fontSize: 13,
-        color: C.t4
-      }
-    }, e.dept, " \xB7 break since ", sinceStr)));
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: C.t4 + "10",
-      border: "1px solid " + C.bd,
-      borderRadius: 12,
-      padding: 14
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: 10
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 17,
-      fontWeight: 700,
-      color: C.t3
-    }
-  }, "Not Clocked In (", notIn.length, ")")), notIn.length === 0 ? /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      color: C.green
-    }
-  }, "Everyone accounted for!") : notIn.map(function (e) {
-    var isLate = e.excs && e.excs.some(function (x) {
-      return x.type === "no-show" || x.type === "tardy-short" || x.type === "tardy-long";
-    });
-    return /*#__PURE__*/React.createElement("div", {
-      key: e.id,
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-        padding: "6px 0",
-        borderBottom: "1px solid " + C.bd + "06"
-      }
-    }, /*#__PURE__*/React.createElement(Av, {
-      fn: e.fn,
-      ln: e.ln,
-      sz: 28
-    }), /*#__PURE__*/React.createElement("div", {
-      style: {
-        flex: 1
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 14,
-        fontWeight: 600,
-        color: C.t1
-      }
-    }, e.fn, " ", e.ln), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontFamily: Fm,
-        fontSize: 13,
-        color: C.t4
-      }
-    }, e.dept, " \xB7 ", e.shiftStart, "\u2013", e.shiftEnd)), isLate && /*#__PURE__*/React.createElement(Tag, {
-      color: C.red
-    }, "LATE"));
-  }))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: C.sf,
-      border: "1px solid " + C.bd,
-      borderRadius: 12,
-      padding: mo ? 12 : 16
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 16,
-      fontWeight: 700,
-      color: C.t1,
-      marginBottom: 10
-    }
-  }, "Department Summary"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: mo ? "1fr 1fr" : "repeat(" + DEPTS.length + ",1fr)",
-      gap: 8
-    }
-  }, DEPTS.map(function (d) {
-    var deptEmps = statuses.filter(function (e) {
-      return e.dept === d;
-    });
-    var inCount = deptEmps.filter(function (e) {
-      return e.cs.status === "in";
-    }).length;
-    var total = deptEmps.length;
-    var pct = total > 0 ? Math.round(inCount / total * 100) : 0;
-    return /*#__PURE__*/React.createElement("div", {
-      key: d,
-      style: {
-        textAlign: "center",
-        padding: "12px 8px",
-        background: C.bg,
-        borderRadius: 8,
-        border: "1px solid " + C.bd
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 13,
-        fontWeight: 700,
-        color: C.t2,
-        marginBottom: 6
-      }
-    }, d), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontFamily: Fm,
-        fontSize: 20,
-        fontWeight: 700,
-        color: pct >= 80 ? C.green : pct >= 50 ? C.spark : C.red
-      }
-    }, inCount, "/", total), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontFamily: Fm,
-        fontSize: 13,
-        color: C.t4
-      }
-    }, pct, "% present"));
-  })))), mTab === "timesheets" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+
+    return React.createElement("div",{style:{display:"grid",gridTemplateColumns:mo?"1fr":"1fr 1fr 1fr",gap:12,alignItems:"flex-start"}},
+      // ── WORKING COLUMN ──
+      React.createElement("div",{style:{background:C.sf,border:"1px solid "+C.green+"33",borderRadius:12,padding:14}},
+        React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}},
+          React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
+            React.createElement("div",{style:{width:10,height:10,borderRadius:5,background:C.green,animation:"pulse 2s ease infinite"}}),
+            React.createElement("div",{style:{fontSize:15,fontWeight:700,color:C.green}},"Working")
+          ),
+          React.createElement("div",{style:{fontSize:22,fontWeight:800,color:C.green,fontFamily:"'JetBrains Mono',monospace"}},fWorking.length)
+        ),
+        fWorking.length===0?React.createElement("div",{style:{fontSize:13,color:C.t4,padding:8,textAlign:"center"}},"No one clocked in"):
+        React.createElement("div",{style:{maxHeight:400,overflowY:"auto"}},fWorking.map(function(e){return empCard(e,C.green)}))
+      ),
+
+      // ── ON BREAK COLUMN ──
+      React.createElement("div",{style:{background:C.sf,border:"1px solid "+(C.blue||"#3B82F6")+"33",borderRadius:12,padding:14}},
+        React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}},
+          React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
+            React.createElement("div",{style:{width:10,height:10,borderRadius:5,background:C.blue||"#3B82F6"}}),
+            React.createElement("div",{style:{fontSize:15,fontWeight:700,color:C.blue||"#3B82F6"}},"On Break")
+          ),
+          React.createElement("div",{style:{fontSize:22,fontWeight:800,color:C.blue||"#3B82F6",fontFamily:"'JetBrains Mono',monospace"}},fBreak.length)
+        ),
+        fBreak.length===0?React.createElement("div",{style:{fontSize:13,color:C.t4,padding:8,textAlign:"center"}},"No one on break"):
+        React.createElement("div",{style:{maxHeight:400,overflowY:"auto"}},fBreak.map(function(e){return empCard(e,C.blue||"#3B82F6")}))
+      ),
+
+      // ── NOT IN COLUMN ──
+      React.createElement("div",{style:{background:C.sf,border:"1px solid "+C.red+"33",borderRadius:12,padding:14}},
+        React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}},
+          React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
+            React.createElement("div",{style:{width:10,height:10,borderRadius:5,background:C.red}}),
+            React.createElement("div",{style:{fontSize:15,fontWeight:700,color:C.red}},"Not Clocked In")
+          ),
+          React.createElement("div",{style:{fontSize:22,fontWeight:800,color:C.red,fontFamily:"'JetBrains Mono',monospace"}},fNotIn.length)
+        ),
+        fNotIn.length===0?React.createElement("div",{style:{fontSize:13,color:C.green,padding:8,textAlign:"center"}},"Everyone accounted for!"):
+        React.createElement("div",{style:{maxHeight:400,overflowY:"auto"}},fNotIn.map(function(e){return empCard(e,C.red)}))
+      )
+    )
+  })()
+), mTab === "timesheets" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       fontWeight: 700,
