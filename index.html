@@ -3156,6 +3156,165 @@ function ReportsTab({emps,punches,policy,mon}){
   );
 }
 
+
+// ═══════════════════════════════════════════
+// UKG-STYLE TIMESHEET DRILLDOWN
+// ═══════════════════════════════════════════
+function TimesheetDrilldown({emp,punches,mon,weekOffset,setWeekOffset,setSelEmp,setSelDay,selDay,onIssuePoint,setEditingPunch,deletePunch,editPunch,policy,onPunch}) {
+  var P=policy||{graceMins:7,otWeekly:40};
+  var Fm="'JetBrains Mono',monospace";
+  var mo=useMobile();
+  var daily=getDailyBreakdownForWeek(punches,emp.id,mon);
+  var weekTotal=daily.reduce(function(s,d){return s+d.hrs},0);
+  var otHrs=Math.max(0,weekTotal-(P.otWeekly||40));
+  var regHrs=weekTotal-otHrs;
+  var cost=regHrs*(emp.rate||16)+otHrs*(emp.rate||16)*1.5;
+  var sun=new Date(mon);sun.setDate(sun.getDate()+6);sun.setHours(23,59,59,999);
+  var allWeekPunches=punches.filter(function(p){return p.eid===emp.id&&new Date(p.time)>=mon&&new Date(p.time)<=sun}).sort(function(a,b){return new Date(a.time)-new Date(b.time)});
+
+  function fmtT(iso){return new Date(iso).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}
+  function getPunchesForDay(dayDate){
+    var ds=new Date(dayDate);ds.setHours(0,0,0,0);
+    var de=new Date(dayDate);de.setHours(23,59,59,999);
+    return getDayPunchesWithCarryOver(punches,emp.id,ds,de);
+  }
+
+  var isCurrentWeek=weekOffset===0;
+  var hdr={background:C.sf,border:"1px solid "+C.bd,borderRadius:12,padding:mo?16:24,marginBottom:16};
+  var cellS={padding:mo?"6px 4px":"8px 12px",fontSize:13,borderBottom:"1px solid "+C.bd+"44"};
+  var thS=Object.assign({},cellS,{fontWeight:700,color:C.t4,fontSize:11,textTransform:"uppercase",letterSpacing:1});
+
+  return React.createElement("div",{style:hdr},
+    // ── HEADER ──
+    React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16}},
+      React.createElement("div",{style:{display:"flex",alignItems:"center",gap:12}},
+        React.createElement(Av,{fn:emp.fn,ln:emp.ln,sz:44}),
+        React.createElement("div",null,
+          React.createElement("div",{style:{fontSize:20,fontWeight:800,color:C.t1}},emp.fn," ",emp.ln),
+          React.createElement("div",{style:{fontSize:13,color:C.t3}},emp.badge," · ",emp.dept," · $",emp.rate||16,"/hr · ",emp.shiftStart||"06:00","–",emp.shiftEnd||"14:30")
+        )
+      ),
+      React.createElement("button",{onClick:function(){setSelEmp(null);setSelDay(null)},style:{padding:"8px 16px",background:"transparent",border:"1px solid "+C.bd,color:C.t3,borderRadius:8,cursor:"pointer",fontSize:13,fontWeight:600}},"Close ✕")
+    ),
+
+    // ── WEEK NAV ──
+    React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,padding:"12px 16px",background:C.bg,borderRadius:8,border:"1px solid "+C.bd}},
+      React.createElement("button",{onClick:function(){setWeekOffset(weekOffset-1);setSelDay(null)},style:{padding:"6px 14px",background:"transparent",border:"1px solid "+C.bd,color:C.t2,borderRadius:6,cursor:"pointer",fontSize:13,fontWeight:600}},"◀ Prev Week"),
+      React.createElement("div",{style:{textAlign:"center"}},
+        React.createElement("div",{style:{fontSize:16,fontWeight:700,color:C.t1}},"Timesheet Edit"),
+        React.createElement("div",{style:{fontSize:13,color:isCurrentWeek?C.spark:C.t3,fontWeight:600}},mon.toLocaleDateString(undefined,{month:"long",day:"numeric"})," – ",new Date(mon.getTime()+6*86400000).toLocaleDateString(undefined,{month:"long",day:"numeric",year:"numeric"}),isCurrentWeek?" · Current":"")
+      ),
+      React.createElement("button",{onClick:function(){setWeekOffset(Math.min(0,weekOffset+1));setSelDay(null)},style:{padding:"6px 14px",background:"transparent",border:"1px solid "+C.bd,color:C.t2,borderRadius:6,cursor:"pointer",fontSize:13,fontWeight:600}},"Next Week ▶")
+    ),
+
+    // ── SUMMARY BAR ──
+    React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:8,marginBottom:16}},
+      [{l:"Total",v:weekTotal.toFixed(1)+"h",c:C.spark},
+       {l:"Regular",v:regHrs.toFixed(1)+"h",c:C.t1},
+       {l:"Overtime",v:otHrs.toFixed(1)+"h",c:otHrs>0?C.red:C.t4},
+       {l:"Cost",v:"$"+cost.toFixed(0),c:C.spark},
+       {l:"Points",v:String(emp.pts||0),c:(emp.pts||0)>0?C.orange:C.green}
+      ].map(function(s){
+        return React.createElement("div",{key:s.l,style:{background:C.bg,border:"1px solid "+C.bd,borderRadius:8,padding:"10px 12px",textAlign:"center"}},
+          React.createElement("div",{style:{fontSize:10,fontWeight:700,color:C.t4,textTransform:"uppercase",letterSpacing:1,marginBottom:2}},s.l),
+          React.createElement("div",{style:{fontSize:18,fontWeight:800,color:s.c,fontFamily:Fm}},s.v)
+        )
+      })
+    ),
+
+    // ── TIME ENTRY TABLE ──
+    React.createElement("div",{style:{overflowX:"auto",marginBottom:16}},
+      React.createElement("table",{style:{width:"100%",borderCollapse:"collapse"}},
+        React.createElement("thead",null,
+          React.createElement("tr",null,
+            ["Day","Date","In","Out","Break","Net Hours","Exc",""].map(function(col){
+              return React.createElement("th",{key:col,style:thS},col)
+            })
+          )
+        ),
+        React.createElement("tbody",null,
+          daily.map(function(d,i){
+            var dp=d.punches||[];
+            var ins=dp.filter(function(p){return p.type==="in"});
+            var outs=dp.filter(function(p){return p.type==="out"});
+            var brkOut=dp.filter(function(p){return p.type==="break-out"});
+            var brkIn=dp.filter(function(p){return p.type==="break-in"});
+            var firstIn=ins.length>0?fmtT(ins[0].time):"–";
+            var lastOut=outs.length>0?fmtT(outs[outs.length-1].time):"–";
+            var breakMins=0;
+            brkOut.forEach(function(bo,bi){if(brkIn[bi])breakMins+=Math.round((new Date(brkIn[bi].time)-new Date(bo.time))/60000)});
+            var breakStr=breakMins>0?breakMins+"m":"–";
+            var isToday=d.date&&d.date.toDateString()===new Date().toDateString();
+            var hasMismatch=ins.length!==outs.length&&!isToday;
+            var dayLabel=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][i];
+            var dateStr=d.date?d.date.toLocaleDateString(undefined,{month:"short",day:"numeric"}):"";
+            var isSelected=selDay===i;
+
+            return React.createElement("tr",{key:i,onClick:function(){setSelDay(isSelected?null:i)},style:{cursor:"pointer",background:isSelected?"rgba(250,204,21,0.06)":isToday?"rgba(250,204,21,0.03)":"transparent",borderLeft:isSelected?"3px solid "+C.spark:"3px solid transparent"}},
+              React.createElement("td",{style:Object.assign({},cellS,{fontWeight:700,color:isToday?C.spark:C.t1})},dayLabel),
+              React.createElement("td",{style:Object.assign({},cellS,{color:C.t3})},dateStr),
+              React.createElement("td",{style:Object.assign({},cellS,{fontFamily:Fm,color:firstIn==="–"?C.t4:C.green,fontWeight:600})},firstIn),
+              React.createElement("td",{style:Object.assign({},cellS,{fontFamily:Fm,color:lastOut==="–"?C.t4:C.red,fontWeight:600})},lastOut),
+              React.createElement("td",{style:Object.assign({},cellS,{fontFamily:Fm,color:C.t3})},breakStr),
+              React.createElement("td",{style:Object.assign({},cellS,{fontFamily:Fm,fontWeight:700,fontSize:15,color:d.hrs>10?C.red:d.hrs>0?C.t1:C.t4})},d.hrs>0?d.hrs.toFixed(1)+"h":"–"),
+              React.createElement("td",{style:cellS},hasMismatch?React.createElement("span",{style:{color:C.red,fontSize:11,fontWeight:700}},"⚠ Mismatch"):dp.length===0&&!isToday?React.createElement("span",{style:{color:C.orange,fontSize:11}},"No punches"):null),
+              React.createElement("td",{style:Object.assign({},cellS,{textAlign:"center"})},dp.length>0?React.createElement("span",{style:{fontSize:11,color:C.t3}},dp.length," punches"):null)
+            )
+          })
+        )
+      )
+    ),
+
+    // ── SELECTED DAY DETAIL ──
+    selDay!==null&&daily[selDay]&&React.createElement("div",{style:{background:C.bg,border:"1px solid "+C.bd,borderRadius:8,padding:16,marginBottom:16}},
+      React.createElement("div",{style:{fontSize:14,fontWeight:700,color:C.t1,marginBottom:12}},daily[selDay].day," ",daily[selDay].date?daily[selDay].date.toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"}):"",React.createElement("span",{style:{color:C.t4,fontWeight:400}}," — Punch Detail")),
+      (daily[selDay].punches||[]).length===0?React.createElement("div",{style:{color:C.t4,fontSize:13}},"No punches recorded"):
+      React.createElement("table",{style:{width:"100%",borderCollapse:"collapse"}},
+        React.createElement("thead",null,React.createElement("tr",null,["Type","Time","Device","Actions"].map(function(col){return React.createElement("th",{key:col,style:Object.assign({},thS,{padding:"6px 8px"})},col)}))),
+        React.createElement("tbody",null,(daily[selDay].punches||[]).map(function(p){
+          var pt=PTYPES.find(function(x){return x.k===p.type})||{l:p.type,c:C.t3};
+          return React.createElement("tr",{key:p.id},
+            React.createElement("td",{style:Object.assign({},cellS,{padding:"6px 8px"})},React.createElement(Tag,{color:pt.c},pt.l)),
+            React.createElement("td",{style:Object.assign({},cellS,{padding:"6px 8px",fontFamily:Fm,fontWeight:600,color:C.t1})},new Date(p.time).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",second:"2-digit"}),p.edited?React.createElement("span",{style:{color:C.spark,fontSize:10,marginLeft:4}},"*"):null),
+            React.createElement("td",{style:Object.assign({},cellS,{padding:"6px 8px",color:C.t4,fontSize:12})},p.dev||"KIOSK",p.ip?" · "+p.ip:""),
+            React.createElement("td",{style:Object.assign({},cellS,{padding:"6px 8px"})},
+              React.createElement("div",{style:{display:"flex",gap:4}},
+                React.createElement("button",{onClick:function(){setEditingPunch(Object.assign({},p,{eid:emp.id}))},style:{padding:"3px 8px",fontSize:11,background:"transparent",border:"1px solid "+C.spark,color:C.spark,borderRadius:4,cursor:"pointer",fontWeight:600}},"Edit"),
+                React.createElement("button",{onClick:function(){deletePunch(p.id)},style:{padding:"3px 8px",fontSize:11,background:"transparent",border:"1px solid "+(C.red||"#EF4444"),color:C.red||"#EF4444",borderRadius:4,cursor:"pointer",fontWeight:600}},"Del")
+              )
+            )
+          )
+        }))
+      )
+    ),
+
+    // ── ALL PUNCHES THIS WEEK ──
+    React.createElement("div",{style:{marginBottom:16}},
+      React.createElement("div",{style:{fontSize:14,fontWeight:700,color:C.t1,marginBottom:8}},"All Punches This Week (",allWeekPunches.length,")"),
+      allWeekPunches.length===0?React.createElement("div",{style:{color:C.t4,fontSize:13}},"No punches this week"):
+      React.createElement("div",{style:{maxHeight:200,overflowY:"auto"}},allWeekPunches.map(function(p){
+        var pt=PTYPES.find(function(x){return x.k===p.type})||{l:p.type,c:C.t3};
+        return React.createElement("div",{key:p.id,style:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"4px 0",borderBottom:"1px solid "+C.bd+"22",fontSize:13}},
+          React.createElement("span",{style:{display:"flex",alignItems:"center",gap:8}},React.createElement(Tag,{color:pt.c},pt.l),React.createElement("span",{style:{color:C.t1}},new Date(p.time).toLocaleString())),
+          React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
+            React.createElement("span",{style:{color:C.t4,fontSize:12}},p.dev||"",p.ip?" · "+p.ip:""),
+            React.createElement("button",{onClick:function(){setEditingPunch(Object.assign({},p,{eid:emp.id}))},style:{padding:"2px 6px",fontSize:10,background:"transparent",border:"1px solid "+C.spark,color:C.spark,borderRadius:3,cursor:"pointer",fontWeight:600}},"Edit"),
+            React.createElement("button",{onClick:function(){deletePunch(p.id)},style:{padding:"2px 6px",fontSize:10,background:"transparent",border:"1px solid "+(C.red||"#EF4444"),color:C.red||"#EF4444",borderRadius:3,cursor:"pointer",fontWeight:600}},"Del")
+          )
+        )
+      }))
+    ),
+
+    // ── ISSUE POINTS ──
+    React.createElement("div",{style:{borderTop:"1px solid "+C.bd,paddingTop:12}},
+      React.createElement("div",{style:{fontSize:13,fontWeight:700,color:C.t1,marginBottom:8}},"Issue Points"),
+      React.createElement("div",{style:{display:"flex",gap:6,flexWrap:"wrap"}},RULES.map(function(r){
+        return React.createElement("button",{key:r.k,onClick:function(){onIssuePoint(emp.id,r.k)},style:{padding:"5px 10px",borderRadius:6,fontSize:12,fontWeight:600,color:C.bg,background:C.spark,border:"none",cursor:"pointer"}},r.v," (+",r.p,")")
+      }))
+    )
+  )
+}
+
 function ManagerView({
   emps,
   punches,
@@ -3661,404 +3820,7 @@ function ManagerView({
       color: C.bg,
       background: C.spark
     }
-  }, "+ Add Punch")), selEmp ? /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: C.sf,
-      border: "1px solid " + C.bd,
-      borderRadius: 14,
-      padding: mo ? 14 : 20,
-      marginBottom: 16
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: 14
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      alignItems: "center",
-      gap: 10
-    }
-  }, /*#__PURE__*/React.createElement(Av, {
-    fn: selEmp.fn,
-    ln: selEmp.ln,
-    sz: 40
-  }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 18,
-      fontWeight: 700,
-      color: C.t1
-    }
-  }, selEmp.fn, " ", selEmp.ln), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      color: C.t4
-    }
-  }, selEmp.badge, " \xB7 ", selEmp.dept, " \xB7 $", selEmp.rate || 16, "/hr \xB7 ", selEmp.shiftStart || "06:00", "\u2013", selEmp.shiftEnd || "14:30"))), /*#__PURE__*/React.createElement("button", {
-    onClick: function () {
-      setSelEmp(null);
-      setSelDay(null);
-    },
-    style: {
-      fontSize: 13,
-      color: C.t3,
-      background: "none",
-      border: "none"
-    }
-  }, "Close \u2715")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      marginBottom: 10
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: function () {
-      setWeekOffset(weekOffset - 1);
-      setSelDay(null);
-    },
-    style: {
-      padding: "4px 10px",
-      borderRadius: 6,
-      fontSize: 13,
-      fontWeight: 700,
-      color: C.t3,
-      background: C.bg,
-      border: "1px solid " + C.bd
-    }
-  }, "\u25C0 Prev"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      textAlign: "center"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 16,
-      fontWeight: 700,
-      color: C.t1
-    }
-  }, "Weekly Timesheet"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      color: isCurrentWeek ? C.spark : C.t4
-    }
-  }, weekLabel, isCurrentWeek ? " (Current)" : "")), /*#__PURE__*/React.createElement("button", {
-    onClick: function () {
-      setWeekOffset(Math.min(0, weekOffset + 1));
-      setSelDay(null);
-    },
-    disabled: isCurrentWeek,
-    style: {
-      padding: "4px 10px",
-      borderRadius: 6,
-      fontSize: 13,
-      fontWeight: 700,
-      color: isCurrentWeek ? C.t4 : C.t3,
-      background: C.bg,
-      border: "1px solid " + C.bd,
-      opacity: isCurrentWeek ? 0.4 : 1
-    }
-  }, "Next \u25B6")), function () {
-    var daily = getDailyBreakdownForWeek(punches, selEmp.id, mon);
-    return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "grid",
-        gridTemplateColumns: "repeat(7,1fr)",
-        gap: 4,
-        marginBottom: 10
-      }
-    }, daily.map(function (d, i) {
-      var isToday = d.isToday;
-      var isSel = selDay === i;
-      return /*#__PURE__*/React.createElement("div", {
-        key: d.day,
-        onClick: function () {
-          setSelDay(selDay === i ? null : i);
-        },
-        style: {
-          background: isSel ? C.spark + "20" : isToday ? C.spark + "10" : C.bg,
-          border: "2px solid " + (isSel ? C.spark : isToday ? C.spark + "44" : C.bd),
-          borderRadius: 8,
-          padding: "8px 4px",
-          textAlign: "center",
-          cursor: "pointer"
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        style: {
-          fontSize: 13,
-          fontWeight: 600,
-          color: isSel ? C.spark : C.t4,
-          letterSpacing: 1,
-          marginBottom: 2
-        }
-      }, d.day), /*#__PURE__*/React.createElement("div", {
-        style: {
-          fontSize: 13,
-          color: C.t4,
-          marginBottom: 2
-        }
-      }, d.date.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric"
-      })), /*#__PURE__*/React.createElement("div", {
-        style: {
-          fontFamily: Fm,
-          fontSize: 16,
-          fontWeight: 700,
-          color: d.hrs > P.otDaily ? C.orange : d.hrs > 0 ? C.t1 : C.t4
-        }
-      }, d.hrs > 0 ? d.hrs.toFixed(1) : "-"), /*#__PURE__*/React.createElement("div", {
-        style: {
-          fontSize: 13,
-          color: C.t4
-        }
-      }, d.punches.length, " punch", d.punches.length !== 1 ? "es" : ""));
-    })), selDay !== null && daily[selDay] && /*#__PURE__*/React.createElement("div", {
-      style: {
-        background: C.bg,
-        border: "1px solid " + C.bd,
-        borderRadius: 10,
-        padding: 12,
-        marginBottom: 10
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 13,
-        fontWeight: 700,
-        color: C.t1,
-        marginBottom: 8
-      }
-    }, daily[selDay].day, " ", daily[selDay].date.toLocaleDateString("en-US", {
-      weekday: "long",
-      month: "long",
-      day: "numeric"
-    }), " \u2014 Punch Detail"), daily[selDay].punches.length === 0 ? /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 13,
-        color: C.t4,
-        padding: "8px 0"
-      }
-    }, "No punches recorded") : daily[selDay].punches.map(function (p) {
-      var pt2 = PTYPES.find(function (x) {
-        return x.k === p.type;
-      }) || {
-        l: p.type,
-        c: C.t3
-      };
-      return /*#__PURE__*/React.createElement("div", {
-        key: p.id,
-        style: {
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "6px 0",
-          borderBottom: "1px solid " + C.bd + "06"
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        style: {
-          display: "flex",
-          alignItems: "center",
-          gap: 8
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        style: {
-          width: 8,
-          height: 8,
-          borderRadius: 4,
-          background: pt2.c
-        }
-      }), /*#__PURE__*/React.createElement(Tag, {
-        color: pt2.c
-      }, pt2.l)), /*#__PURE__*/React.createElement("div", {
-        style: {
-          fontFamily: Fm,
-          fontSize: 13,
-          fontWeight: 600,
-          color: C.t1
-        }
-      }, new Date(p.time).toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit"
-      })), /*#__PURE__*/React.createElement("div", {
-        style: {
-          textAlign: "right"
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        style: {
-          fontSize: 13,
-          color: C.t4
-        }
-      }, p.dev || "KIOSK", p.ip ? " · " + p.ip : ""), p.lat ? /*#__PURE__*/React.createElement("div", {
-        style: {
-          fontSize: 13,
-          color: C.green,
-          fontFamily: Fm
-        }
-      }, "\u25C9 ", p.lat.toFixed(4), "\xB0, ", p.lng.toFixed(4), "\xB0", p.dist != null ? " · " + p.dist + "m" : "") : null), /*#__PURE__*/React.createElement("div",{style:{display:"flex",gap:6,alignItems:"center",flexShrink:0}},/*#__PURE__*/React.createElement("button",{onClick:function(ev){ev.stopPropagation();setEditingPunch(Object.assign({},p,{eid:selEmp.id}))},style:{padding:"4px 10px",fontSize:11,background:"transparent",border:"1px solid "+(C.spark||"#FACC15"),color:C.spark||"#FACC15",borderRadius:4,cursor:"pointer",fontWeight:600}},"Edit"),/*#__PURE__*/React.createElement("button",{onClick:function(ev){ev.stopPropagation();deletePunch(p.id)},style:{padding:"4px 10px",fontSize:11,background:"transparent",border:"1px solid "+(C.red||"#EF4444"),color:C.red||"#EF4444",borderRadius:4,cursor:"pointer",fontWeight:600}},"Del")));
-    }), daily[selDay].punches.length > 0 && /*#__PURE__*/React.createElement("div", {
-      style: {
-        marginTop: 8,
-        paddingTop: 8,
-        borderTop: "1px solid " + C.bd,
-        display: "flex",
-        justifyContent: "space-between"
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 13,
-        fontWeight: 600,
-        color: C.t3
-      }
-    }, "Day Total"), /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontFamily: Fm,
-        fontSize: 13,
-        fontWeight: 700,
-        color: C.spark
-      }
-    }, daily[selDay].hrs.toFixed(1), "h"))));
-  }(), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 12,
-      flexWrap: "wrap",
-      marginBottom: 10,
-      padding: "8px 12px",
-      background: C.bg,
-      borderRadius: 8,
-      border: "1px solid " + C.bd
-    }
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 13,
-      color: C.t4
-    }
-  }, "Week Total: "), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontFamily: Fm,
-      fontSize: 16,
-      fontWeight: 700,
-      color: C.spark
-    }
-  }, calcWeekHoursForWeek(punches, selEmp.id, mon).toFixed(1), "h")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 13,
-      color: C.t4
-    }
-  }, "Reg: "), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontFamily: Fm,
-      fontSize: 13,
-      fontWeight: 600,
-      color: C.t1
-    }
-  }, calcLaborCostForWeek(selEmp, punches, P, mon).regH.toFixed(1), "h")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 13,
-      color: C.t4
-    }
-  }, "OT: "), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontFamily: Fm,
-      fontSize: 13,
-      fontWeight: 600,
-      color: C.orange
-    }
-  }, calcLaborCostForWeek(selEmp, punches, P, mon).otH.toFixed(1), "h")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 13,
-      color: C.t4
-    }
-  }, "Cost: "), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontFamily: Fm,
-      fontSize: 13,
-      fontWeight: 700,
-      color: C.spark
-    }
-  }, "$", calcLaborCostForWeek(selEmp, punches, P, mon).total.toFixed(2))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 13,
-      color: C.t4
-    }
-  }, "Points: "), /*#__PURE__*/React.createElement(PtBar, {
-    pts: selEmp.pts
-  }))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      fontWeight: 700,
-      color: C.t1,
-      marginBottom: 6
-    }
-  }, "All Punches This Week"), punches.filter(function (p) {
-    return p.eid === selEmp.id && new Date(p.time) >= mon && new Date(p.time) <= sun;
-  }).sort(function (a, b) {
-    return new Date(b.time) - new Date(a.time);
-  }).map(function (p) {
-    var pt2 = PTYPES.find(function (x) {
-      return x.k === p.type;
-    }) || {
-      l: p.type,
-      c: C.t3
-    };
-    return /*#__PURE__*/React.createElement("div", {
-      key: p.id,
-      style: {
-        display: "flex",
-        justifyContent: "space-between",
-        padding: "4px 0",
-        borderBottom: "1px solid " + C.bd + "06",
-        fontSize: 13
-      }
-    }, /*#__PURE__*/React.createElement("span", {style:{display:"flex",alignItems:"center",gap:8}}, /*#__PURE__*/React.createElement(Tag, {
-      color: pt2.c
-    }, pt2.l), /*#__PURE__*/React.createElement("span",{style:{color:C.t1||"#E4E4E7"}},new Date(p.time).toLocaleString())), /*#__PURE__*/React.createElement("span", {
-      style: {
-        color: C.t4
-      }
-    }, p.dev || "", p.ip ? " · " + p.ip : "", p.lat ? " · ◉" : ""), /*#__PURE__*/React.createElement("div",{style:{display:"flex",gap:4,flexShrink:0}},/*#__PURE__*/React.createElement("button",{onClick:function(){setEditingPunch(Object.assign({},p,{eid:selEmp.id}))},style:{padding:"3px 8px",fontSize:11,background:"transparent",border:"1px solid "+(C.spark||"#FACC15"),color:C.spark||"#FACC15",borderRadius:4,cursor:"pointer",fontWeight:600}},"Edit"),/*#__PURE__*/React.createElement("button",{onClick:function(){deletePunch(p.id)},style:{padding:"3px 8px",fontSize:11,background:"transparent",border:"1px solid "+(C.red||"#EF4444"),color:C.red||"#EF4444",borderRadius:4,cursor:"pointer",fontWeight:600}},"Del")));
-  }), punches.filter(function (p) {
-    return p.eid === selEmp.id && new Date(p.time) >= mon && new Date(p.time) <= sun;
-  }).length === 0 && /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      color: C.t4,
-      padding: "4px 0"
-    }
-  }, "No punches for this week")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginTop: 12,
-      display: "flex",
-      gap: 6,
-      flexWrap: "wrap"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 13,
-      fontWeight: 600,
-      color: C.t1,
-      width: "100%",
-      marginBottom: 4
-    }
-  }, "Issue Points"), RULES.map(function (r) {
-    return /*#__PURE__*/React.createElement("button", {
-      key: r.k,
-      onClick: function () {
-        onIssuePoint(selEmp.id, r.k);
-      },
-      style: {
-        padding: "5px 10px",
-        borderRadius: 6,
-        fontSize: 13,
-        fontWeight: 600,
-        color: C.bg,
-        background: C.spark
-      }
-    }, r.v, " (+", r.p, ")");
-  }))) : /*#__PURE__*/React.createElement("div", {
+  }, "+ Add Punch")), selEmp ? React.createElement(TimesheetDrilldown,{emp:selEmp,punches:punches,mon:mon,weekOffset:weekOffset,setWeekOffset:setWeekOffset,setSelEmp:setSelEmp,setSelDay:setSelDay,selDay:selDay,onIssuePoint:onIssuePoint,setEditingPunch:setEditingPunch,deletePunch:deletePunch,editPunch:editPunch,policy:P,onPunch:onPunch}) : /*#__PURE__*/React.createElement("div", {
     style: {
       overflowX: "auto"
     }
