@@ -5143,7 +5143,7 @@ function AdminView({
       k: "day"
     };
     var ne = {
-      id: "E" + String(emps.length + 1).padStart(3, "0"),
+      id: "E-" + Date.now().toString(36) + Math.random().toString(36).substr(2,4),
       badge: form.badge || genBadge(),
       fn: form.fn,
       ln: form.ln,
