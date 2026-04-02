@@ -3091,7 +3091,7 @@ function ReportsTab({emps,punches,policy,mon}){
       var ds=new Date(mon);ds.setDate(ds.getDate()+di);ds.setHours(0,0,0,0);
       var de=new Date(ds);de.setHours(23,59,59,999);
       return emps.filter(function(e){return e.dept===dept}).reduce(function(s,e){
-        return s+calcDayHours(punches.filter(function(p){return p.eid===e.id&&new Date(p.time)>=ds&&new Date(p.time)<=de})).netH;
+        return s+calcDayHours(getDayPunchesWithCarryOver(punches,e.id,ds,de)).netH;
       },0);
     })});
     if(hRef.current){if(ci.current.h)ci.current.h.destroy();ci.current.h=new Ch(hRef.current,{type:"bar",data:{labels:days,datasets:depts.map(function(d,i){return{label:d,data:hd[i],backgroundColor:Object.values(DC)[i]+"CC",borderColor:Object.values(DC)[i],borderWidth:1,borderRadius:4}})},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"top"}},scales:{x:{grid:{color:"#27272A"}},y:{grid:{color:"#27272A"},ticks:{callback:function(v){return v+"h"}}}}}});}
@@ -4303,9 +4303,8 @@ function ManagerView({
     var days = dayNames.map(function (dn, i) {
       var ds = new Date(mon);
       ds.setDate(ds.getDate() + i);
-      var dp = punches.filter(function (p) {
-        return p.eid === e.id && new Date(p.time) >= ds && new Date(p.time) < new Date(ds.getTime() + 86400000);
-      });
+      var de = new Date(ds.getTime() + 86400000 - 1);
+      var dp = getDayPunchesWithCarryOver(punches, e.id, ds, de);
       return calcDayHours(dp);
     });
     var approved = approvals[e.id] === "approved";
