@@ -872,7 +872,7 @@ function getDayPunchesWithCarryOver(allPunches, eid, dayStart, dayEnd) {
     return p.eid === eid && new Date(p.time) >= dayStart && new Date(p.time) <= dayEnd;
   }).sort(function(a,b){return new Date(a.time)-new Date(b.time)});
 
-  // Check if the day's punches suggest a shift started before midnight
+  // Check if first punch suggests a shift started before midnight
   var needsCarry = dp.length > 0 && dp[0].type !== "in";
   if (!needsCarry && dp.length > 0) {
     var hasIn = dp.some(function(p){return p.type==="in"});
@@ -881,26 +881,17 @@ function getDayPunchesWithCarryOver(allPunches, eid, dayStart, dayEnd) {
   }
 
   if (needsCarry) {
-    // Walk backwards through ALL prior punches to find unmatched clock-in
+    // Only look back 12 hours before this day (covers 6PM-midnight evening shifts)
+    var lookbackStart = new Date(dayStart.getTime() - 12 * 3600000);
     var priorPunches = allPunches.filter(function(p) {
-      return p.eid === eid && new Date(p.time) < dayStart;
+      return p.eid === eid && new Date(p.time) >= lookbackStart && new Date(p.time) < dayStart;
     }).sort(function(a,b){return new Date(b.time)-new Date(a.time)}); // newest first
 
-    var unmatchedOuts = 0;
+    // Find most recent clock-in in that window
     for (var i = 0; i < priorPunches.length; i++) {
-      var p = priorPunches[i];
-      if (p.type === "out") unmatchedOuts++;
-      if (p.type === "in") {
-        if (unmatchedOuts > 0) {
-          unmatchedOuts--; // This clock-in is paired with a later clock-out
-        } else {
-          // This clock-in has no clock-out after it — it's the overnight start
-          var hr = new Date(p.time).getHours();
-          if (hr >= 18) {
-            dp = [p].concat(dp);
-          }
-          break;
-        }
+      if (priorPunches[i].type === "in") {
+        dp = [priorPunches[i]].concat(dp);
+        break;
       }
     }
   }
