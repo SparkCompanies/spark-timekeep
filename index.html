@@ -871,34 +871,42 @@ function getDayPunchesWithCarryOver(allPunches, eid, dayStart, dayEnd) {
   var dp = allPunches.filter(function(p) {
     return p.eid === eid && new Date(p.time) >= dayStart && new Date(p.time) <= dayEnd;
   }).sort(function(a,b){return new Date(a.time)-new Date(b.time)});
-  // Check if first punch is NOT a clock-in (could be break-in, break-out, or clock-out)
-  // If so, look for a carry-over clock-in from previous day
+
+  // Check if the day's punches suggest a shift started before midnight
   var needsCarry = dp.length > 0 && dp[0].type !== "in";
-  // Also check: has clock-out but no clock-in at all
   if (!needsCarry && dp.length > 0) {
     var hasIn = dp.some(function(p){return p.type==="in"});
     var hasOut = dp.some(function(p){return p.type==="out"});
     needsCarry = hasOut && !hasIn;
   }
+
   if (needsCarry) {
-    // Look at previous day for an unmatched clock-in
-    var prevStart = new Date(dayStart.getTime() - 86400000);
-    var prevEnd = new Date(dayStart.getTime() - 1);
-    var prevPunches = allPunches.filter(function(p) {
-      return p.eid === eid && new Date(p.time) >= prevStart && new Date(p.time) <= prevEnd;
-    }).sort(function(a,b){return new Date(a.time)-new Date(b.time)});
-    // Find last punch of previous day
-    if (prevPunches.length > 0) {
-      var lastPrev = prevPunches[prevPunches.length - 1];
-      if (lastPrev.type === "in") {
-        // Carry this clock-in into today's punches
-        var prevHour = new Date(lastPrev.time).getHours(); if (prevHour >= 18) { dp = [lastPrev].concat(dp); }
+    // Walk backwards through ALL prior punches to find unmatched clock-in
+    var priorPunches = allPunches.filter(function(p) {
+      return p.eid === eid && new Date(p.time) < dayStart;
+    }).sort(function(a,b){return new Date(b.time)-new Date(a.time)}); // newest first
+
+    var unmatchedOuts = 0;
+    for (var i = 0; i < priorPunches.length; i++) {
+      var p = priorPunches[i];
+      if (p.type === "out") unmatchedOuts++;
+      if (p.type === "in") {
+        if (unmatchedOuts > 0) {
+          unmatchedOuts--; // This clock-in is paired with a later clock-out
+        } else {
+          // This clock-in has no clock-out after it — it's the overnight start
+          var hr = new Date(p.time).getHours();
+          if (hr >= 18) {
+            dp = [p].concat(dp);
+          }
+          break;
+        }
       }
     }
   }
+
   return dp.sort(function(a,b){return new Date(a.time)-new Date(b.time)});
 }
-
 function calcWeekHours(allPunches, eid) {
   var monday = getMonday();
   var total = 0;
