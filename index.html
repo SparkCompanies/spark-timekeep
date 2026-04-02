@@ -868,20 +868,19 @@ function calcDayHours(punches) {
 }
 // Overnight shift handler: get day punches + carry-over from previous night
 function getDayPunchesWithCarryOver(allPunches, eid, dayStart, dayEnd) {
-  // Get punches that fall within this day
   var dp = allPunches.filter(function(p) {
     return p.eid === eid && new Date(p.time) >= dayStart && new Date(p.time) <= dayEnd;
-  });
-  // Check if the first punch of the day is a clock-out with no clock-in before it
-  var firstOut = dp.length > 0 && dp.sort(function(a,b){return new Date(a.time)-new Date(b.time)})[0];
-  var hasOrphanOut = firstOut && firstOut.type === "out" && !dp.some(function(p){return p.type === "in" && new Date(p.time) < new Date(firstOut.time)});
-  // Also check if there are NO clock-ins at all but there is a clock-out
-  if (!hasOrphanOut) {
-    var ins = dp.filter(function(p){return p.type === "in"});
-    var outs = dp.filter(function(p){return p.type === "out"});
-    hasOrphanOut = outs.length > 0 && ins.length === 0;
+  }).sort(function(a,b){return new Date(a.time)-new Date(b.time)});
+  // Check if first punch is NOT a clock-in (could be break-in, break-out, or clock-out)
+  // If so, look for a carry-over clock-in from previous day
+  var needsCarry = dp.length > 0 && dp[0].type !== "in";
+  // Also check: has clock-out but no clock-in at all
+  if (!needsCarry && dp.length > 0) {
+    var hasIn = dp.some(function(p){return p.type==="in"});
+    var hasOut = dp.some(function(p){return p.type==="out"});
+    needsCarry = hasOut && !hasIn;
   }
-  if (hasOrphanOut) {
+  if (needsCarry) {
     // Look at previous day for an unmatched clock-in
     var prevStart = new Date(dayStart.getTime() - 86400000);
     var prevEnd = new Date(dayStart.getTime() - 1);
