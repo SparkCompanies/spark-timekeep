@@ -889,7 +889,7 @@ function getDayPunchesWithCarryOver(allPunches, eid, dayStart, dayEnd) {
 
     // Find most recent clock-in in that window
     for (var i = 0; i < priorPunches.length; i++) {
-      if (priorPunches[i].type === "in") {
+      if (priorPunches[i].type === "in" && new Date(priorPunches[i].time).getHours() >= 18) {
         dp = [priorPunches[i]].concat(dp);
         break;
       }
