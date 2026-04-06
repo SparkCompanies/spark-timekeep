@@ -872,26 +872,60 @@ function getDayPunchesWithCarryOver(allPunches, eid, dayStart, dayEnd) {
     return p.eid === eid && new Date(p.time) >= dayStart && new Date(p.time) <= dayEnd;
   }).sort(function(a,b){return new Date(a.time)-new Date(b.time)});
 
-  // Check if first punch suggests a shift started before midnight
-  var needsCarry = dp.length > 0 && dp[0].type !== "in";
-  if (!needsCarry && dp.length > 0) {
-    var hasIn = dp.some(function(p){return p.type==="in"});
-    var hasOut = dp.some(function(p){return p.type==="out"});
-    needsCarry = hasOut && !hasIn;
+  // FORWARD LOOK: If last punch is an evening clock-in (>=18:00) with no clock-out after it,
+  // pull in next-day punches until we find the clock-out
+  var lastPunch = dp.length > 0 ? dp[dp.length - 1] : null;
+  if (lastPunch && lastPunch.type === "in" && new Date(lastPunch.time).getHours() >= 18) {
+    var nextDayStart = new Date(dayEnd.getTime() + 1);
+    var nextDayEnd = new Date(dayStart.getTime() + 36 * 3600000); // up to 12h into next day
+    var nextPunches = allPunches.filter(function(p) {
+      return p.eid === eid && new Date(p.time) >= nextDayStart && new Date(p.time) <= nextDayEnd;
+    }).sort(function(a,b){return new Date(a.time)-new Date(b.time)});
+    // Add punches until we hit the clock-out
+    for (var i = 0; i < nextPunches.length; i++) {
+      dp.push(nextPunches[i]);
+      if (nextPunches[i].type === "out") break;
+    }
   }
 
-  if (needsCarry) {
-    // Only look back 12 hours before this day (covers 6PM-midnight evening shifts)
+  // BACKWARD LOOK: If first punch is not a clock-in, check if the previous day
+  // already claimed this shift via forward-look. If so, EXCLUDE these early-morning
+  // punches to avoid double-counting.
+  if (dp.length > 0 && dp[0].type !== "in") {
     var lookbackStart = new Date(dayStart.getTime() - 12 * 3600000);
     var priorPunches = allPunches.filter(function(p) {
       return p.eid === eid && new Date(p.time) >= lookbackStart && new Date(p.time) < dayStart;
-    }).sort(function(a,b){return new Date(b.time)-new Date(a.time)}); // newest first
-
-    // Find most recent clock-in in that window
-    for (var i = 0; i < priorPunches.length; i++) {
-      if (priorPunches[i].type === "in" && new Date(priorPunches[i].time).getHours() >= 18) {
-        dp = [priorPunches[i]].concat(dp);
+    }).sort(function(a,b){return new Date(b.time)-new Date(a.time)});
+    // Check if there's an evening clock-in in the prior window
+    var priorEveningIn = false;
+    for (var j = 0; j < priorPunches.length; j++) {
+      if (priorPunches[j].type === "in" && new Date(priorPunches[j].time).getHours() >= 18) {
+        priorEveningIn = true;
         break;
+      }
+    }
+    if (priorEveningIn) {
+      // Previous day's forward-look already counted these punches
+      // Remove early-morning punches that belong to previous shift (before first same-day clock-in)
+      var firstInIdx = -1;
+      for (var k = 0; k < dp.length; k++) {
+        if (dp[k].type === "in" && new Date(dp[k].time) >= dayStart) {
+          firstInIdx = k;
+          break;
+        }
+      }
+      if (firstInIdx > 0) {
+        dp = dp.slice(firstInIdx);
+      } else if (firstInIdx === -1) {
+        // All punches are carry-over from previous shift, but check for same-day evening punches
+        var eveningPunches = dp.filter(function(p) {
+          return new Date(p.time).getHours() >= 12;
+        });
+        if (eveningPunches.length > 0) {
+          dp = eveningPunches;
+        } else {
+          dp = []; // All belong to previous day's shift
+        }
       }
     }
   }
