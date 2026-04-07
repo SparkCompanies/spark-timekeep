@@ -516,8 +516,8 @@ async function sbLoadConfig(key) {
   return r.data.value;
 }
 /* ═══ OFFLINE PUNCH QUEUE ═══ */
-function getOfflineQueue() { try { var q=safeStorage.getItem("tk-offline-queue"); return q?JSON.parse(q):[]; } catch(e){return[]} }
-function saveOfflineQueue(q) { safeStorage.setItem("tk-offline-queue",JSON.stringify(q)); }
+function getOfflineQueue() { try { var q=localStorage.getItem("tk-offline-queue"); return q?JSON.parse(q):[]; } catch(e){return[]} }
+function saveOfflineQueue(q) { localStorage.setItem("tk-offline-queue",JSON.stringify(q)); }
 async function flushOfflineQueue() { var q=getOfflineQueue(); if(q.length===0)return; var sb=getSb(); if(!sb)return; var failed=[]; for(var i=0;i<q.length;i++){var r=await sb.from("tk_punches").upsert(q[i]); if(r.error)failed.push(q[i])} saveOfflineQueue(failed); if(failed.length===0&&q.length>0)console.log("Flushed "+q.length+" offline punches"); }
 setInterval(flushOfflineQueue,30000); /* retry every 30 seconds */
 
@@ -7467,6 +7467,19 @@ function App() {
             setPEvents([]);
           }
           setPunches(sbPch || []);
+          /* Check localStorage backup for missed punches */
+          try{
+            var backup=JSON.parse(localStorage.getItem("tk-v7-punches-backup")||"[]");
+            if(backup.length>0 && sbPch){
+              var sbIds={}; sbPch.forEach(function(p){sbIds[p.id]=true});
+              var missed=backup.filter(function(p){return !sbIds[p.id]});
+              if(missed.length>0){
+                console.warn("Found "+missed.length+" punches in backup not in Supabase — re-syncing");
+                missed.forEach(function(p){sbSavePunch(p)});
+                setPunches(sbPch.concat(missed));
+              }
+            }
+          }catch(e){}
           setRequests(sbReqs || []);
           if (sbPol) setPolicy(sbPol);
           if (sbGeo) setGeoConfig(sbGeo);
@@ -7572,6 +7585,8 @@ function App() {
   function persistP(np, newPunch) {
     if (!saveOk.current) return;
     sSet("tk-v7-punches", np);
+    /* Also save to localStorage as backup */
+    try{localStorage.setItem("tk-v7-punches-backup",JSON.stringify(np))}catch(e){}
     if (useSupa() && newPunch) {
       sbSavePunch(newPunch);
     }
