@@ -906,26 +906,38 @@ function getDayPunchesWithCarryOver(allPunches, eid, dayStart, dayEnd) {
       }
     }
     if (priorEveningIn) {
-      // Previous day's forward-look already counted these punches
-      // Remove early-morning punches that belong to previous shift (before first same-day clock-in)
-      var firstInIdx = -1;
-      for (var k = 0; k < dp.length; k++) {
-        if (dp[k].type === "in" && new Date(dp[k].time) >= dayStart) {
-          firstInIdx = k;
-          break;
+      // Check if prior day is Sunday — Sunday skips forward-look,
+      // so Monday must CLAIM these hours by adding the clock-in
+      var priorDay = new Date(dayStart.getTime() - 12 * 3600000);
+      var priorIsSunday = priorDay.getDay() === 0;
+      if (priorIsSunday) {
+        // Add Sunday evening clock-in to Monday's punches
+        for (var k2 = 0; k2 < priorPunches.length; k2++) {
+          if (priorPunches[k2].type === "in" && new Date(priorPunches[k2].time).getHours() >= 14) {
+            dp = [priorPunches[k2]].concat(dp);
+            break;
+          }
         }
-      }
-      if (firstInIdx > 0) {
-        dp = dp.slice(firstInIdx);
-      } else if (firstInIdx === -1) {
-        // All punches are carry-over from previous shift, but check for same-day evening punches
-        var eveningPunches = dp.filter(function(p) {
-          return new Date(p.time).getHours() >= 12;
-        });
-        if (eveningPunches.length > 0) {
-          dp = eveningPunches;
-        } else {
-          dp = []; // All belong to previous day's shift
+      } else {
+        // Previous day already forward-looked — remove morning punches to avoid double-count
+        var firstInIdx = -1;
+        for (var k = 0; k < dp.length; k++) {
+          if (dp[k].type === "in" && new Date(dp[k].time) >= dayStart) {
+            firstInIdx = k;
+            break;
+          }
+        }
+        if (firstInIdx > 0) {
+          dp = dp.slice(firstInIdx);
+        } else if (firstInIdx === -1) {
+          var eveningPunches = dp.filter(function(p) {
+            return new Date(p.time).getHours() >= 12;
+          });
+          if (eveningPunches.length > 0) {
+            dp = eveningPunches;
+          } else {
+            dp = [];
+          }
         }
       }
     }
