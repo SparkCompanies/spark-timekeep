@@ -3489,7 +3489,7 @@ function ManagerView({
     outline: "none",
     fontFamily: Fb
   };
-  var filtered = statuses.filter(function (e) {
+  var filtered = statuses.sort(function(a,b){return(a.ln||"").localeCompare(b.ln||"")}).filter(function (e) {
     return (dept === "all" || e.dept === dept) && (!search || (e.fn + " " + e.ln).toLowerCase().includes(search.toLowerCase()) || e.badge.includes(search));
   });
   var recentEvents = pointEvents.slice().sort(function (a, b) {
