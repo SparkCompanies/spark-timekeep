@@ -1008,6 +1008,7 @@ function getDailyBreakdownForWeek(allPunches, eid, monday) {
   });
 }
 function getCurrentState(emp, punches) {
+  var cutoff = new Date(Date.now() - 24*60*60*1000);
   var ep = punches.filter(function (p) {
     return p.eid === emp.id && new Date(p.time) >= cutoff;
   }).sort(function (a, b) {
