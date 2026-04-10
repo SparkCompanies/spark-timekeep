@@ -437,7 +437,7 @@ async function sbLoadPunches() {
   if (!sb) return null;
   var r = await sb.from("tk_punches").select("*").order("time", {
     ascending: false
-  }).limit(5000);
+  }).limit(10000);
   if (r.error) return null;
   return r.data.map(function (p) {
     return {
