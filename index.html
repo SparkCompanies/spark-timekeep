@@ -435,8 +435,7 @@ async function sbLoadEmployees() {
 async function sbLoadPunches() {
   var sb = getSb();
   if (!sb) return null;
-  var cutoff = new Date(Date.now() - 90*24*60*60*1000).toISOString();
-  var r = await sb.from("tk_punches").select("*").gte("time",cutoff).order("time", {
+  var r = await sb.from("tk_punches").select("*").order("time", {
     ascending: false
   }).limit(5000);
   if (r.error) return null;
@@ -1009,7 +1008,6 @@ function getDailyBreakdownForWeek(allPunches, eid, monday) {
   });
 }
 function getCurrentState(emp, punches) {
-  var cutoff = new Date(Date.now() - 24*60*60*1000);
   var ep = punches.filter(function (p) {
     return p.eid === emp.id && new Date(p.time) >= cutoff;
   }).sort(function (a, b) {
