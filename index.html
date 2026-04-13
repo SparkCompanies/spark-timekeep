@@ -3400,7 +3400,7 @@ function ManagerView({
   var rtab = useState("dashboard"),
     mTab = rtab[0],
     setMTab = rtab[1];
-  var rappr = useState({}),
+  var rappr = useState(function(){try{return JSON.parse(localStorage.getItem("tk-approvals")||"{}")}catch(e){return {}}}),
     approvals = rappr[0],
     setApprovals = rappr[1];
   var rwk = useState(0),
@@ -4353,7 +4353,7 @@ function ManagerView({
       var dp = getDayPunchesWithCarryOver(punches, e.id, ds, de);
       return calcDayHours(dp);
     });
-    var approved = approvals[e.id] === "approved";
+    var wkKey=e.id+"-"+mon.toISOString().slice(0,10);var approved = approvals[wkKey] === "approved";
     return /*#__PURE__*/React.createElement("tr", {
       key: e.id,
       onClick: function () {
@@ -4433,9 +4433,7 @@ function ManagerView({
     }, "OK") : /*#__PURE__*/React.createElement("button", {
       onClick: function (ev) {
         ev.stopPropagation();
-        setApprovals(Object.assign({}, approvals, {
-          [e.id]: "approved"
-        }));
+        var wk=mon.toISOString().slice(0,10);var nxt=Object.assign({},approvals);nxt[e.id+"-"+wk]="approved";setApprovals(nxt);try{localStorage.setItem("tk-approvals",JSON.stringify(nxt))}catch(ex){}
       },
       style: {
         padding: "4px 10px",
@@ -4459,9 +4457,7 @@ function ManagerView({
       fontSize: 13,
       color: C.t4
     }
-  }, Object.values(approvals).filter(function (v) {
-    return v === "approved";
-  }).length, " of ", active.length, " approved"), /*#__PURE__*/React.createElement("button", {
+  }, Object.keys(approvals).filter(function(k){return k.endsWith("-"+mon.toISOString().slice(0,10))&&approvals[k]==="approved"}).length, " of ", active.length, " approved"), /*#__PURE__*/React.createElement("button", {
     onClick: function () {
       var all = {};
       active.forEach(function (e) {
