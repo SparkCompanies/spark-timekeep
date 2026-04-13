@@ -4459,11 +4459,11 @@ function ManagerView({
     }
   }, Object.keys(approvals).filter(function(k){return k.endsWith("-"+mon.toISOString().slice(0,10))&&approvals[k]==="approved"}).length, " of ", active.length, " approved"), /*#__PURE__*/React.createElement("button", {
     onClick: function () {
-      var all = {};
+      var wk2=mon.toISOString().slice(0,10);var all=Object.assign({},approvals);
       active.forEach(function (e) {
-        all[e.id] = "approved";
+        all[e.id+"-"+wk2]="approved";
       });
-      setApprovals(all);
+      setApprovals(all);try{localStorage.setItem("tk-approvals",JSON.stringify(all))}catch(ex){}
     },
     style: {
       padding: "7px 16px",
