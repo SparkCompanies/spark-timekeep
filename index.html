@@ -4292,7 +4292,7 @@ function ManagerView({
       borderBottom: "1px solid " + C.bd,
       fontFamily: Fb
     }
-  }, "Employee"), dayNames.map(function (d) {
+  }, "Employee"), React.createElement("th",{key:"shift",style:{padding:"8px 6px",textAlign:"center",fontSize:13,fontWeight:600,color:C.t4,borderBottom:"1px solid "+C.bd,fontFamily:Fb}},"Shift"), dayNames.map(function (d) {
     return /*#__PURE__*/React.createElement("th", {
       key: d,
       style: {
@@ -4386,7 +4386,7 @@ function ManagerView({
         fontWeight: 600,
         color: C.t1
       }
-    }, e.fn, " ", e.ln))), days.map(function (dh, di) {
+    }, e.fn, " ", e.ln))),/*#__PURE__*/React.createElement("td",{style:{padding:"8px 6px",textAlign:"center",fontSize:12,color:C.t4,fontFamily:Fm}},e.shiftStart||"06:00","–",e.shiftEnd||"14:30"), days.map(function (dh, di) {
       return /*#__PURE__*/React.createElement("td", {
         key: di,
         style: {
