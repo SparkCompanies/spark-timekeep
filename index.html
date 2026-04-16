@@ -875,12 +875,12 @@ function getDayPunchesWithCarryOver(allPunches, eid, dayStart, dayEnd) {
   // FORWARD LOOK: If last punch is an evening clock-in (>=18:00) with no clock-out after it,
   // pull in next-day punches until we find the clock-out
   var lastPunch = dp.length > 0 ? dp[dp.length - 1] : null;
-  var isSunday = dayStart.getDay() === 0;
-  if (!isSunday && lastPunch && lastPunch.type === "in" && new Date(lastPunch.time).getHours() >= 14) {
+  
+  if (lastPunch && lastPunch.type === "in" && new Date(lastPunch.time).getHours() >= 14) {
     var nextDayStart = new Date(dayEnd.getTime() + 1);
     var nextDayEnd = new Date(dayStart.getTime() + 36 * 3600000); // up to 12h into next day
     var nextPunches = allPunches.filter(function(p) {
-      return p.eid === eid && new Date(p.time) >= nextDayStart && new Date(p.time) <= nextDayEnd;
+      if(p.eid!==eid)return false;var pt2=new Date(p.time);var nd=new Date(dayStart);nd.setDate(nd.getDate()+1);return pt2.getFullYear()===nd.getFullYear()&&pt2.getMonth()===nd.getMonth()&&pt2.getDate()===nd.getDate()&&pt2.getHours()<12;
     }).sort(function(a,b){return new Date(a.time)-new Date(b.time)});
     // Add punches until we hit the clock-out
     for (var i = 0; i < nextPunches.length; i++) {
@@ -895,7 +895,7 @@ function getDayPunchesWithCarryOver(allPunches, eid, dayStart, dayEnd) {
   if (dp.length > 0 && dp[0].type !== "in") {
     var lookbackStart = new Date(dayStart.getTime() - 12 * 3600000);
     var priorPunches = allPunches.filter(function(p) {
-      return p.eid === eid && new Date(p.time) >= lookbackStart && new Date(p.time) < dayStart;
+      if(p.eid!==eid)return false;var pt3=new Date(p.time);var pd=new Date(dayStart);pd.setDate(pd.getDate()-1);return pt3.getFullYear()===pd.getFullYear()&&pt3.getMonth()===pd.getMonth()&&pt3.getDate()===pd.getDate();
     }).sort(function(a,b){return new Date(b.time)-new Date(a.time)});
     // Check if there's an evening clock-in in the prior window
     var priorEveningIn = false;
@@ -909,7 +909,7 @@ function getDayPunchesWithCarryOver(allPunches, eid, dayStart, dayEnd) {
       // Check if prior day is Sunday — Sunday skips forward-look,
       // so Monday must CLAIM these hours by adding the clock-in
       var priorDay = new Date(dayStart.getTime() - 12 * 3600000);
-      var priorIsSunday = priorDay.getDay() === 0;
+      var priorIsSunday = false;
       if (priorIsSunday) {
         // Add Sunday evening clock-in to Monday's punches
         for (var k2 = 0; k2 < priorPunches.length; k2++) {
