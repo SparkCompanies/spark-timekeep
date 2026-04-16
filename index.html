@@ -869,7 +869,7 @@ function calcDayHours(punches) {
 // Overnight shift handler: get day punches + carry-over from previous night
 function getDayPunchesWithCarryOver(allPunches, eid, dayStart, dayEnd) {
   var dp = allPunches.filter(function(p) {
-    return p.eid === eid && new Date(p.time) >= dayStart && new Date(p.time) <= dayEnd;
+    if(p.eid!==eid)return false;var pt=new Date(p.time);return pt.getFullYear()===dayStart.getFullYear()&&pt.getMonth()===dayStart.getMonth()&&pt.getDate()===dayStart.getDate();
   }).sort(function(a,b){return new Date(a.time)-new Date(b.time)});
 
   // FORWARD LOOK: If last punch is an evening clock-in (>=18:00) with no clock-out after it,
