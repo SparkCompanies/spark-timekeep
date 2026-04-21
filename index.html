@@ -2209,7 +2209,14 @@ function AddPunchModal({
       display: "block",
       marginBottom: 3
     }
-  }, "DATE & TIME"), /*#__PURE__*/React.createElement("div",{style:{display:"flex",gap:8}},/*#__PURE__*/React.createElement("input",{type:"date",value:time?time.slice(0,10):"",onChange:function(e){var t=time||"2026-01-01T12:00";setTime(e.target.value+"T"+t.slice(11))},style:Object.assign({},inp,{flex:1})}),/*#__PURE__*/React.createElement("input",{type:"number",min:1,max:12,placeholder:"HH",value:time?(function(){var h=parseInt(time.slice(11,13));return h===0?12:h>12?h-12:h})():"",onChange:function(e){var v=parseInt(e.target.value)||12;var cur=time||"2026-01-01T12:00";var oldH=parseInt(cur.slice(11,13));var isPM=oldH>=12;var newH=isPM?(v===12?12:v+12):(v===12?0:v);setTime(cur.slice(0,11)+String(newH).padStart(2,"0")+cur.slice(13))},style:Object.assign({},inp,{width:50,textAlign:"center"})}),/*#__PURE__*/React.createElement("span",{style:{color:C.t3,alignSelf:"center"}},":"),/*#__PURE__*/React.createElement("input",{type:"number",min:0,max:59,placeholder:"MM",value:time?time.slice(14,16):"",onChange:function(e){var v=String(parseInt(e.target.value)||0).padStart(2,"0");var cur=time||"2026-01-01T12:00";setTime(cur.slice(0,14)+v)},style:Object.assign({},inp,{width:50,textAlign:"center"})}),/*#__PURE__*/React.createElement("select",{value:time?(parseInt(time.slice(11,13))>=12?"PM":"AM"):"AM",onChange:function(e){var cur=time||"2026-01-01T12:00";var h=parseInt(cur.slice(11,13));if(e.target.value==="PM"&&h<12)h+=12;if(e.target.value==="AM"&&h>=12)h-=12;setTime(cur.slice(0,11)+String(h).padStart(2,"0")+cur.slice(13))},style:Object.assign({},inp,{width:70,appearance:"auto"})},/*#__PURE__*/React.createElement("option",{value:"AM"},"AM"),/*#__PURE__*/React.createElement("option",{value:"PM"},"PM"))))), /*#__PURE__*/React.createElement("div", {
+  }, "TIME"), /*#__PURE__*/React.createElement("input", {
+    type: "datetime-local",
+    value: time,
+    onChange: function (e) {
+      setTime(e.target.value);
+    },
+    style: inp
+  })), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8
