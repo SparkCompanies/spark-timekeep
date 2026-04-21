@@ -568,7 +568,9 @@ async function sbSaveEmployee(e) {
     work_days: e.workDays,
     rate: e.rate,
     status: e.st,
-    salary: e.salary || 0
+    salary: e.salary || 0,
+    hire_date: e.hireDate || null,
+    term_date: e.termDate || null
   });
 }
 async function sbSaveRequest(r) {
@@ -3483,7 +3485,7 @@ function ManagerView({
     fontFamily: Fb
   };
   var filtered = statuses.sort(function(a,b){return(a.ln||"").localeCompare(b.ln||"")}).filter(function (e) {
-    return (dept === "all" || e.dept === dept) && (!search || (e.fn + " " + e.ln).toLowerCase().includes(search.toLowerCase()) || e.badge.includes(search));
+    var weekEnd=new Date(mon);weekEnd.setDate(weekEnd.getDate()+6);var hd=e.hireDate?new Date(e.hireDate):null;var td=e.termDate?new Date(e.termDate):null;if(hd&&hd>weekEnd)return false;if(td&&td<mon)return false;return (dept === "all" || e.dept === dept) && (!search || (e.fn + " " + e.ln).toLowerCase().includes(search.toLowerCase()) || e.badge.includes(search));
   });
   var recentEvents = pointEvents.slice().sort(function (a, b) {
     return new Date(b.date) - new Date(a.date);
@@ -5181,6 +5183,8 @@ function AdminView({
       rate: parseFloat(form.rate) || 16.50,
       salary: parseFloat(form.salary) || 0,
       st: "active",
+      hireDate: form.hireDate || new Date().toISOString().slice(0,10),
+      termDate: null,
       pts: 0
     };
     onUpdateEmps(emps.concat([ne]), ne.id);
@@ -5195,7 +5199,8 @@ function AdminView({
       shiftEnd: "14:30",
       workDays: [1, 2, 3, 4, 5],
       rate: 16.50,
-      salary: 0
+      salary: 0,
+      hireDate: ""
     });
     setShowAdd(false);
   }
@@ -5203,7 +5208,7 @@ function AdminView({
   var rEditForm = useState({}), editForm = rEditForm[0], setEditForm = rEditForm[1];
   function startEdit(e) { setEditForm({fn:e.fn,ln:e.ln,dept:e.dept,shiftStart:e.shiftStart||"06:00",shiftEnd:e.shiftEnd||"14:30",rate:e.rate||16,salary:e.salary||0,badge:e.badge,pin:e.pin}); setEditEmp2(e); }
   function saveEdit() { if(!editEmp2)return; onUpdateEmps(emps.map(function(x){return x.id===editEmp2.id?Object.assign({},x,{fn:editForm.fn||x.fn,ln:editForm.ln||x.ln,dept:editForm.dept||x.dept,shiftStart:editForm.shiftStart||x.shiftStart,shiftEnd:editForm.shiftEnd||x.shiftEnd,rate:parseFloat(editForm.rate)||x.rate,salary:parseFloat(editForm.salary)||0,badge:editForm.badge||x.badge,pin:editForm.pin||x.pin}):x})); logAdminAction("EDIT",editEmp2.fn+" "+editEmp2.ln+" ("+editEmp2.badge+")",staffName); setEditEmp2(null); }
-  function termEmp(id) { var emp2=emps.find(function(e){return e.id===id}); if(window.confirm("Terminate this employee? They will be moved to the Inactive bucket.")) { onUpdateEmps(emps.map(function(x){return x.id===id?Object.assign({},x,{st:"terminated"}):x})); logAdminAction("TERMINATE",emp2.fn+" "+emp2.ln+" ("+emp2.badge+")",staffName); } }
+  function termEmp(id) { var emp2=emps.find(function(e){return e.id===id}); if(window.confirm("Terminate this employee? They will be moved to the Inactive bucket.")) { onUpdateEmps(emps.map(function(x){return x.id===id?Object.assign({},x,{st:"terminated",termDate:new Date().toISOString().slice(0,10)}):x})); logAdminAction("TERMINATE",emp2.fn+" "+emp2.ln+" ("+emp2.badge+")",staffName); } }
   function deleteEmp(id) {
     var emp=emps.find(function(e){return e.id===id});
     if(!emp) return;
@@ -7492,7 +7497,7 @@ function App() {
                 setEmps(function(prev){return prev.filter(function(x){return x.id!==payload.old.id})});
               } else {
                 var e=payload.new;
-                var m={id:e.id,badge:e.badge,fn:e.fn,ln:e.ln,pin:e.pin,dept:e.dept,role:e.role,site:e.site,shift:e.shift,shiftStart:e.shift_start,shiftEnd:e.shift_end,workDays:e.work_days,rate:parseFloat(e.rate),st:e.status,salary:parseFloat(e.salary)||0};
+                var m={id:e.id,badge:e.badge,fn:e.fn,ln:e.ln,pin:e.pin,dept:e.dept,role:e.role,site:e.site,shift:e.shift,shiftStart:e.shift_start,shiftEnd:e.shift_end,workDays:e.work_days,rate:parseFloat(e.rate),st:e.status,salary:parseFloat(e.salary)||0,hireDate:e.hire_date||null,termDate:e.term_date||null};
                 setEmps(function(prev){var ex=prev.some(function(x){return x.id===m.id});if(ex)return prev.map(function(x){return x.id===m.id?Object.assign({},x,m):x});return prev.concat([m])});
               }
             }).subscribe();
