@@ -2209,14 +2209,7 @@ function AddPunchModal({
       display: "block",
       marginBottom: 3
     }
-  }, "TIME"), /*#__PURE__*/React.createElement("input", {
-    type: "datetime-local",
-    value: time,
-    onChange: function (e) {
-      setTime(e.target.value);
-    },
-    style: inp
-  })), /*#__PURE__*/React.createElement("div", {
+  }, "DATE & TIME"), /*#__PURE__*/React.createElement("div",{style:{display:"flex",gap:8}},/*#__PURE__*/React.createElement("input",{type:"date",value:time?time.slice(0,10):"",onChange:function(e){setTime(e.target.value+"T"+(time?time.slice(11):"12:00"))},style:Object.assign({},inp,{flex:1})}),/*#__PURE__*/React.createElement("input",{type:"time",value:time?time.slice(11,16):"",onChange:function(e){setTime((time?time.slice(0,10):"2026-01-01")+"T"+e.target.value)},style:Object.assign({},inp,{flex:1})}))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 8
