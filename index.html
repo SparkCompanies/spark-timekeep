@@ -5273,7 +5273,7 @@ function AdminView({
       var rows = ["Employee,Badge,Mon,Tue,Wed,Thu,Fri,Sat,Sun,Total,OT"];
       emps.filter(function (e) {
         return e.st === "active";
-      }).forEach(function (e) {
+      }).sort(function(a,b){return(a.ln||"").localeCompare(b.ln||"")}).forEach(function (e) {
         var daily = getDailyBreakdownForWeek(punches, e.id, monday);
         var total = daily.reduce(function (s, d) {
           return s + d.hrs;
@@ -5313,7 +5313,25 @@ function AdminView({
       a2.download = "points-report.csv";
       a2.click();
     }
-    if (type === "audit") {
+    if (type === "detailed") {
+      var drows = ["Employee,Badge,Dept,Shift,Date,Clock In,Clock Out,Break Out,Break In,Net Hours"];
+      emps.filter(function(e){return e.st==="active"}).sort(function(a,b){return(a.ln||"").localeCompare(b.ln||"")}).forEach(function(e){
+        for(var di=0;di<7;di++){
+          var ds=new Date(monday);ds.setDate(ds.getDate()+di);ds.setHours(0,0,0,0);
+          var de=new Date(ds);de.setHours(23,59,59,999);
+          var dp=getDayPunchesWithCarryOver(punches,e.id,ds,de);
+          var hrs=calcDayHours(dp);
+          if(dp.length===0)continue;
+          var ins=dp.filter(function(p){return p.type==="in"});
+          var outs=dp.filter(function(p){return p.type==="out"});
+          var bouts=dp.filter(function(p){return p.type==="break-out"});
+          var bins=dp.filter(function(p){return p.type==="break-in"});
+          drows.push(e.fn+" "+e.ln+","+e.badge+","+(e.dept||"")+","+(e.shiftStart||"")+"–"+(e.shiftEnd||"")+","+ds.toLocaleDateString()+","+(ins[0]?new Date(ins[0].time).toLocaleTimeString():"")+ ","+(outs[outs.length-1]?new Date(outs[outs.length-1].time).toLocaleTimeString():"")+ ","+(bouts[0]?new Date(bouts[0].time).toLocaleTimeString():"")+ ","+(bins[0]?new Date(bins[0].time).toLocaleTimeString():"")+ ","+hrs.netH.toFixed(1));
+        }
+      });
+      var dblob=new Blob([drows.join("\n")],{type:"text/csv"});var durl=URL.createObjectURL(dblob);var da=document.createElement("a");da.href=durl;da.download="detailed-punches-"+monday.toISOString().slice(0,10)+".csv";da.click();
+    }
+        if (type === "audit") {
       var rows3 = ["Employee,Badge,Type,Time,Device,IP,Lat,Lng,Distance,Accuracy,Altitude,Speed,Flags"];
       punches.slice().sort(function (a, b) {
         return new Date(b.time) - new Date(a.time);
@@ -7195,7 +7213,7 @@ function AdminView({
   ),
   /*#__PURE__*/React.createElement("div", {
     style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }
-  }, [["Weekly Timesheet","Mon\u2013Sun hours by employee with OT breakdown","timesheet","\u{1F4CA}"],["Points Report","90-day attendance violation history","points","\u26A0"],["Audit Trail", "Every punch with badge, time, device, IP", "audit", "🔍"]].map(function (x) {
+  }, [["Weekly Timesheet","Mon\u2013Sun hours by employee with OT breakdown","timesheet","\u{1F4CA}"],["Points Report","90-day attendance violation history","points","\u26A0"],["Audit Trail", "Every punch with badge, time, device, IP", "audit", "🔍"],["Detailed Punches","Daily in/out/break per employee sorted by last name","detailed","📋"]].map(function (x) {
     return /*#__PURE__*/React.createElement("div", {
       key: x[0],
       style: {
