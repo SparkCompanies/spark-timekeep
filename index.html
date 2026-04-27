@@ -5795,7 +5795,7 @@ function AdminView({
       background: form.fn && form.ln ? C.green : C.t4,
       gridColumn: mo ? "1/-1" : undefined
     }
-  }, "Create"))), /*#__PURE__*/React.createElement(BulkDeleteBar, {
+  }, React.createElement("div",{style:{marginBottom:12,gridColumn:"1/-1"}},React.createElement("label",{style:{fontSize:13,fontWeight:600,color:C.t4,letterSpacing:1.5,display:"block",marginBottom:3}},"HIRE DATE"),React.createElement("input",{type:"date",value:form.hireDate||"",onChange:function(ev){setForm(Object.assign({},form,{hireDate:ev.target.value}))},style:inp})), "Create"))), /*#__PURE__*/React.createElement(BulkDeleteBar, {
     selected: selEmps,
     onTerminateSelected: function() {
       if (!selEmps || selEmps.length === 0) return;
