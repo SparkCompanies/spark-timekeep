@@ -5314,6 +5314,7 @@ function AdminView({
       a2.click();
     }
     if (type === "detailed") {
+      var monday = reportMon || getMonday();
       var drows = ["Employee,Badge,Dept,Shift,Date,Clock In,Clock Out,Break Out,Break In,Net Hours"];
       emps.filter(function(e){return e.st==="active"}).sort(function(a,b){return(a.ln||"").localeCompare(b.ln||"")}).forEach(function(e){
         for(var di=0;di<7;di++){
