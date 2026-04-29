@@ -7492,8 +7492,17 @@ function App() {
           setPunches(sbPch || []);
           /* Check localStorage backup for missed punches */
           try{
-            /* Update backup to match Supabase (source of truth) */
-          try{localStorage.setItem("tk-v7-punches-backup",JSON.stringify(sbPch||[]))}catch(e){}
+            var backup=JSON.parse(localStorage.getItem("tk-v7-punches-backup")||"[]");
+            if(backup.length>0 && sbPch){
+              var sbIds={}; sbPch.forEach(function(p){sbIds[p.id]=true});
+              var missed=backup.filter(function(p){return !sbIds[p.id]});
+              if(missed.length>0){
+                console.warn("Found "+missed.length+" punches in backup not in Supabase — re-syncing");
+                missed.forEach(function(p){sbSavePunch(p)});
+                setPunches(sbPch.concat(missed));
+              }
+            }
+          }catch(e){}
           setRequests(sbReqs || []);
           if (sbPol) setPolicy(sbPol);
           if (sbGeo) setGeoConfig(sbGeo);
