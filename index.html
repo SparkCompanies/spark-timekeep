@@ -2971,6 +2971,7 @@ function KioskView({
       marginTop: 6
     }
   }, "Check your badge number or PIN"));
+  if (state === "terminated" && emp) content = React.createElement("div",{style:{textAlign:"center",padding:40}},React.createElement(Av,{fn:emp.fn,ln:emp.ln,sz:64}),React.createElement("div",{style:{fontSize:22,fontWeight:800,color:C.red,marginTop:12}},emp.fn," ",emp.ln),React.createElement("div",{style:{fontSize:16,color:C.red,marginTop:8,padding:"8px 16px",background:C.red+"15",borderRadius:8,display:"inline-block"}},"ACCOUNT INACTIVE"),React.createElement("div",{style:{fontSize:14,color:C.t4,marginTop:12}},"This employee has been terminated.",emp.termDate?" Last day: "+emp.termDate:""));
   if (state === "geo-denied") content = /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center"
