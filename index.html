@@ -7721,7 +7721,7 @@ function App() {
   function deletePunch(punchId) {
     if(!confirm("Delete this punch? This cannot be undone.")) return;
     var updated=punches.filter(function(p){return p.id!==punchId});
-    setPunches(updated);safeStorage.setItem("spark-tk-punches",JSON.stringify(updated));
+    setPunches(updated);sSet("tk-v7-punches",updated);try{localStorage.setItem("tk-v7-punches-backup",JSON.stringify(updated))}catch(ex){}
     if(useSupa()){(async function(){var sb=getSb();if(sb){var r=await sb.from("tk_punches").delete().eq("id",punchId);if(r.error)console.error("Delete failed:",r.error)}})()}
   }
   function switchView(){if(view==="admin")setView("manager");else if(view==="manager")setView("admin")}
