@@ -23,6 +23,7 @@ select,input,textarea{font-family:inherit}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
 @keyframes glow{0%,100%{box-shadow:0 0 8px rgba(250,204,21,0.3)}50%{box-shadow:0 0 20px rgba(250,204,21,0.5)}}
 </style>
+<script>setInterval(function(){var b=document.querySelector("[data-kiosk-idle]");if(b)location.reload()},5*60*1000)</script>
 </head>
 <body>
 <div id="root"></div>
@@ -2319,6 +2320,7 @@ function KioskView({
     }
   }
   function doPunch(type) {
+    if(window._punchLock)return;window._punchLock=true;setTimeout(function(){window._punchLock=false},10000);
     var gc = geoConfig || null;
     setGeoChecking(true);
     setGeoError("");
@@ -2543,10 +2545,10 @@ function KioskView({
       sz: 48
     }), /*#__PURE__*/React.createElement("div", {
       style: {
-        fontSize: 17,
-        fontWeight: 700,
+        fontSize: 24,
+        fontWeight: 800,
         color: C.t1,
-        marginTop: 6
+        marginTop: 8
       }
     }, emp.fn, " ", emp.ln), /*#__PURE__*/React.createElement("div", {
       style: {
@@ -2606,11 +2608,14 @@ function KioskView({
           doPunch(a.k);
         },
         style: {
-          padding: mo ? "14px 24px" : "18px 36px",
-          borderRadius: 12,
-          fontSize: mo ? 16 : 18,
+          padding: mo ? "20px 32px" : "28px 48px",
+          borderRadius: 16,
+          fontSize: mo ? 20 : 26,
           fontWeight: 800,
-          letterSpacing: 2,
+          letterSpacing: 3,
+          textTransform: "uppercase",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+          transition: "transform 0.1s",
           color: C.bg,
           background: a.c,
           minWidth: mo ? 120 : 160
