@@ -3894,7 +3894,6 @@ function ManagerView({
       }
     }, h);
   }))), /*#__PURE__*/React.createElement("tbody", null, filtered.map(function (e) {
-    var wkEnd=new Date(mon.getTime()+7*86400000);var ep=punches.filter(function(p){return p.eid===e.id&&new Date(p.time)>=mon&&new Date(p.time)<wkEnd});var pIns=ep.filter(function(p){return p.type==="in"}).length;var pOuts=ep.filter(function(p){return p.type==="out"}).length;var pFlag=pIns!==pOuts;
     return /*#__PURE__*/React.createElement("tr", {
       key: e.id,
       onClick: function () {
@@ -4360,8 +4359,8 @@ function ManagerView({
       return calcDayHours(dp);
     });
     var wkKey=e.id+"-"+mon.toISOString().slice(0,10);var approved = approvals[wkKey] === "approved";
-
-
+    var ep=punches.filter(function(p){return p.eid===e.id});var pIns=ep.filter(function(p){return p.type==="in"}).length;var pOuts=ep.filter(function(p){return p.type==="out"}).length;var pFlag=pIns!==pOuts;
+    var ep=punches.filter(function(p){return p.eid===e.id});var pIns=ep.filter(function(p){return p.type==="in"}).length;var pOuts=ep.filter(function(p){return p.type==="out"}).length;var pFlag=pIns!==pOuts;
     return /*#__PURE__*/React.createElement("tr", {
       key: e.id,
       onClick: function () {
