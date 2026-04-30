@@ -4194,7 +4194,7 @@ function ManagerView({
       fontWeight: 700,
       color: C.spark
     }
-  }, "$", Math.round(totalLabor).toLocaleString()))))),React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 0"}},React.createElement("div",{style:{fontSize:12,color:C.t4}},"Showing "+(dashPage*20+1)+" – "+Math.min((dashPage+1)*20,filtered.length)+" of "+filtered.length),React.createElement("div",{style:{display:"flex",gap:8}},dashPage>0&&React.createElement("button",{onClick:function(){setDashPage(dashPage-1)},style:{padding:"6px 14px",borderRadius:6,fontSize:13,fontWeight:600,color:C.t2,background:"transparent",border:"1px solid "+C.bd,cursor:"pointer"}},"◀ Prev"),((dashPage+1)*20<filtered.length)&&React.createElement("button",{onClick:function(){setDashPage(dashPage+1)},style:{padding:"6px 14px",borderRadius:6,fontSize:13,fontWeight:600,color:C.t2,background:"transparent",border:"1px solid "+C.bd,cursor:"pointer"}},"Next ▶")))), mTab === "whos-in" && React.createElement("div",null,
+  }, "$", Math.round(totalLabor).toLocaleString()))))), mTab === "whos-in" && React.createElement("div",null,
 
   // ── KANBAN BOARD ──
   (function(){
