@@ -2034,7 +2034,8 @@ function EditPunchModal(props) {
 function AddPunchModal({
   emps,
   onAdd,
-  onClose
+  onClose,
+  staffName
 }) {
   var mo = useMobile();
   var r1 = useState(""),
@@ -2068,8 +2069,8 @@ function AddPunchModal({
       var startM = emp && emp.shiftStart ? parseInt(emp.shiftStart.split(":")[1]) : 0;
       var inTime = new Date(qDate+"T00:00:00"); inTime.setHours(startH, startM, 0, 0);
       var outTime = new Date(inTime.getTime() + parseFloat(qHours) * 3600000);
-      onAdd({id:"P-M-"+Date.now()+"-"+Math.random().toString(36).substr(2,4),eid:eid,type:"in",time:inTime.toISOString(),dev:"MANAGER-HOURS",ip:getIP()});
-      setTimeout(function(){onAdd({id:"P-M-"+Date.now()+"-"+Math.random().toString(36).substr(2,4),eid:eid,type:"out",time:outTime.toISOString(),dev:"MANAGER-HOURS",ip:getIP()})},100);
+      onAdd({id:"P-M-"+Date.now()+"-"+Math.random().toString(36).substr(2,4),eid:eid,type:"in",time:inTime.toISOString(),dev:`MANAGER-HOURS - ${staffName||"Unknown"}`,ip:getIP()});
+      setTimeout(function(){onAdd({id:"P-M-"+Date.now()+"-"+Math.random().toString(36).substr(2,4),eid:eid,type:"out",time:outTime.toISOString(),dev:`MANAGER-HOURS - ${staffName||"Unknown"}`,ip:getIP()})},100);
       onClose();
       return;
     }
@@ -2078,7 +2079,7 @@ function AddPunchModal({
       eid: eid,
       type: type,
       time: new Date(time).toISOString(),
-      dev: "MANAGER",
+      dev: `MANAGER - ${staffName||"Unknown"}`,
       ip: getIP()
     });
     onClose();
@@ -4830,6 +4831,7 @@ function ManagerView({
   ,showAddPunch && /*#__PURE__*/React.createElement(AddPunchModal, {
     emps: active,
     onAdd: onPunch,
+    staffName: staffName,
     onClose: function () {
       setShowAddPunch(false);
     }
@@ -7679,15 +7681,17 @@ function App() {
     if (useSupa()) { var changed = updated.find(function(ev){return ev.id===evId}); if(changed) sbSavePointEvent(changed); }
   }
   function editPunch(punchId, newTime) {
+    var editorName = (loggedIn && loggedIn.fn && loggedIn.ln) ? (loggedIn.fn + " " + loggedIn.ln) : "Unknown";
+    var newDev = "MANAGER - " + editorName;
     var updated = punches.map(function(p) {
       if (p.id === punchId) {
-        return Object.assign({}, p, { time: newTime, edited: true, editedAt: new Date().toISOString() });
+        return Object.assign({}, p, { time: newTime, dev: newDev, edited: true, editedAt: new Date().toISOString(), editedBy: editorName });
       }
       return p;
     });
     setPunches(updated);
     localStorage.setItem("spark-tk-punches", JSON.stringify(updated));
-    if(useSupa()){(async function(){var sb=getSb();if(sb){var edited=updated.find(function(p){return p.id===punchId});if(edited){var r=await sb.from("tk_punches").upsert({id:edited.id,eid:edited.eid,type:edited.type,time:edited.time,dev:edited.dev||"manager",ip:edited.ip||""});if(r.error)console.error("Edit sync failed:",r.error)}}})()}
+    if(useSupa()){(async function(){var sb=getSb();if(sb){var edited=updated.find(function(p){return p.id===punchId});if(edited){var r=await sb.from("tk_punches").upsert({id:edited.id,eid:edited.eid,type:edited.type,time:edited.time,dev:edited.dev||newDev,ip:edited.ip||""});if(r.error)console.error("Edit sync failed:",r.error)}}})()}
   }
   function deletePunch(punchId) {
     if(!confirm("Delete this punch? This cannot be undone.")) return;
