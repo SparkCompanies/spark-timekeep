@@ -5264,7 +5264,7 @@ function AdminView({
   function doExport(type) {
     if (type === "timesheet") {
       var monday = reportMon || getMonday();
-      var rows = ["Employee,Badge,Mon,Tue,Wed,Thu,Fri,Sat,Sun,Total,OT"];
+      var rows = ["Employee,Badge,Dept,Title,Mon,Tue,Wed,Thu,Fri,Sat,Sun,Total,OT"];
       emps.filter(function (e) {
         return e.st === "active";
       }).sort(function(a,b){return(a.ln||"").localeCompare(b.ln||"")}).forEach(function (e) {
@@ -5272,7 +5272,7 @@ function AdminView({
         var total = daily.reduce(function (s, d) {
           return s + d.hrs;
         }, 0);
-        rows.push(e.fn + " " + e.ln + "," + e.badge + "," + daily.map(function (d) {
+        rows.push(e.fn + " " + e.ln + "," + e.badge + "," + (e.dept||"") + "," + (e.role||"") + "," + daily.map(function (d) {
           return d.hrs;
         }).join(",") + "," + total.toFixed(1) + "," + Math.max(0, total - P.otWeekly).toFixed(1));
       });
