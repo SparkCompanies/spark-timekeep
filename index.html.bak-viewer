@@ -429,8 +429,7 @@ async function sbLoadEmployees() {
       workDays: e.work_days,
       rate: parseFloat(e.rate),
       st: e.status,
-      salary: parseFloat(e.salary) || 0,
-      breakExempt: !!e.break_exempt
+      salary: parseFloat(e.salary) || 0
     };
   });
 }
@@ -571,7 +570,6 @@ async function sbSaveEmployee(e) {
     rate: e.rate,
     status: e.st,
     salary: e.salary || 0,
-    break_exempt: e.breakExempt || false,
     hire_date: e.hireDate || null,
     term_date: e.termDate || null
   });
@@ -820,7 +818,7 @@ function fmtTime(iso) {
     minute: "2-digit"
   });
 }
-function calcDayHours(punches, eid) {
+function calcDayHours(punches) {
   var sorted = punches.slice().sort(function (a, b) {
     return new Date(a.time) - new Date(b.time);
   });
@@ -851,7 +849,7 @@ function calcDayHours(punches, eid) {
 
   // Step 2: Auto-deduct break if gross hours >= policy threshold
   var grossH = gross / 3600000;
-  var _bex=eid&&window.__breakExemptEids&&window.__breakExemptEids[eid]; var breakMs=_bex?0:(grossH>=(window.__breakReqHrs||8))?(window.__breakMins||30)*60000:0;
+  var breakMs = (grossH >= (window.__breakReqHrs||8)) ? (window.__breakMins||30) * 60000 : 0;
 
   var net = gross - breakMs;
   return {
@@ -949,7 +947,7 @@ function calcWeekHours(allPunches, eid) {
     var de = new Date(ds);
     de.setHours(23, 59, 59, 999);
     var dp = getDayPunchesWithCarryOver(allPunches, eid, ds, de);
-    total += calcDayHours(dp,eid).netH;
+    total += calcDayHours(dp).netH;
   }
   return parseFloat(total.toFixed(1));
 }
@@ -962,7 +960,7 @@ function calcWeekHoursForWeek(allPunches, eid, monday) {
     var de = new Date(ds);
     de.setHours(23, 59, 59, 999);
     var dp = getDayPunchesWithCarryOver(allPunches, eid, ds, de);
-    total += calcDayHours(dp,eid).netH;
+    total += calcDayHours(dp).netH;
   }
   return parseFloat(total.toFixed(1));
 }
@@ -977,7 +975,7 @@ function getDailyBreakdown(allPunches, eid) {
     var dp = getDayPunchesWithCarryOver(allPunches, eid, ds, de);
     return {
       day: d,
-      hrs: parseFloat(calcDayHours(dp,eid).netH.toFixed(1)),
+      hrs: parseFloat(calcDayHours(dp).netH.toFixed(1)),
       isToday: ds.toDateString() === new Date().toDateString()
     };
   });
@@ -993,7 +991,7 @@ function getDailyBreakdownForWeek(allPunches, eid, monday) {
     return {
       day: d,
       date: new Date(ds),
-      hrs: parseFloat(calcDayHours(dp,eid).netH.toFixed(1)),
+      hrs: parseFloat(calcDayHours(dp).netH.toFixed(1)),
       isToday: ds.toDateString() === new Date().toDateString(),
       punches: dp.sort(function (a, b) {
         return new Date(a.time) - new Date(b.time);
@@ -1626,8 +1624,7 @@ function Header({
   onLogout,
   staffName,
   downgradeEvent,
-  editPunch,
-  readOnly
+  editPunch
 }) {
   var mo = useMobile();
   return /*#__PURE__*/React.createElement("div", {
@@ -1677,18 +1674,7 @@ function Header({
       fontWeight: 600,
       color: C.spark
     }
-  }, staffName)), readOnly && /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: "4px 10px",
-      borderRadius: 6,
-      background: (C.spark || "#FACC15") + "22",
-      border: "1px solid " + (C.spark || "#FACC15"),
-      fontSize: 11,
-      fontWeight: 800,
-      color: C.spark || "#FACC15",
-      letterSpacing: 1.2
-    }
-  }, "VIEW ONLY"), /*#__PURE__*/React.createElement(SparkLogo, {
+  }, staffName)), /*#__PURE__*/React.createElement(SparkLogo, {
     size: "sm"
   }), onLogout && /*#__PURE__*/React.createElement("button", {
     onClick: onLogout,
@@ -3138,7 +3124,7 @@ function ReportsTab({emps,punches,policy,mon}){
       var ds=new Date(mon);ds.setDate(ds.getDate()+di);ds.setHours(0,0,0,0);
       var de=new Date(ds);de.setHours(23,59,59,999);
       return emps.filter(function(e){return e.dept===dept}).reduce(function(s,e){
-        return s+calcDayHours(getDayPunchesWithCarryOver(punches,e.id,ds,de),e.id).netH;
+        return s+calcDayHours(getDayPunchesWithCarryOver(punches,e.id,ds,de)).netH;
       },0);
     })});
     if(hRef.current){if(ci.current.h)ci.current.h.destroy();ci.current.h=new Ch(hRef.current,{type:"bar",data:{labels:days,datasets:depts.map(function(d,i){return{label:d,data:hd[i],backgroundColor:Object.values(DC)[i]+"CC",borderColor:Object.values(DC)[i],borderWidth:1,borderRadius:4}})},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"top"}},scales:{x:{grid:{color:"#27272A"}},y:{grid:{color:"#27272A"},ticks:{callback:function(v){return v+"h"}}}}}});}
@@ -3206,7 +3192,7 @@ function ReportsTab({emps,punches,policy,mon}){
 // ═══════════════════════════════════════════
 // UKG-STYLE TIMESHEET DRILLDOWN
 // ═══════════════════════════════════════════
-function TimesheetDrilldown({emp,punches,mon,weekOffset,setWeekOffset,setSelEmp,setSelDay,selDay,onIssuePoint,setEditingPunch,deletePunch,editPunch,policy,onPunch,readOnly}) {
+function TimesheetDrilldown({emp,punches,mon,weekOffset,setWeekOffset,setSelEmp,setSelDay,selDay,onIssuePoint,setEditingPunch,deletePunch,editPunch,policy,onPunch}) {
   var P=policy||{graceMins:7,otWeekly:40};
   var Fm="'JetBrains Mono',monospace";
   var mo=useMobile();
@@ -3325,7 +3311,7 @@ function TimesheetDrilldown({emp,punches,mon,weekOffset,setWeekOffset,setSelEmp,
             React.createElement("td",{style:Object.assign({},cellS,{padding:"6px 8px",color:C.t4,fontSize:12})},p.dev||"KIOSK",p.ip?" · "+p.ip:""),
             React.createElement("td",{style:Object.assign({},cellS,{padding:"6px 8px"})},
               React.createElement("div",{style:{display:"flex",gap:4}},
-                !readOnly && React.createElement("button",{onClick:function(){setEditingPunch(Object.assign({},p,{eid:emp.id}))},style:{padding:"3px 8px",fontSize:11,background:"transparent",border:"1px solid "+C.spark,color:C.spark,borderRadius:4,cursor:"pointer",fontWeight:600}},"Edit"),
+                React.createElement("button",{onClick:function(){setEditingPunch(Object.assign({},p,{eid:emp.id}))},style:{padding:"3px 8px",fontSize:11,background:"transparent",border:"1px solid "+C.spark,color:C.spark,borderRadius:4,cursor:"pointer",fontWeight:600}},"Edit"),
                 React.createElement("button",{onClick:function(){deletePunch(p.id)},style:{padding:"3px 8px",fontSize:11,background:"transparent",border:"1px solid "+(C.red||"#EF4444"),color:C.red||"#EF4444",borderRadius:4,cursor:"pointer",fontWeight:600}},"Del")
               )
             )
@@ -3344,7 +3330,7 @@ function TimesheetDrilldown({emp,punches,mon,weekOffset,setWeekOffset,setSelEmp,
           React.createElement("span",{style:{display:"flex",alignItems:"center",gap:8}},React.createElement(Tag,{color:pt.c},pt.l),React.createElement("span",{style:{color:C.t1}},new Date(p.time).toLocaleString())),
           React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
             React.createElement("span",{style:{color:C.t4,fontSize:12}},p.dev||"",p.ip?" · "+p.ip:""),
-            !readOnly && React.createElement("button",{onClick:function(){setEditingPunch(Object.assign({},p,{eid:emp.id}))},style:{padding:"2px 6px",fontSize:10,background:"transparent",border:"1px solid "+C.spark,color:C.spark,borderRadius:3,cursor:"pointer",fontWeight:600}},"Edit"),
+            React.createElement("button",{onClick:function(){setEditingPunch(Object.assign({},p,{eid:emp.id}))},style:{padding:"2px 6px",fontSize:10,background:"transparent",border:"1px solid "+C.spark,color:C.spark,borderRadius:3,cursor:"pointer",fontWeight:600}},"Edit"),
             React.createElement("button",{onClick:function(){deletePunch(p.id)},style:{padding:"2px 6px",fontSize:10,background:"transparent",border:"1px solid "+(C.red||"#EF4444"),color:C.red||"#EF4444",borderRadius:3,cursor:"pointer",fontWeight:600}},"Del")
           )
         )
@@ -3375,8 +3361,7 @@ function ManagerView({
   staffName,
   deletePunch,
   editPunch,
-  onSwitchView,
-  readOnly
+  onSwitchView
 }) {
   var mo = useMobile();
   var P = policy || DEFAULT_POLICY;
@@ -3526,7 +3511,7 @@ function ManagerView({
     return (b.sev || 0) - (a.sev || 0);
   });
   var totalBadges = pending.length;
-  var tabDef = [["dashboard", "Dashboard" + (violations.length > 0 ? " (" + violations.length + ")" : "")], ["whos-in", "Who's In"], ["reports", "Reports"], ["timesheets", "Timesheets"], ["alerts", "Alerts" + (function(){var c=alerts.filter(function(a,i){return !dismissedAlerts[a.id||"a"+i]}).length;return c>0?" ("+c+")":""}())], ["approvals", "Approvals" + (pending.length > 0 ? " (" + pending.length + ")" : "")]].filter(function(t){return !(readOnly && t[0]==="approvals")});
+  var tabDef = [["dashboard", "Dashboard" + (violations.length > 0 ? " (" + violations.length + ")" : "")], ["whos-in", "Who's In"], ["reports", "Reports"], ["timesheets", "Timesheets"], ["alerts", "Alerts" + (function(){var c=alerts.filter(function(a,i){return !dismissedAlerts[a.id||"a"+i]}).length;return c>0?" ("+c+")":""}())], ["approvals", "Approvals" + (pending.length > 0 ? " (" + pending.length + ")" : "")]];
   return /*#__PURE__*/React.createElement("div", {
     style: {
       minHeight: "100vh",
@@ -3537,8 +3522,7 @@ function ManagerView({
     title: "Manager Dashboard",
     sub: "Monitoring " + active.length + " employees",
     onLogout: onLogout,
-    staffName: staffName,
-    readOnly: readOnly
+    staffName: staffName
   }), /*#__PURE__*/React.createElement("div", {
     style: {
       padding: mo ? 12 : 28
@@ -3571,7 +3555,7 @@ function ManagerView({
         background: mTab === x[0] ? C.spark : "transparent"
       }
     }, x[1]);
-  })), !readOnly && onSwitchView && React.createElement("div",{style:{marginBottom:12}},React.createElement("button",{onClick:onSwitchView,style:{padding:"6px 16px",background:"transparent",border:"1px solid "+(C.spark||"#FACC15"),color:C.spark||"#FACC15",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:600}},"Switch to Admin View")), /*#__PURE__*/React.createElement("div",{style:{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap",alignItems:"center"}},/*#__PURE__*/React.createElement("input",{placeholder:"Search name or badge...",value:search,onChange:function(e){setSearch(e.target.value)},style:{padding:"8px 12px",background:C.bg,border:"1px solid "+C.bd,color:C.t1,borderRadius:6,fontSize:13,outline:"none",width:260,fontFamily:"inherit"}}),/*#__PURE__*/React.createElement("select",{value:dept,onChange:function(e){setDept(e.target.value)},style:{padding:"8px 12px",background:C.bg,border:"1px solid "+C.bd,color:C.t1,borderRadius:6,fontSize:13,outline:"none",fontFamily:"inherit",appearance:"auto"}},/*#__PURE__*/React.createElement("option",{value:"all"},"All Departments"),emps.filter(function(e){return e.st==="active"}).map(function(e){return e.dept}).filter(function(v,i,a){return v&&a.indexOf(v)===i}).sort().map(function(d){return /*#__PURE__*/React.createElement("option",{key:d,value:d},d)})),search&&/*#__PURE__*/React.createElement("button",{onClick:function(){setSearch("");setDept("all")},style:{padding:"6px 12px",background:"transparent",border:"1px solid "+C.bd,color:C.t3,borderRadius:6,fontSize:12,cursor:"pointer",fontFamily:"inherit"}},"Clear")), (mTab === "dashboard" || mTab === "timesheets") && /*#__PURE__*/React.createElement("div", {
+  })), onSwitchView && React.createElement("div",{style:{marginBottom:12}},React.createElement("button",{onClick:onSwitchView,style:{padding:"6px 16px",background:"transparent",border:"1px solid "+(C.spark||"#FACC15"),color:C.spark||"#FACC15",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:600}},"Switch to Admin View")), /*#__PURE__*/React.createElement("div",{style:{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap",alignItems:"center"}},/*#__PURE__*/React.createElement("input",{placeholder:"Search name or badge...",value:search,onChange:function(e){setSearch(e.target.value)},style:{padding:"8px 12px",background:C.bg,border:"1px solid "+C.bd,color:C.t1,borderRadius:6,fontSize:13,outline:"none",width:260,fontFamily:"inherit"}}),/*#__PURE__*/React.createElement("select",{value:dept,onChange:function(e){setDept(e.target.value)},style:{padding:"8px 12px",background:C.bg,border:"1px solid "+C.bd,color:C.t1,borderRadius:6,fontSize:13,outline:"none",fontFamily:"inherit",appearance:"auto"}},/*#__PURE__*/React.createElement("option",{value:"all"},"All Departments"),emps.filter(function(e){return e.st==="active"}).map(function(e){return e.dept}).filter(function(v,i,a){return v&&a.indexOf(v)===i}).sort().map(function(d){return /*#__PURE__*/React.createElement("option",{key:d,value:d},d)})),search&&/*#__PURE__*/React.createElement("button",{onClick:function(){setSearch("");setDept("all")},style:{padding:"6px 12px",background:"transparent",border:"1px solid "+C.bd,color:C.t3,borderRadius:6,fontSize:12,cursor:"pointer",fontFamily:"inherit"}},"Clear")), (mTab === "dashboard" || mTab === "timesheets") && /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       alignItems: "center",
@@ -3780,7 +3764,7 @@ function ManagerView({
       }
     }, /*#__PURE__*/React.createElement(Tag, {
       color: col
-    }, rule.v, " (+", v.pts, ")"), !readOnly && /*#__PURE__*/React.createElement("button", {
+    }, rule.v, " (+", v.pts, ")"), /*#__PURE__*/React.createElement("button", {
       onClick: function () {
         onIssuePoint(v.eid, v.type, undefined, v.day.toISOString());
         setDismissed(Object.assign({}, dismissed, function () {
@@ -3797,7 +3781,7 @@ function ManagerView({
         color: C.bg,
         background: C.green
       }
-    }, "Approve"), !readOnly && /*#__PURE__*/React.createElement("button", {
+    }, "Approve"), /*#__PURE__*/React.createElement("button", {
       onClick: function () {
         setDismissed(Object.assign({}, dismissed, function () {
           var o = {};
@@ -3857,7 +3841,7 @@ function ManagerView({
       key: d,
       value: d
     }, d);
-  })), !readOnly && /*#__PURE__*/React.createElement("button", {
+  })), /*#__PURE__*/React.createElement("button", {
     onClick: function () {
       setShowAddPunch(true);
     },
@@ -3869,7 +3853,7 @@ function ManagerView({
       color: C.bg,
       background: C.spark
     }
-  }, "+ Add Punch")), selEmp ? React.createElement(TimesheetDrilldown,{emp:selEmp,punches:punches,mon:mon,weekOffset:weekOffset,setWeekOffset:setWeekOffset,setSelEmp:setSelEmp,setSelDay:setSelDay,selDay:selDay,onIssuePoint:onIssuePoint,setEditingPunch:setEditingPunch,deletePunch:deletePunch,editPunch:editPunch,policy:P,onPunch:onPunch,readOnly:readOnly}) : /*#__PURE__*/React.createElement("div", {
+  }, "+ Add Punch")), selEmp ? React.createElement(TimesheetDrilldown,{emp:selEmp,punches:punches,mon:mon,weekOffset:weekOffset,setWeekOffset:setWeekOffset,setSelEmp:setSelEmp,setSelDay:setSelDay,selDay:selDay,onIssuePoint:onIssuePoint,setEditingPunch:setEditingPunch,deletePunch:deletePunch,editPunch:editPunch,policy:P,onPunch:onPunch}) : /*#__PURE__*/React.createElement("div", {
     style: {
       overflowX: "auto"
     }
@@ -4354,7 +4338,7 @@ function ManagerView({
       ds.setDate(ds.getDate() + i);
       var de = new Date(ds.getTime() + 86400000 - 1);
       var dp = getDayPunchesWithCarryOver(punches, e.id, ds, de);
-      return calcDayHours(dp,e.id);
+      return calcDayHours(dp);
     });
     var wkKey=e.id+"-"+mon.toISOString().slice(0,10);var approved = approvals[wkKey] === "approved";
     var wkEnd=new Date(mon.getTime()+7*86400000);var ep=punches.filter(function(p){return p.eid===e.id&&new Date(p.time)>=mon&&new Date(p.time)<wkEnd});var pIns=ep.filter(function(p){return p.type==="in"}).length;var pOuts=ep.filter(function(p){return p.type==="out"}).length;var pFlag=pIns!==pOuts;
@@ -4434,7 +4418,7 @@ function ManagerView({
       }
     }, approved ? /*#__PURE__*/React.createElement(Tag, {
       color: C.green
-    }, "OK") : !readOnly && /*#__PURE__*/React.createElement("button", {
+    }, "OK") : /*#__PURE__*/React.createElement("button", {
       onClick: function (ev) {
         ev.stopPropagation();
         var wk=mon.toISOString().slice(0,10);var nxt=Object.assign({},approvals);nxt[e.id+"-"+wk]="approved";setApprovals(nxt);try{localStorage.setItem("tk-approvals",JSON.stringify(nxt))}catch(ex){}
@@ -4461,7 +4445,7 @@ function ManagerView({
       fontSize: 13,
       color: C.t4
     }
-  }, Object.keys(approvals).filter(function(k){return k.endsWith("-"+mon.toISOString().slice(0,10))&&approvals[k]==="approved"}).length, " of ", active.length, " approved"), !readOnly && /*#__PURE__*/React.createElement("button", {
+  }, Object.keys(approvals).filter(function(k){return k.endsWith("-"+mon.toISOString().slice(0,10))&&approvals[k]==="approved"}).length, " of ", active.length, " approved"), /*#__PURE__*/React.createElement("button", {
     onClick: function () {
       var wk2=mon.toISOString().slice(0,10);var all=Object.assign({},approvals);
       active.forEach(function (e) {
@@ -4484,7 +4468,7 @@ function ManagerView({
       color: C.t1,
       marginBottom: 4
     }
-  }, "Alert Center"), /*#__PURE__*/React.createElement("div",{style:{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap",alignItems:"center"}},/*#__PURE__*/React.createElement("input",{placeholder:"Search employee...",value:alertSearch,onChange:function(e){setAlertSearch(e.target.value)},style:{padding:"8px 12px",background:C.bg,border:"1px solid "+C.bd,color:C.t1,borderRadius:6,fontSize:13,outline:"none",width:200,fontFamily:"inherit"}}),/*#__PURE__*/React.createElement("select",{value:alertFilter,onChange:function(e){setAlertFilter(e.target.value)},style:{padding:"8px 12px",background:C.bg,border:"1px solid "+C.bd,color:C.t1,borderRadius:6,fontSize:13,outline:"none",fontFamily:"inherit",appearance:"auto"}},/*#__PURE__*/React.createElement("option",{value:"all"},"All Severity"),/*#__PURE__*/React.createElement("option",{value:"3"},"Critical Only"),/*#__PURE__*/React.createElement("option",{value:"2"},"Warning Only"),/*#__PURE__*/React.createElement("option",{value:"1"},"Info Only")),!readOnly && /*#__PURE__*/React.createElement("button",{onClick:function(){var visible=alerts.filter(function(a){if(dismissedAlerts[a.id||"a"+alerts.indexOf(a)])return false;if(alertFilter!=="all"&&String(a.sev||0)!==alertFilter)return false;if(alertSearch){var s=alertSearch.toLowerCase();if(!a.emp||(a.emp.fn+" "+a.emp.ln).toLowerCase().indexOf(s)===-1)return false}return true});if(visible.length===0)return;if(!confirm("Dismiss "+visible.length+" visible alerts?"))return;var nd=Object.assign({},dismissedAlerts);visible.forEach(function(a,i){nd[a.id||"a"+alerts.indexOf(a)]=true});setDismissedAlerts(nd)},style:{padding:"8px 14px",background:C.bg,border:"1px solid "+C.red,color:C.red,borderRadius:6,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}},"Dismiss Visible"),/*#__PURE__*/React.createElement("div",{style:{fontSize:12,color:C.t3,marginLeft:4}},alerts.filter(function(a){return !dismissedAlerts[a.id||"a"+alerts.indexOf(a)]}).length+" active")), alerts.length === 0 ? /*#__PURE__*/React.createElement("div", {
+  }, "Alert Center"), /*#__PURE__*/React.createElement("div",{style:{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap",alignItems:"center"}},/*#__PURE__*/React.createElement("input",{placeholder:"Search employee...",value:alertSearch,onChange:function(e){setAlertSearch(e.target.value)},style:{padding:"8px 12px",background:C.bg,border:"1px solid "+C.bd,color:C.t1,borderRadius:6,fontSize:13,outline:"none",width:200,fontFamily:"inherit"}}),/*#__PURE__*/React.createElement("select",{value:alertFilter,onChange:function(e){setAlertFilter(e.target.value)},style:{padding:"8px 12px",background:C.bg,border:"1px solid "+C.bd,color:C.t1,borderRadius:6,fontSize:13,outline:"none",fontFamily:"inherit",appearance:"auto"}},/*#__PURE__*/React.createElement("option",{value:"all"},"All Severity"),/*#__PURE__*/React.createElement("option",{value:"3"},"Critical Only"),/*#__PURE__*/React.createElement("option",{value:"2"},"Warning Only"),/*#__PURE__*/React.createElement("option",{value:"1"},"Info Only")),/*#__PURE__*/React.createElement("button",{onClick:function(){var visible=alerts.filter(function(a){if(dismissedAlerts[a.id||"a"+alerts.indexOf(a)])return false;if(alertFilter!=="all"&&String(a.sev||0)!==alertFilter)return false;if(alertSearch){var s=alertSearch.toLowerCase();if(!a.emp||(a.emp.fn+" "+a.emp.ln).toLowerCase().indexOf(s)===-1)return false}return true});if(visible.length===0)return;if(!confirm("Dismiss "+visible.length+" visible alerts?"))return;var nd=Object.assign({},dismissedAlerts);visible.forEach(function(a,i){nd[a.id||"a"+alerts.indexOf(a)]=true});setDismissedAlerts(nd)},style:{padding:"8px 14px",background:C.bg,border:"1px solid "+C.red,color:C.red,borderRadius:6,fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}},"Dismiss Visible"),/*#__PURE__*/React.createElement("div",{style:{fontSize:12,color:C.t3,marginLeft:4}},alerts.filter(function(a){return !dismissedAlerts[a.id||"a"+alerts.indexOf(a)]}).length+" active")), alerts.length === 0 ? /*#__PURE__*/React.createElement("div", {
     style: {
       background: C.green + "10",
       border: "1px solid " + C.green + "33",
@@ -4649,7 +4633,7 @@ function ManagerView({
         border: "1px solid " + C.spark + "33",
         flexShrink: 0
       }
-    }, "View"), !readOnly && /*#__PURE__*/React.createElement("button",{onClick:function(){var nd=Object.assign({},dismissedAlerts);nd[a.id||"a"+alerts.indexOf(a)]=true;setDismissedAlerts(nd)},style:{padding:"5px 10px",borderRadius:6,fontSize:13,fontWeight:600,color:C.t3,background:"transparent",border:"1px solid "+C.bd,flexShrink:0,cursor:"pointer"}},"Dismiss"));
+    }, "View"), /*#__PURE__*/React.createElement("button",{onClick:function(){var nd=Object.assign({},dismissedAlerts);nd[a.id||"a"+alerts.indexOf(a)]=true;setDismissedAlerts(nd)},style:{padding:"5px 10px",borderRadius:6,fontSize:13,fontWeight:600,color:C.t3,background:"transparent",border:"1px solid "+C.bd,flexShrink:0,cursor:"pointer"}},"Dismiss"));
   }))), mTab === "approvals" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
@@ -4735,7 +4719,7 @@ function ManagerView({
         gap: 6,
         flexShrink: 0
       }
-    }, !readOnly && /*#__PURE__*/React.createElement("button", {
+    }, /*#__PURE__*/React.createElement("button", {
       onClick: function () {
         onApproveRequest(req.id);
       },
@@ -4747,7 +4731,7 @@ function ManagerView({
         color: C.bg,
         background: C.green
       }
-    }, "Approve"), !readOnly && /*#__PURE__*/React.createElement("button", {
+    }, "Approve"), /*#__PURE__*/React.createElement("button", {
       onClick: function () {
         onDenyRequest(req.id);
       },
@@ -4767,7 +4751,7 @@ function ManagerView({
       color: C.green,
       marginBottom: 16
     }
-  }, "No pending requests"), !readOnly && /*#__PURE__*/React.createElement("button", {
+  }, "No pending requests"), /*#__PURE__*/React.createElement("button", {
     onClick: function () {
       setShowAddPunch(true);
     },
@@ -4780,7 +4764,7 @@ function ManagerView({
       background: C.spark,
       marginBottom: 20
     }
-  }, "+ Manual Punch Correction"), !readOnly && /*#__PURE__*/React.createElement("button", {onClick:function(){setShowPunchEditor(!showPunchEditor)},style:{padding:"8px 16px",background:"transparent",border:"1px solid "+(C.spark||"#FACC15"),color:C.spark||"#FACC15",borderRadius:6,cursor:"pointer",fontSize:13,fontWeight:600,marginLeft:8}}, showPunchEditor?"Close Editor":"Edit Punches"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  }, "+ Manual Punch Correction"), /*#__PURE__*/React.createElement("button", {onClick:function(){setShowPunchEditor(!showPunchEditor)},style:{padding:"8px 16px",background:"transparent",border:"1px solid "+(C.spark||"#FACC15"),color:C.spark||"#FACC15",borderRadius:6,cursor:"pointer",fontSize:13,fontWeight:600,marginLeft:8}}, showPunchEditor?"Close Editor":"Edit Punches"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 16,
       fontWeight: 700,
@@ -4828,7 +4812,7 @@ function ManagerView({
         fontWeight: 700,
         color: ev.pts > 0 ? C.orange : C.green
       }
-    }, ev.pts > 0 ? "+" : "", ev.pts), ev.type === "no-show" && !readOnly && /*#__PURE__*/React.createElement("button", {onClick: function(){if(confirm("Downgrade this No-Show to Called In? Points: " + ev.pts + " \u2192 1")){downgradeEvent(ev.id)}}, style:{marginLeft:8,padding:"2px 8px",fontSize:11,background:"transparent",border:"1px solid "+(C.spark||"#FACC15"),color:C.spark||"#FACC15",borderRadius:4,cursor:"pointer",fontWeight:600}}, "\u2193 Called In"));
+    }, ev.pts > 0 ? "+" : "", ev.pts), ev.type === "no-show" && /*#__PURE__*/React.createElement("button", {onClick: function(){if(confirm("Downgrade this No-Show to Called In? Points: " + ev.pts + " \u2192 1")){downgradeEvent(ev.id)}}, style:{marginLeft:8,padding:"2px 8px",fontSize:11,background:"transparent",border:"1px solid "+(C.spark||"#FACC15"),color:C.spark||"#FACC15",borderRadius:4,cursor:"pointer",fontWeight:600}}, "\u2193 Called In"));
   }))))
   
   ,mTab === "reports" && /*#__PURE__*/React.createElement(ReportsTab, {emps:statuses,punches:punches,policy:P,weekOffset:weekOffset,mon:mon})
@@ -5069,8 +5053,7 @@ function AdminView({
       shiftEnd: "14:30",
       workDays: [1, 2, 3, 4, 5],
       rate: 16.50,
-      salary: 0,
-      breakExempt: false
+      salary: 0
     }),
     form = r3[0],
     setForm = r3[1];
@@ -5193,7 +5176,6 @@ function AdminView({
       workDays: form.workDays,
       rate: parseFloat(form.rate) || 16.50,
       salary: parseFloat(form.salary) || 0,
-      breakExempt: form.breakExempt || false,
       st: "active",
       hireDate: form.hireDate || new Date().toISOString().slice(0,10),
       termDate: null,
@@ -5212,15 +5194,14 @@ function AdminView({
       workDays: [1, 2, 3, 4, 5],
       rate: 16.50,
       salary: 0,
-      breakExempt: false,
       hireDate: ""
     });
     setShowAdd(false);
   }
   var rEdit = useState(null), editEmp2 = rEdit[0], setEditEmp2 = rEdit[1];
   var rEditForm = useState({}), editForm = rEditForm[0], setEditForm = rEditForm[1];
-  function startEdit(e) { setEditForm({fn:e.fn,ln:e.ln,dept:e.dept,shiftStart:e.shiftStart||"06:00",shiftEnd:e.shiftEnd||"14:30",rate:e.rate||16,salary:e.salary||0,badge:e.badge,pin:e.pin,breakExempt:e.breakExempt||false}); setEditEmp2(e); }
-  function saveEdit() { if(!editEmp2)return; onUpdateEmps(emps.map(function(x){return x.id===editEmp2.id?Object.assign({},x,{fn:editForm.fn||x.fn,ln:editForm.ln||x.ln,dept:editForm.dept||x.dept,shiftStart:editForm.shiftStart||x.shiftStart,shiftEnd:editForm.shiftEnd||x.shiftEnd,rate:parseFloat(editForm.rate)||x.rate,salary:parseFloat(editForm.salary)||0,badge:editForm.badge||x.badge,pin:editForm.pin||x.pin,breakExempt:editForm.breakExempt!==undefined?editForm.breakExempt:x.breakExempt}):x})); logAdminAction("EDIT",editEmp2.fn+" "+editEmp2.ln+" ("+editEmp2.badge+")",staffName); setEditEmp2(null); }
+  function startEdit(e) { setEditForm({fn:e.fn,ln:e.ln,dept:e.dept,shiftStart:e.shiftStart||"06:00",shiftEnd:e.shiftEnd||"14:30",rate:e.rate||16,salary:e.salary||0,badge:e.badge,pin:e.pin}); setEditEmp2(e); }
+  function saveEdit() { if(!editEmp2)return; onUpdateEmps(emps.map(function(x){return x.id===editEmp2.id?Object.assign({},x,{fn:editForm.fn||x.fn,ln:editForm.ln||x.ln,dept:editForm.dept||x.dept,shiftStart:editForm.shiftStart||x.shiftStart,shiftEnd:editForm.shiftEnd||x.shiftEnd,rate:parseFloat(editForm.rate)||x.rate,salary:parseFloat(editForm.salary)||0,badge:editForm.badge||x.badge,pin:editForm.pin||x.pin}):x})); logAdminAction("EDIT",editEmp2.fn+" "+editEmp2.ln+" ("+editEmp2.badge+")",staffName); setEditEmp2(null); }
   function termEmp(id) { var emp2=emps.find(function(e){return e.id===id}); if(!emp2)return; var td=window.prompt("Enter last day for "+emp2.fn+" "+emp2.ln+" (YYYY-MM-DD):",new Date().toISOString().slice(0,10)); if(!td)return; if(!td.match(/^\d{4}-\d{2}-\d{2}$/)){alert("Invalid date format. Use YYYY-MM-DD");return} onUpdateEmps(emps.map(function(x){return x.id===id?Object.assign({},x,{st:"terminated",termDate:td}):x}),id); logAdminAction("TERMINATE",emp2.fn+" "+emp2.ln+" ("+emp2.badge+") — end date: "+td,staffName); }
   function deleteEmp(id) {
     var emp=emps.find(function(e){return e.id===id});
@@ -5334,7 +5315,7 @@ function AdminView({
           var ds=new Date(monday);ds.setDate(ds.getDate()+di);ds.setHours(0,0,0,0);
           var de=new Date(ds);de.setHours(23,59,59,999);
           var dp=getDayPunchesWithCarryOver(punches,e.id,ds,de);
-          var hrs=calcDayHours(dp,e.id);
+          var hrs=calcDayHours(dp);
           if(dp.length===0)continue;
           var ins=dp.filter(function(p){return p.type==="in"});
           var outs=dp.filter(function(p){return p.type==="out"});
@@ -6074,7 +6055,6 @@ function AdminView({
   /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"Shift Start"), /*#__PURE__*/React.createElement("input",{type:"time",value:editForm.shiftStart||"06:00",onChange:function(ev){setEditForm(Object.assign({},editForm,{shiftStart:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px 10px",borderRadius:6,fontSize:14,fontFamily:Fm,outline:"none"}})),
   /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"Shift End"), /*#__PURE__*/React.createElement("input",{type:"time",value:editForm.shiftEnd||"14:30",onChange:function(ev){setEditForm(Object.assign({},editForm,{shiftEnd:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px 10px",borderRadius:6,fontSize:14,fontFamily:Fm,outline:"none"}})),
   /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"Salary/YR"), /*#__PURE__*/React.createElement("input",{type:"number",step:"1000",value:editForm.salary||"",onChange:function(ev){setEditForm(Object.assign({},editForm,{salary:ev.target.value}))},placeholder:"0 = hourly",style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.green,padding:"8px 10px",borderRadius:6,fontSize:14,fontFamily:Fm,outline:"none"}}))),
-  React.createElement("div",{style:{gridColumn:"1/-1",display:"flex",alignItems:"center",gap:10,marginTop:8,padding:"10px 12px",background:editForm.breakExempt?"rgba(250,204,21,0.08)":"transparent",border:"1px solid "+(editForm.breakExempt?"rgba(250,204,21,0.25)":"#1E1E22"),borderRadius:8}},React.createElement("input",{type:"checkbox",checked:editForm.breakExempt||false,onChange:function(ev){setEditForm(Object.assign({},editForm,{breakExempt:ev.target.checked}))},style:{accentColor:"#FACC15",width:18,height:18,cursor:"pointer"}}),React.createElement("div",null,React.createElement("div",{style:{fontSize:14,fontWeight:600,color:editForm.breakExempt?"#FACC15":"#A1A1AA"}},"Lunch Break Exempt"),React.createElement("div",{style:{fontSize:12,color:"#3F3F46"}},editForm.breakExempt?"No auto 30-min lunch deduction":"Standard auto lunch deduction applies"))),
   /*#__PURE__*/React.createElement("div", {style:{display:"flex",gap:8,marginTop:16}},
   /*#__PURE__*/React.createElement("button",{onClick:function(){setEditEmp2(null)},style:{flex:1,padding:"10px",borderRadius:8,fontSize:14,fontWeight:600,color:C.t3,background:C.bg,border:"1px solid "+C.bd}},"Cancel"),
   /*#__PURE__*/React.createElement("button",{onClick:saveEdit,style:{flex:1,padding:"10px",borderRadius:8,fontSize:14,fontWeight:700,color:C.bg,background:C.spark}},"Save Changes")))),
@@ -6230,8 +6210,6 @@ function AdminView({
   }, /*#__PURE__*/React.createElement("option", {
     value: "manager"
   }, "Manager"), /*#__PURE__*/React.createElement("option", {
-    value: "viewer"
-  }, "Viewer (Read-Only)"), /*#__PURE__*/React.createElement("option", {
     value: "admin"
   }, "Admin")))), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -6330,7 +6308,7 @@ function AdminView({
         padding: "10px 14px"
       }
     }, /*#__PURE__*/React.createElement(Tag, {
-      color: s.role === "admin" ? C.red : s.role === "viewer" ? C.spark : C.blue
+      color: s.role === "admin" ? C.red : C.blue
     }, s.role.toUpperCase())), /*#__PURE__*/React.createElement("td", {
       style: {
         padding: "10px 14px",
@@ -7582,7 +7560,6 @@ function App() {
       }, 500);
     })();
   }, []);
-  useEffect(function(){window.__breakExemptEids={};emps.forEach(function(e){if(e.breakExempt)window.__breakExemptEids[e.id]=true});},[ emps]);
   function persist(ne, npe, changedId) {
     if (!saveOk.current) return;
     sSet("tk-v7-data", {
@@ -7828,8 +7805,7 @@ function App() {
     onDenyRequest: handleDenyRequest,
     policy: policy,
     onLogout: handleLogout,
-    staffName: loggedIn.fn + " " + loggedIn.ln,
-    readOnly: loggedIn.role === "viewer"
+    staffName: loggedIn.fn + " " + loggedIn.ln
   }), view === "admin" && loggedIn && /*#__PURE__*/React.createElement(AdminView, {
     emps: emps,
     punches: punches,
