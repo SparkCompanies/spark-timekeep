@@ -7187,7 +7187,7 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
 
   async function loadPoints() {
     try {
-      var r = await window._sb.from('tk_point_events').select('*').eq('eid', eid).order('event_date', { ascending: false }).limit(50);
+      var r = await window._sb.from('tk_point_events').select('*').eq('eid', eid).order('date', { ascending: false }).limit(50);
       if (!r.error && r.data) setPoints(r.data);
     } catch (e) { console.error('points load', e); }
     setLoading(false);
