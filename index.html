@@ -3544,7 +3544,7 @@ function ManagerView({
       onBack: function () { setActiveEid(null); },
       onPunchDelete: async function (id) {
         try {
-          var r = await sb.from("tk_punches").delete().eq("id", id);
+          var r = await window._sb.from("tk_punches").delete().eq("id", id);
           if (r.error) { alert("Delete failed: " + r.error.message); return; }
         } catch (e) { alert("Delete failed: " + e.message); }
       },
@@ -7187,7 +7187,7 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
 
   async function loadPoints() {
     try {
-      var r = await sb.from('tk_point_events').select('*').eq('eid', eid).order('event_date', { ascending: false }).limit(50);
+      var r = await window._sb.from('tk_point_events').select('*').eq('eid', eid).order('event_date', { ascending: false }).limit(50);
       if (!r.error && r.data) setPoints(r.data);
     } catch (e) { console.error('points load', e); }
     setLoading(false);
@@ -7195,7 +7195,7 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
 
   async function loadNotes() {
     try {
-      var r = await sb.from('tk_notes').select('*').eq('eid', eid).order('created_at', { ascending: false });
+      var r = await window._sb.from('tk_notes').select('*').eq('eid', eid).order('created_at', { ascending: false });
       if (!r.error && r.data) setNotes(r.data);
     } catch (e) { console.error('notes load', e); }
   }
@@ -7208,7 +7208,7 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
       author_pin: null,
       body: noteDraft.trim()
     };
-    var r = await sb.from('tk_notes').insert(body).select();
+    var r = await window._sb.from('tk_notes').insert(body).select();
     if (r.error) { alert('Failed to post note: ' + r.error.message); return; }
     setNoteDraft('');
     loadNotes();
@@ -7216,7 +7216,7 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
 
   async function deleteNote(id) {
     if (!confirm('Delete this note?')) return;
-    var r = await sb.from('tk_notes').delete().eq('id', id);
+    var r = await window._sb.from('tk_notes').delete().eq('id', id);
     if (r.error) { alert('Failed: ' + r.error.message); return; }
     loadNotes();
   }
