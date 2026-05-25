@@ -3840,9 +3840,7 @@ function ManagerView({
     return /*#__PURE__*/React.createElement("tr", {
       key: e.id,
       onClick: function () {
-        setSelEmp(e);
-        setSelDay(null);
-        setMTab("dashboard");
+        setActiveEid(e.id);
       },
       style: {
         cursor: "pointer",
@@ -7175,6 +7173,7 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
   const [noteDraft, setNoteDraft] = React.useState('');
   const [activeTab, setActiveTab] = React.useState('overview');
   const [loading, setLoading] = React.useState(true);
+  const [expandedCell, setExpandedCell] = React.useState(null); // {weekIdx, dayIdx} or null
 
   // ── load employee + points + notes ────────────────────────────────
   React.useEffect(function () {
@@ -7232,7 +7231,7 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
   var empPunches = (punches || []).filter(function (p) { return p.eid === eid; });
   var sortedPunches = empPunches.slice().sort(function (a, b) { return new Date(b.time) - new Date(a.time); });
 
-  // Week-by-week hours (last 12 weeks)
+  // Week-by-week hours (last 12 weeks) — uses SHARED calc to match manager grid
   var weeks = [];
   var today = new Date();
   for (var w = 0; w < 12; w++) {
@@ -7243,29 +7242,17 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
     sunday.setDate(monday.getDate() + 6);
     sunday.setHours(23, 59, 59, 999);
     var days = [0, 0, 0, 0, 0, 0, 0];
-    var weekPunches = empPunches.filter(function (p) {
-      var t = new Date(p.time);
-      return t >= monday && t <= sunday;
-    }).sort(function (a, b) { return new Date(a.time) - new Date(b.time); });
-    // Simple pairing: clock-in to clock-out, subtract break pairs
+    var weekDayPunches = [[],[],[],[],[],[],[]];
     for (var d = 0; d < 7; d++) {
       var dayStart = new Date(monday); dayStart.setDate(monday.getDate() + d); dayStart.setHours(0, 0, 0, 0);
       var dayEnd = new Date(dayStart); dayEnd.setHours(23, 59, 59, 999);
-      var dp = weekPunches.filter(function (p) { var t = new Date(p.time); return t >= dayStart && t <= dayEnd; });
-      var workMs = 0, breakMs = 0;
-      var openIn = null, openBO = null;
-      dp.forEach(function (p) {
-        var t = new Date(p.time);
-        if (p.type === 'in' && !openIn) openIn = t;
-        else if (p.type === 'out' && openIn) { workMs += t - openIn; openIn = null; }
-        else if (p.type === 'break-out' && !openBO) openBO = t;
-        else if (p.type === 'break-in' && openBO) { breakMs += t - openBO; openBO = null; }
-      });
-      var net = Math.max(0, (workMs - breakMs) / (1000 * 60 * 60));
-      days[d] = net;
+      // SAME functions used by the manager timesheet grid — handles overnight, breaks, today-in-progress
+      var dp = getDayPunchesWithCarryOver(punches || [], eid, dayStart, dayEnd);
+      weekDayPunches[d] = dp;
+      days[d] = calcDayHours(dp, eid).netH;
     }
     var total = days.reduce(function (a, b) { return a + b; }, 0);
-    weeks.push({ monday: monday, sunday: sunday, days: days, total: total, weekNum: getISOWeek(monday) });
+    weeks.push({ monday: monday, sunday: sunday, days: days, dayPunches: weekDayPunches, total: total, weekNum: getISOWeek(monday) });
   }
 
   function getISOWeek(d) {
@@ -7381,17 +7368,55 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
                   formatDateShort(w.monday) + ' – ' + formatDateShort(w.sunday),
                   React.createElement('div', { style: { color: '#5b6473', fontSize: 10 } }, 'WK ' + w.weekNum)
                 ),
-                w.days.map(function (h, di) {
-                  var cls = h > 8.5 ? 'ot' : h > 0 ? 'has' : 'off';
-                  var bg = h > 8.5 ? '#f59e0b1a' : h > 0 ? '#38bdf81a' : 'transparent';
-                  var color = h > 8.5 ? '#f59e0b' : h > 0 ? '#e8ecf2' : '#5b6473';
-                  return React.createElement('div', { key: di, style: { textAlign: 'center', fontFamily: 'JetBrains Mono, monospace', fontSize: 12, padding: '4px 2px', borderRadius: 4, background: bg, color: color, fontWeight: h > 8.5 ? 600 : 400 } }, h > 0 ? h.toFixed(1) : '—');
+                w.days.map(function (hrs, di) {
+                  var cls = hrs > 8.5 ? 'ot' : hrs > 0 ? 'has' : 'off';
+                  var bg = hrs > 8.5 ? '#f59e0b1a' : hrs > 0 ? '#38bdf81a' : 'transparent';
+                  var color = hrs > 8.5 ? '#f59e0b' : hrs > 0 ? '#e8ecf2' : '#5b6473';
+                  var isExpanded = expandedCell && expandedCell.weekIdx === i && expandedCell.dayIdx === di;
+                  return React.createElement('div', {
+                    key: di,
+                    onClick: function () {
+                      if (isExpanded) setExpandedCell(null);
+                      else setExpandedCell({ weekIdx: i, dayIdx: di });
+                    },
+                    style: { textAlign: 'center', fontFamily: 'JetBrains Mono, monospace', fontSize: 12, padding: '4px 2px', borderRadius: 4, background: isExpanded ? '#ffc23333' : bg, color: color, fontWeight: hrs > 8.5 ? 600 : 400, cursor: 'pointer', border: isExpanded ? '1px solid #ffc233' : '1px solid transparent' }
+                  }, hrs > 0 ? hrs.toFixed(1) : '—');
                 }),
                 React.createElement('div', { style: { textAlign: 'right', fontFamily: 'JetBrains Mono, monospace', fontWeight: 600, fontSize: 12.5, color: '#ffc233' } }, w.total.toFixed(1))
               );
             })
           )
-        )
+        ),
+        // ── EXPANDED DAY PUNCHES (shown when a day cell is clicked) ───
+        expandedCell && (function () {
+          var w = weeks[expandedCell.weekIdx];
+          if (!w) return null;
+          var dp = (w.dayPunches && w.dayPunches[expandedCell.dayIdx]) || [];
+          var dayStart = new Date(w.monday); dayStart.setDate(w.monday.getDate() + expandedCell.dayIdx);
+          var dayLabel = dayStart.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
+          return panel('Punches · ' + dayLabel,
+            React.createElement('div', null,
+              dp.length === 0
+                ? React.createElement('div', { style: { color: '#5b6473', fontSize: 12, padding: '8px 0' } }, 'No punches recorded this day')
+                : dp.map(function (p) {
+                    var typeColors = { 'in': ['#22c55e', '#22c55e1a'], 'out': ['#ef4444', '#ef44441a'], 'break-out': ['#f59e0b', '#f59e0b1a'], 'break-in': ['#38bdf8', '#38bdf81a'] };
+                    var c = typeColors[p.type] || ['#8993a4', '#8993a41a'];
+                    var typeLabel = p.type === 'in' ? 'CLOCK IN' : p.type === 'out' ? 'CLOCK OUT' : p.type === 'break-out' ? 'BREAK OUT' : 'BREAK IN';
+                    return React.createElement('div', { key: p.id, style: { display: 'grid', gridTemplateColumns: '100px 1fr auto', gap: 10, padding: '9px 0', alignItems: 'center', borderBottom: '1px solid #1a2029', fontSize: 12 } },
+                      React.createElement('div', { style: { padding: '3px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700, textAlign: 'center', background: c[1], color: c[0] } }, typeLabel),
+                      React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace' } },
+                        new Date(p.time).toLocaleString(),
+                        React.createElement('div', { style: { fontSize: 10.5, color: '#5b6473', marginTop: 2 } }, (p.dev || 'unknown') + (p.ip ? ' · ' + p.ip : ''))
+                      ),
+                      React.createElement('div', { style: { display: 'flex', gap: 4 } },
+                        React.createElement('button', { onClick: function () { onPunchEdit && onPunchEdit(p); }, style: { padding: '4px 10px', background: 'transparent', border: '1px solid #1f2733', color: '#8993a4', borderRadius: 4, cursor: 'pointer', fontSize: 11 } }, 'Edit'),
+                        React.createElement('button', { onClick: function () { if (confirm('Delete this punch?')) onPunchDelete(p.id); }, style: { padding: '4px 10px', background: 'transparent', border: '1px solid #ef4444', color: '#ef4444', borderRadius: 4, cursor: 'pointer', fontSize: 11 } }, 'Delete')
+                      )
+                    );
+                  })
+            )
+          );
+        })()
       ),
 
       // RIGHT: exceptions + recent punches + points preview
@@ -7455,6 +7480,50 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
               })
         )
 
+      )
+    ),
+
+    // ── TIMESHEETS TAB ────────────────────────────────────────────────
+    activeTab === 'timesheets' && panel('Full Timesheets · last 12 weeks',
+      React.createElement('div', null,
+        weeks.map(function (w, wi) {
+          var weekTotal = w.total;
+          return React.createElement('div', { key: wi, style: { marginBottom: 18, paddingBottom: 14, borderBottom: '1px solid #1a2029' } },
+            React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 } },
+              React.createElement('div', { style: { fontWeight: 700, fontSize: 13 } },
+                'Week of ' + formatDateShort(w.monday) + ' – ' + formatDateShort(w.sunday),
+                React.createElement('span', { style: { marginLeft: 8, fontSize: 11, color: '#5b6473', fontWeight: 500 } }, 'WK ' + w.weekNum)
+              ),
+              React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: 14, color: weekTotal > 40 ? '#f59e0b' : '#ffc233' } }, weekTotal.toFixed(1) + ' h' + (weekTotal > 40 ? '  · ' + (weekTotal - 40).toFixed(1) + ' OT' : ''))
+            ),
+            React.createElement('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6 } },
+              ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(function (dn, di) {
+                var hrs = w.days[di];
+                var dp = (w.dayPunches && w.dayPunches[di]) || [];
+                var bg = hrs > 8.5 ? '#f59e0b1a' : hrs > 0 ? '#38bdf81a' : '#0a0d12';
+                var color = hrs > 8.5 ? '#f59e0b' : hrs > 0 ? '#e8ecf2' : '#5b6473';
+                return React.createElement('div', { key: di, style: { background: bg, border: '1px solid #1f2733', borderRadius: 6, padding: '8px 6px' } },
+                  React.createElement('div', { style: { fontSize: 10, color: '#5b6473', textTransform: 'uppercase', letterSpacing: 0.6, fontWeight: 600, marginBottom: 4 } }, dn),
+                  React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', fontSize: 13, fontWeight: 600, color: color, marginBottom: 4 } }, hrs > 0 ? hrs.toFixed(1) + 'h' : '—'),
+                  dp.length > 0 && React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 2 } },
+                    dp.map(function (p) {
+                      var typeColors = { 'in': '#22c55e', 'out': '#ef4444', 'break-out': '#f59e0b', 'break-in': '#38bdf8' };
+                      var tc = typeColors[p.type] || '#8993a4';
+                      var lbl = p.type === 'in' ? 'IN' : p.type === 'out' ? 'OUT' : p.type === 'break-out' ? 'B-OUT' : 'B-IN';
+                      var tm = new Date(p.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                      return React.createElement('div', { key: p.id, style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 10, fontFamily: 'JetBrains Mono, monospace', padding: '2px 4px', borderRadius: 3, background: '#0a0d12' } },
+                        React.createElement('span', { style: { color: tc, fontWeight: 700 } }, lbl),
+                        React.createElement('span', { style: { color: '#8993a4', flex: 1, textAlign: 'right', marginRight: 4 } }, tm),
+                        React.createElement('button', { onClick: function () { onPunchEdit && onPunchEdit(p); }, title: 'Edit', style: { width: 16, height: 16, padding: 0, background: 'transparent', border: '1px solid #1f2733', color: '#8993a4', borderRadius: 3, cursor: 'pointer', fontSize: 9, lineHeight: 1 } }, '✎'),
+                        React.createElement('button', { onClick: function () { if (confirm('Delete this ' + p.type + ' punch?')) onPunchDelete(p.id); }, title: 'Delete', style: { width: 16, height: 16, padding: 0, marginLeft: 2, background: 'transparent', border: '1px solid #1f2733', color: '#8993a4', borderRadius: 3, cursor: 'pointer', fontSize: 9, lineHeight: 1 } }, '×')
+                      );
+                    })
+                  )
+                );
+              })
+            )
+          );
+        })
       )
     ),
 
