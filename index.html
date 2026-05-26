@@ -456,7 +456,11 @@ async function sbLoadPunches() {
       accuracy: p.accuracy ? parseFloat(p.accuracy) : null,
       altitude: p.altitude ? parseFloat(p.altitude) : null,
       speed: p.speed ? parseFloat(p.speed) : null,
-      flags: p.geo_flags || null
+      flags: p.geo_flags || null,
+      edited: !!p.edited,
+      editedAt: p.edited_at || null,
+      editedBy: p.edited_by || null,
+      editReason: p.edit_reason || null
     };
   });
 }
@@ -2008,40 +2012,59 @@ function PunchEditorPanel(props) {
   );
 }
 function EditPunchModal(props) {
-  var punch=props.punch,emp=props.emp,onSave=props.onSave,onClose=props.onClose;
+  var punch=props.punch,emp=props.emp,onSave=props.onSave,onClose=props.onClose,onDelete=props.onDelete;
   var origDate=new Date(punch.time);
   var r=React.useState(origDate.toISOString().slice(0,16));
   var newTime=r[0],setNewTime=r[1];
-  var punchLabel=punch.type==="in"?"CLOCK IN":punch.type==="out"?"CLOCK OUT":punch.type==="break-start"?"BREAK START":"BREAK END";
+  var rType=React.useState(punch.type||"in");
+  var newType=rType[0],setNewType=rType[1];
+  var rReason=React.useState("");
+  var reason=rReason[0],setReason=rReason[1];
+  var punchLabel=punch.type==="in"?"CLOCK IN":punch.type==="out"?"CLOCK OUT":punch.type==="break-out"?"BREAK OUT":punch.type==="break-in"?"BREAK IN":punch.type;
   var empName=emp?(emp.name||emp.fn+" "+emp.ln):"Unknown Employee";
   var dayStr=origDate.toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric",year:"numeric"});
-  var timeStr=origDate.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  var timeStr=origDate.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
   return React.createElement("div",{onClick:onClose,style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:9999}},
-    React.createElement("div",{onClick:function(e){e.stopPropagation()},style:{background:C.sf||"#111113",border:"1px solid "+(C.bd||"#1E1E22"),borderRadius:12,padding:28,width:440,maxWidth:"92%"}},
-      React.createElement("div",{style:{fontSize:18,fontWeight:700,color:C.t1,marginBottom:20}},"Edit Punch"),
-      React.createElement("div",{style:{background:C.bg||"#09090B",border:"1px solid "+(C.bd||"#1E1E22"),borderRadius:8,padding:16,marginBottom:20}},
-        React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}},
+    React.createElement("div",{onClick:function(e){e.stopPropagation()},style:{background:C.sf||"#111113",border:"1px solid "+(C.bd||"#1E1E22"),borderRadius:12,padding:24,width:480,maxWidth:"92%",maxHeight:"90vh",overflowY:"auto"}},
+      React.createElement("div",{style:{fontSize:18,fontWeight:700,color:C.t1,marginBottom:16}},"Edit Punch"),
+      React.createElement("div",{style:{background:C.bg||"#09090B",border:"1px solid "+(C.bd||"#1E1E22"),borderRadius:8,padding:14,marginBottom:14}},
+        React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}},
           React.createElement("div",{style:{fontSize:15,fontWeight:700,color:C.t1}},empName),
-          React.createElement("div",{style:{padding:"4px 12px",borderRadius:6,fontSize:12,fontWeight:700,color:punch.type==="in"?"#22C55E":"#EF4444",background:punch.type==="in"?"rgba(34,197,94,0.1)":"rgba(239,68,68,0.1)",border:"1px solid "+(punch.type==="in"?"rgba(34,197,94,0.2)":"rgba(239,68,68,0.2)")}},punchLabel)
+          React.createElement("div",{style:{padding:"3px 10px",borderRadius:5,fontSize:10,fontWeight:700,color:C.t3||"#71717A",background:"rgba(255,255,255,0.05)"}},"Original: "+punchLabel+" @ "+timeStr)
         ),
-        React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
-          React.createElement("div",null,
-            React.createElement("div",{style:{fontSize:11,color:C.t4||"#3F3F46",textTransform:"uppercase",fontWeight:700,letterSpacing:1,marginBottom:4}},"Date"),
-            React.createElement("div",{style:{fontSize:14,color:C.t2||"#A1A1AA"}},dayStr)
-          ),
-          React.createElement("div",null,
-            React.createElement("div",{style:{fontSize:11,color:C.t4||"#3F3F46",textTransform:"uppercase",fontWeight:700,letterSpacing:1,marginBottom:4}},"Original Time"),
-            React.createElement("div",{style:{fontSize:14,color:C.t2||"#A1A1AA",fontFamily:"monospace"}},timeStr)
-          )
+        React.createElement("div",{style:{fontSize:12,color:C.t3||"#71717A"}},dayStr),
+        punch.edited && React.createElement("div",{style:{marginTop:10,padding:"7px 10px",background:"rgba(250,204,21,0.08)",border:"1px solid rgba(250,204,21,0.25)",borderRadius:6,fontSize:11,color:C.spark||"#FACC15"}},
+          "✎ Previously edited by ",punch.editedBy||"Unknown"," on ",punch.editedAt?new Date(punch.editedAt).toLocaleString():"unknown",punch.editReason?" — Reason: "+punch.editReason:""
         )
       ),
-      React.createElement("div",{style:{marginBottom:20}},
-        React.createElement("label",{style:{fontSize:12,fontWeight:600,color:C.t2||"#A1A1AA",display:"block",marginBottom:6}},"New Date & Time"),
-        React.createElement("input",{type:"datetime-local",value:newTime,onChange:function(e){setNewTime(e.target.value)},style:{width:"100%",background:C.bg||"#09090B",border:"2px solid "+(C.spark||"#FACC15"),color:C.t1||"#E4E4E7",padding:"12px",borderRadius:8,fontSize:16,fontFamily:"monospace",fontWeight:600,outline:"none",boxSizing:"border-box"}})
+      React.createElement("div",{style:{marginBottom:12}},
+        React.createElement("label",{style:{fontSize:11,fontWeight:700,color:C.t3||"#71717A",display:"block",marginBottom:5,textTransform:"uppercase",letterSpacing:0.6}},"Punch Type"),
+        React.createElement("select",{value:newType,onChange:function(e){setNewType(e.target.value)},style:{width:"100%",background:C.bg||"#09090B",border:"1px solid "+(C.bd||"#1E1E22"),color:C.t1||"#E4E4E7",padding:"10px 12px",borderRadius:8,fontSize:14,fontWeight:600,outline:"none",boxSizing:"border-box"}},
+          React.createElement("option",{value:"in"},"Clock In"),
+          React.createElement("option",{value:"out"},"Clock Out"),
+          React.createElement("option",{value:"break-out"},"Break Out"),
+          React.createElement("option",{value:"break-in"},"Break In")
+        )
       ),
-      React.createElement("div",{style:{display:"flex",gap:10,justifyContent:"flex-end"}},
-        React.createElement("button",{onClick:onClose,style:{padding:"10px 20px",background:"transparent",border:"1px solid "+(C.t4||"#3F3F46"),color:C.t2||"#A1A1AA",borderRadius:8,cursor:"pointer",fontSize:13,fontWeight:600}},"Cancel"),
-        React.createElement("button",{onClick:function(){if(!newTime){alert("Please select a date and time.");return}var dt=new Date(newTime);if(isNaN(dt.getTime())){alert("Invalid date.");return}onSave(punch.id,dt.toISOString());onClose()},style:{padding:"10px 24px",background:C.spark||"#FACC15",border:"none",color:"#000",borderRadius:8,cursor:"pointer",fontSize:14,fontWeight:700}},"Save Change")
+      React.createElement("div",{style:{marginBottom:12}},
+        React.createElement("label",{style:{fontSize:11,fontWeight:700,color:C.t3||"#71717A",display:"block",marginBottom:5,textTransform:"uppercase",letterSpacing:0.6}},"Date & Time"),
+        React.createElement("input",{type:"datetime-local",value:newTime,onChange:function(e){setNewTime(e.target.value)},style:{width:"100%",background:C.bg||"#09090B",border:"2px solid "+(C.spark||"#FACC15"),color:C.t1||"#E4E4E7",padding:"11px 12px",borderRadius:8,fontSize:15,fontFamily:"monospace",fontWeight:600,outline:"none",boxSizing:"border-box"}})
+      ),
+      React.createElement("div",{style:{marginBottom:18}},
+        React.createElement("label",{style:{fontSize:11,fontWeight:700,color:C.t3||"#71717A",display:"block",marginBottom:5,textTransform:"uppercase",letterSpacing:0.6}},"Reason for change ",React.createElement("span",{style:{color:"#EF4444"}},"*")),
+        React.createElement("input",{type:"text",value:reason,onChange:function(e){setReason(e.target.value)},placeholder:"e.g. Forgot to clock in, fixed after meeting...",style:{width:"100%",background:C.bg||"#09090B",border:"1px solid "+(C.bd||"#1E1E22"),color:C.t1||"#E4E4E7",padding:"10px 12px",borderRadius:8,fontSize:13,outline:"none",boxSizing:"border-box"}})
+      ),
+      React.createElement("div",{style:{display:"flex",gap:10,justifyContent:"space-between",alignItems:"center"}},
+        onDelete && React.createElement("button",{onClick:function(){if(!reason||!reason.trim()){alert("Please provide a reason before deleting.");return}if(confirm("Delete this punch?\n\nReason: "+reason)){onDelete(punch.id,reason.trim())}},style:{padding:"10px 16px",background:"transparent",border:"1px solid #EF4444",color:"#EF4444",borderRadius:8,cursor:"pointer",fontSize:13,fontWeight:600}},"Delete Punch"),
+        React.createElement("div",{style:{display:"flex",gap:10,marginLeft:"auto"}},
+          React.createElement("button",{onClick:onClose,style:{padding:"10px 20px",background:"transparent",border:"1px solid "+(C.t4||"#3F3F46"),color:C.t2||"#A1A1AA",borderRadius:8,cursor:"pointer",fontSize:13,fontWeight:600}},"Cancel"),
+          React.createElement("button",{onClick:function(){
+            if(!newTime){alert("Please select a date and time.");return}
+            if(!reason||!reason.trim()){alert("Please provide a reason for this change.");return}
+            var dt=new Date(newTime);if(isNaN(dt.getTime())){alert("Invalid date.");return}
+            onSave(punch.id,dt.toISOString(),{type:newType,reason:reason.trim()})
+          },style:{padding:"10px 24px",background:C.spark||"#FACC15",border:"none",color:"#000",borderRadius:8,cursor:"pointer",fontSize:14,fontWeight:700}},"Save Change")
+        )
       )
     )
   );
@@ -3444,11 +3467,15 @@ function ManagerView({
   var violations = detectViolations(emps, punches, pointEvents, P, mon).filter(function (v) {
     return !dismissed[v.id];
   });
+  var empIdSet = {};
+  emps.forEach(function (e) { empIdSet[e.id] = true; });
+  var validPunches = (punches || []).filter(function (p) { return p && p.eid && empIdSet[p.eid]; });
+  var orphanCount = (punches || []).length - validPunches.length;
   var statuses = active.map(function (e) {
-    var cs = getCurrentState(e, punches);
-    var wk = calcWeekHoursForWeek(punches, e.id, mon);
-    var excs = detectExceptions(e, punches, P);
-    var cost = calcLaborCostForWeek(e, punches, P, mon);
+    var cs = getCurrentState(e, validPunches);
+    var wk = calcWeekHoursForWeek(validPunches, e.id, mon);
+    var excs = detectExceptions(e, validPunches, P);
+    var cost = calcLaborCostForWeek(e, validPunches, P, mon);
     return Object.assign({}, e, {
       cs: cs,
       weekH: wk,
@@ -3671,7 +3698,7 @@ function ManagerView({
       border: "1px solid " + C.bd,
       opacity: isCurrentWeek ? 0.4 : 1
     }
-  }, "\u25B6")), mTab === "dashboard" && React.createElement(window.CommandCenter, { employees: emps, punches: punches, policy: P, statuses: statuses, clockedIn: clockedIn, onBreak: onBreak, notIn: notIn, allExcs: allExcs, otCount: otCount, atRisk: atRisk, totalLabor: totalLabor, alerts: alerts, dismissedAlerts: dismissedAlerts, pending: pending, mon: mon, weekOffset: weekOffset, search: search, dept: dept, onDismissAlert: function(id){ var d = Object.assign({}, dismissedAlerts); d[id] = true; setDismissedAlerts(d); }, onOpenEmp: function(eid){ setActiveEid(eid); }, onSwitchTab: function(tab){ setMTab(tab); } }), mTab === "whos-in" && React.createElement("div",null,
+  }, "\u25B6")), mTab === "dashboard" && React.createElement(window.CommandCenter, { employees: emps, punches: validPunches, orphanCount: orphanCount, policy: P, statuses: statuses, clockedIn: clockedIn, onBreak: onBreak, notIn: notIn, allExcs: allExcs, otCount: otCount, atRisk: atRisk, totalLabor: totalLabor, alerts: alerts, dismissedAlerts: dismissedAlerts, pending: pending, mon: mon, weekOffset: weekOffset, search: search, dept: dept, onDismissAlert: function(id){ var d = Object.assign({}, dismissedAlerts); d[id] = true; setDismissedAlerts(d); }, onOpenEmp: function(eid){ setActiveEid(eid); }, onSwitchTab: function(tab){ setMTab(tab); } }), mTab === "whos-in" && React.createElement("div",null,
 
   // ── KANBAN BOARD ──
   (function(){
@@ -4318,7 +4345,8 @@ function ManagerView({
   ,editingPunch && /*#__PURE__*/React.createElement(EditPunchModal, {
     punch: editingPunch,
     emp: emps.find(function(e){return e.id===editingPunch.eid}),
-    onSave: function(pid,nt){editPunch(pid,nt);setEditingPunch(null)},
+    onSave: function(pid,nt,opts){editPunch(pid,nt,opts);setEditingPunch(null)},
+    onDelete: function(pid,reason){deletePunch(pid,reason);setEditingPunch(null)},
     onClose: function(){setEditingPunch(null)}
   })
   ,showAddPunch && /*#__PURE__*/React.createElement(AddPunchModal, {
@@ -7705,12 +7733,16 @@ function App() {
           var sb = getSb();
           if (sb) {
             sb.channel("tk-punches").on("postgres_changes", {event:"*",schema:"public",table:"tk_punches"}, function(payload) {
+              function mapRow(p){return {id:p.id,eid:p.eid,type:p.type,time:p.time,dev:p.dev,ip:p.ip,lat:p.lat?parseFloat(p.lat):null,lng:p.lng?parseFloat(p.lng):null,dist:p.dist,accuracy:p.accuracy?parseFloat(p.accuracy):null,altitude:p.altitude?parseFloat(p.altitude):null,speed:p.speed?parseFloat(p.speed):null,flags:p.geo_flags||null,edited:!!p.edited,editedAt:p.edited_at||null,editedBy:p.edited_by||null,editReason:p.edit_reason||null}}
               if (payload.eventType==="INSERT") {
                 var p=payload.new;
                 setPunches(function(prev) {
                   if(prev.some(function(x){return x.id===p.id}))return prev;
-                  return [{id:p.id,eid:p.eid,type:p.type,time:p.time,dev:p.dev,ip:p.ip,lat:p.lat?parseFloat(p.lat):null,lng:p.lng?parseFloat(p.lng):null,dist:p.dist,accuracy:p.accuracy?parseFloat(p.accuracy):null,altitude:p.altitude?parseFloat(p.altitude):null,speed:p.speed?parseFloat(p.speed):null,flags:p.geo_flags||null}].concat(prev);
+                  return [mapRow(p)].concat(prev);
                 });
+              } else if (payload.eventType==="UPDATE") {
+                var pu=payload.new;
+                setPunches(function(prev){return prev.map(function(x){return x.id===pu.id?mapRow(pu):x})});
               } else if (payload.eventType==="DELETE") {
                 setPunches(function(prev){return prev.filter(function(x){return x.id!==payload.old.id})});
               }
@@ -7902,21 +7934,70 @@ function App() {
     persist(ne, updated);
     if (useSupa()) { var changed = updated.find(function(ev){return ev.id===evId}); if(changed) sbSavePointEvent(changed); }
   }
-  function editPunch(punchId, newTime) {
+  function editPunch(punchId, newTime, opts) {
+    opts = opts || {};
     var editorName = (loggedIn && loggedIn.fn && loggedIn.ln) ? (loggedIn.fn + " " + loggedIn.ln) : "Unknown";
     var newDev = "MANAGER - " + editorName;
+    var reason = opts.reason || "";
+    var newType = opts.type || null;
+    var before = punches.find(function(p){return p.id===punchId});
     var updated = punches.map(function(p) {
       if (p.id === punchId) {
-        return Object.assign({}, p, { time: newTime, dev: newDev, edited: true, editedAt: new Date().toISOString(), editedBy: editorName });
+        var patch = { time: newTime, dev: newDev, edited: true, editedAt: new Date().toISOString(), editedBy: editorName, editReason: reason };
+        if (newType && newType !== p.type) patch.type = newType;
+        return Object.assign({}, p, patch);
       }
       return p;
     });
     setPunches(updated);
-    localStorage.setItem("spark-tk-punches", JSON.stringify(updated));
-    if(useSupa()){(async function(){var sb=getSb();if(sb){var edited=updated.find(function(p){return p.id===punchId});if(edited){var r=await sb.from("tk_punches").upsert({id:edited.id,eid:edited.eid,type:edited.type,time:edited.time,dev:edited.dev||newDev,ip:edited.ip||""});if(r.error)console.error("Edit sync failed:",r.error)}}})()}
+    try{localStorage.setItem("spark-tk-punches", JSON.stringify(updated))}catch(e){}
+    try{localStorage.setItem("tk-v7-punches-backup", JSON.stringify(updated))}catch(e){}
+    if(useSupa()){(async function(){
+      var sb=getSb(); if(!sb) return;
+      var edited=updated.find(function(p){return p.id===punchId}); if(!edited) return;
+      var row = {
+        id: edited.id, eid: edited.eid, type: edited.type, time: edited.time,
+        dev: edited.dev || newDev, ip: edited.ip || "",
+        edited: true, edited_at: edited.editedAt, edited_by: edited.editedBy, edit_reason: edited.editReason || ""
+      };
+      if (edited.lat != null) row.lat = edited.lat;
+      if (edited.lng != null) row.lng = edited.lng;
+      if (edited.dist != null) row.dist = edited.dist;
+      if (edited.accuracy != null) row.accuracy = edited.accuracy;
+      if (edited.altitude != null) row.altitude = edited.altitude;
+      if (edited.speed != null) row.speed = edited.speed;
+      if (edited.flags) row.geo_flags = edited.flags;
+      var r = await sb.from("tk_punches").upsert(row);
+      if (r.error) {
+        console.error("Edit sync failed:", r.error);
+        alert("Saved locally but failed to sync to server. Error: " + (r.error.message || r.error.code || "unknown") + ". Please refresh and retry.");
+        return;
+      }
+      try {
+        await sb.from("tk_audit_log").insert({
+          event_type: "punch_edit", eid: edited.eid, actor_name: editorName,
+          target_id: edited.id, before_data: before || null, after_data: edited,
+          reason: reason, ts: new Date().toISOString()
+        });
+      } catch(auditErr) { console.warn("Audit log unavailable:", auditErr); }
+    })()}
   }
-  function deletePunch(punchId) {
-    if(!confirm("Delete this punch? This cannot be undone.")) return;
+  function deletePunch(punchId, reason) {
+    if (reason === undefined) {
+      if(!confirm("Delete this punch? This cannot be undone.")) return;
+    }
+    var editorName = (loggedIn && loggedIn.fn && loggedIn.ln) ? (loggedIn.fn + " " + loggedIn.ln) : "Unknown";
+    var deleted = punches.find(function(p){return p.id===punchId});
+    if(useSupa() && deleted){(async function(){
+      var sb=getSb(); if(!sb) return;
+      try {
+        await sb.from("tk_audit_log").insert({
+          event_type: "punch_delete", eid: deleted.eid, actor_name: editorName,
+          target_id: deleted.id, before_data: deleted, after_data: null,
+          reason: reason || "", ts: new Date().toISOString()
+        });
+      } catch(e) { console.warn("Audit log unavailable:", e); }
+    })()}
     var updated=punches.filter(function(p){return p.id!==punchId});
     setPunches(updated);sSet("tk-v7-punches",updated);try{localStorage.setItem("tk-v7-punches-backup",JSON.stringify(updated))}catch(ex){}
     if(useSupa()){(async function(){var sb=getSb();if(sb){var r=await sb.from("tk_punches").delete().eq("id",punchId);if(r.error)console.error("Delete failed:",r.error)}})()}
