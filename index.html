@@ -7267,7 +7267,19 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
   async function loadPoints() {
     try {
       var r = await window._sb.from('tk_point_events').select('*').eq('eid', eid).order('date', { ascending: false }).limit(50);
-      if (!r.error && r.data) setPoints(r.data);
+      if (!r.error && r.data) {
+        // Normalize defensively — handles any legacy rows with weird shapes
+        var normalized = r.data.map(function(p) {
+          return {
+            id: p.id,
+            eid: p.eid,
+            type: p.type || 'manual',
+            pts: parseFloat(p.pts) || 0,
+            date: p.date || p.created_at || new Date().toISOString()
+          };
+        });
+        setPoints(normalized);
+      }
     } catch (e) { console.error('points load', e); }
     setLoading(false);
   }
@@ -7351,8 +7363,20 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
   var nowMs = Date.now();
   var futurePunches = empPunches.filter(function (p) { return new Date(p.time).getTime() > nowMs + 90000; });
 
-  // Total points
-  var totalPoints = points.reduce(function (s, p) { return s + (parseFloat(p.points) || 0); }, 0);
+  // Total points — uses canonical field p.pts
+  var totalPoints = points.reduce(function (s, p) { return s + (parseFloat(p.pts) || 0); }, 0);
+
+  // Type → friendly label map (mirrors module-level RULES const)
+  var POINT_LABEL = {
+    'tardy-short': 'Tardy (≤30 min)',
+    'tardy-long': 'Tardy (>30 min)',
+    'left-early': 'Left Early',
+    'unexcused': 'Unexcused Absence',
+    'no-show': 'No-Show / No-Call',
+    'called-in': 'Called In',
+    'manual': 'Manual Adjustment'
+  };
+  function pointLabel(t) { return POINT_LABEL[t] || (t ? t.charAt(0).toUpperCase() + t.slice(1).replace(/-/g, ' ') : 'Event'); }
 
   // Initials for avatar
   var initials = ((emp.fn || '') + ' ' + (emp.ln || '')).split(' ').map(function (p) { return p[0]; }).filter(Boolean).join('').slice(0, 2).toUpperCase();
@@ -7543,19 +7567,19 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
           )
         ),
 
-        // POINTS PREVIEW (3 most recent)
+        // POINTS PREVIEW (5 most recent)
         panel('Points · most recent',
           points.length === 0
             ? React.createElement('div', { style: { color: '#5b6473', fontSize: 12, padding: '8px 0' } }, 'No point events on record')
             : points.slice(0, 5).map(function (p, i) {
-                var pts = parseFloat(p.points) || 0;
+                var pts = parseFloat(p.pts) || 0;
                 var color = pts > 0 ? '#ef4444' : pts < 0 ? '#22c55e' : '#8993a4';
                 return React.createElement('div', { key: p.id || i, style: { padding: '10px 0', borderBottom: '1px solid #1a2029' } },
                   React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between' } },
-                    React.createElement('div', { style: { fontWeight: 600, fontSize: 12.5 } }, p.reason || p.event_type || 'Event'),
+                    React.createElement('div', { style: { fontWeight: 600, fontSize: 12.5 } }, pointLabel(p.type)),
                     React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: 12, color: color } }, (pts > 0 ? '+' : '') + pts.toFixed(1) + ' pts')
                   ),
-                  React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#8993a4', marginTop: 2 } }, p.event_date ? new Date(p.event_date).toLocaleDateString() : '')
+                  React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#8993a4', marginTop: 2 } }, p.date ? new Date(p.date).toLocaleDateString() : '')
                 );
               })
         )
@@ -7632,25 +7656,98 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
     ),
 
     // ── POINTS TAB ────────────────────────────────────────────────────
-    activeTab === 'points' && panel('Points History',
-      points.length === 0
-        ? React.createElement('div', { style: { color: '#5b6473', fontSize: 12, padding: '8px 0' } }, 'No point events on record')
-        : React.createElement('div', null,
-            points.map(function (p, i) {
-              var pts = parseFloat(p.points) || 0;
+    activeTab === 'points' && panel('Points History · ' + totalPoints.toFixed(1) + ' total',
+      React.createElement('div', null,
+        // Quick-issue toolbar
+        React.createElement('div', { style: { display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16, padding: '10px 12px', background: '#0a0d12', border: '1px solid #1a2029', borderRadius: 8 } },
+          React.createElement('div', { style: { fontSize: 11, fontWeight: 700, color: '#5b6473', letterSpacing: 0.6, textTransform: 'uppercase', alignSelf: 'center', marginRight: 6 } }, 'Quick Issue:'),
+          [
+            { k: 'tardy-short', lbl: 'Tardy ≤30', pts: 0.5 },
+            { k: 'tardy-long', lbl: 'Tardy >30', pts: 1 },
+            { k: 'left-early', lbl: 'Left Early', pts: 1 },
+            { k: 'unexcused', lbl: 'Unexcused', pts: 1.5 },
+            { k: 'no-show', lbl: 'No-Show', pts: 2 }
+          ].map(function(r) {
+            return React.createElement('button', {
+              key: r.k,
+              onClick: async function() {
+                if (!confirm('Issue ' + r.lbl + ' (+' + r.pts + ' pts) to ' + emp.fn + ' ' + emp.ln + '?')) return;
+                var newEv = {
+                  id: 'PE-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
+                  eid: eid,
+                  type: r.k,
+                  pts: r.pts,
+                  date: new Date().toISOString()
+                };
+                try {
+                  var sb = window._sb;
+                  if (sb) {
+                    var res = await sb.from('tk_point_events').insert(newEv);
+                    if (res.error) { alert('Failed to save: ' + res.error.message); return; }
+                  }
+                  setPoints(function(prev) { return [newEv].concat(prev); });
+                } catch(e) { alert('Error: ' + e.message); }
+              },
+              style: { padding: '5px 10px', background: '#ffc23312', border: '1px solid #ffc23333', color: '#ffc233', borderRadius: 5, fontSize: 11, fontWeight: 600, cursor: 'pointer' }
+            }, r.lbl + ' (+' + r.pts + ')');
+          }),
+          React.createElement('button', {
+            onClick: async function() {
+              var amtStr = prompt('Custom adjustment for ' + emp.fn + ' ' + emp.ln + '\n\nEnter point change (e.g. 0.5 to add, -1 to remove):');
+              if (!amtStr) return;
+              var amt = parseFloat(amtStr);
+              if (isNaN(amt) || amt === 0) { alert('Invalid amount.'); return; }
+              var newEv = {
+                id: 'PE-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
+                eid: eid,
+                type: 'manual',
+                pts: amt,
+                date: new Date().toISOString()
+              };
+              try {
+                var sb = window._sb;
+                if (sb) {
+                  var res = await sb.from('tk_point_events').insert(newEv);
+                  if (res.error) { alert('Failed to save: ' + res.error.message); return; }
+                }
+                setPoints(function(prev) { return [newEv].concat(prev); });
+              } catch(e) { alert('Error: ' + e.message); }
+            },
+            style: { padding: '5px 10px', background: 'transparent', border: '1px solid #1f2733', color: '#8993a4', borderRadius: 5, fontSize: 11, fontWeight: 600, cursor: 'pointer' }
+          }, 'Custom ±')
+        ),
+        // List of events
+        points.length === 0
+          ? React.createElement('div', { style: { color: '#5b6473', fontSize: 12, padding: '12px 0', textAlign: 'center' } }, 'No point events on record')
+          : points.map(function (p, i) {
+              var pts = parseFloat(p.pts) || 0;
               var color = pts > 0 ? '#ef4444' : pts < 0 ? '#22c55e' : '#8993a4';
-              return React.createElement('div', { key: p.id || i, style: { padding: '12px 0', borderBottom: '1px solid #1a2029' } },
-                React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between' } },
-                  React.createElement('div', { style: { fontWeight: 600, fontSize: 13 } }, p.reason || p.event_type || 'Event'),
-                  React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: 12, color: color } }, (pts > 0 ? '+' : '') + pts.toFixed(1) + ' pts')
+              return React.createElement('div', { key: p.id || i, style: { display: 'grid', gridTemplateColumns: '1fr auto auto', gap: 12, alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #1a2029' } },
+                React.createElement('div', null,
+                  React.createElement('div', { style: { fontWeight: 600, fontSize: 13 } }, pointLabel(p.type)),
+                  React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#8993a4', marginTop: 2 } },
+                    p.date ? new Date(p.date).toLocaleString() : ''
+                  )
                 ),
-                React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#8993a4', marginTop: 2 } },
-                  (p.event_date ? new Date(p.event_date).toLocaleDateString() : ''),
-                  p.added_by && ' · added by ' + p.added_by
-                )
+                React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: 13, color: color, minWidth: 60, textAlign: 'right' } }, (pts > 0 ? '+' : '') + pts.toFixed(1) + ' pts'),
+                React.createElement('button', {
+                  onClick: async function() {
+                    if (!confirm('Delete this ' + pointLabel(p.type) + ' (' + (pts > 0 ? '+' : '') + pts.toFixed(1) + ') event?')) return;
+                    try {
+                      var sb = window._sb;
+                      if (sb) {
+                        var res = await sb.from('tk_point_events').delete().eq('id', p.id);
+                        if (res.error) { alert('Failed to delete: ' + res.error.message); return; }
+                      }
+                      setPoints(function(prev) { return prev.filter(function(x){return x.id !== p.id}); });
+                    } catch(e) { alert('Error: ' + e.message); }
+                  },
+                  title: 'Delete',
+                  style: { width: 26, height: 26, padding: 0, background: 'transparent', border: '1px solid #1f2733', color: '#8993a4', borderRadius: 4, cursor: 'pointer', fontSize: 13, lineHeight: 1 }
+                }, '×')
               );
             })
-          )
+      )
     ),
 
     // ── NOTES TAB ─────────────────────────────────────────────────────
