@@ -431,7 +431,8 @@ async function sbLoadEmployees() {
       rate: parseFloat(e.rate),
       st: e.status,
       salary: parseFloat(e.salary) || 0,
-      breakExempt: !!e.break_exempt
+      breakExempt: !!e.break_exempt,
+      mobilePunchExempt: !!e.mobile_punch_exempt
     };
   });
 }
@@ -530,8 +531,8 @@ setInterval(flushOfflineQueue,30000); /* retry every 30 seconds */
 
 async function sbSavePunch(p) {
   var sb = getSb();
-  if (!sb) { var q=getOfflineQueue();q.push({id:p.id,eid:p.eid,type:p.type,time:p.time,dev:p.dev,ip:p.ip,lat:p.lat,lng:p.lng,dist:p.dist,accuracy:p.accuracy||null,altitude:p.altitude||null,speed:p.speed||null,geo_flags:p.flags||null});saveOfflineQueue(q);return; }
-  var payload={id:p.id,eid:p.eid,type:p.type,time:p.time,dev:p.dev,ip:p.ip,lat:p.lat,lng:p.lng,dist:p.dist,accuracy:p.accuracy||null,altitude:p.altitude||null,speed:p.speed||null,geo_flags:p.flags||null};
+  if (!sb) { var q=getOfflineQueue();q.push({id:p.id,eid:p.eid,type:p.type,time:p.time,dev:p.dev,ip:p.ip,lat:p.lat,lng:p.lng,dist:p.dist,accuracy:p.accuracy||null,altitude:p.altitude||null,speed:p.speed||null,geo_flags:p.flags||null,mobile_exempt:p.mobileExempt||false});saveOfflineQueue(q);return; }
+  var payload={id:p.id,eid:p.eid,type:p.type,time:p.time,dev:p.dev,ip:p.ip,lat:p.lat,lng:p.lng,dist:p.dist,accuracy:p.accuracy||null,altitude:p.altitude||null,speed:p.speed||null,geo_flags:p.flags||null,mobile_exempt:p.mobileExempt||false};
   try { var r=await sb.from("tk_punches").upsert(payload); if(r.error){var q2=getOfflineQueue();q2.push(payload);saveOfflineQueue(q2)} } catch(e){var q3=getOfflineQueue();q3.push(payload);saveOfflineQueue(q3)}
   flushOfflineQueue();
 }
@@ -577,6 +578,7 @@ async function sbSaveEmployee(e) {
     status: e.st,
     salary: e.salary || 0,
     break_exempt: e.breakExempt || false,
+    mobile_punch_exempt: e.mobilePunchExempt || false,
     hire_date: e.hireDate || null,
     term_date: e.termDate || null
   });
@@ -2346,24 +2348,28 @@ function KioskView({
   function doPunch(type) {
     if(window._punchLock)return;window._punchLock=true;setTimeout(function(){window._punchLock=false},10000);
     var gc = geoConfig || null;
+    var isExempt = emp && emp.mobilePunchExempt === true;
     setGeoChecking(true);
     setGeoError("");
-    var ipCheck = checkIPAllowed(gc);
-    if (!ipCheck.ok) {
-      setGeoChecking(false);
-      setGeoError(ipCheck.reason);
-      setGeoData({
-        type: "ip"
-      });
-      setState("geo-denied");
-      setTimeout(reset, 8000);
-      return;
+    // IP check — bypass if exempt (still record IP on the punch)
+    if (!isExempt) {
+      var ipCheck = checkIPAllowed(gc);
+      if (!ipCheck.ok) {
+        setGeoChecking(false);
+        setGeoError(ipCheck.reason);
+        setGeoData({ type: "ip" });
+        setState("geo-denied");
+        setTimeout(reset, 8000);
+        return;
+      }
     }
     var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent||"");
     var deviceName = isMobile ? "MOBILE" : "KIOSK-MARSHALL-01";
+    if (isExempt) deviceName = (isMobile ? "MOBILE-EXEMPT" : "EXEMPT-DEVICE");
     checkGeoLocation(gc, punches, emp.id, isMobile).then(function (geoResult) {
       setGeoChecking(false);
-      if (!geoResult.ok) {
+      // Geo check — bypass if exempt (still record location data + flags on the punch)
+      if (!isExempt && !geoResult.ok) {
         setGeoError(geoResult.reason);
         setGeoData({
           type: "geo",
@@ -2375,6 +2381,8 @@ function KioskView({
         setTimeout(reset, 8000);
         return;
       }
+      var allFlags = (geoResult.flags || []).slice();
+      if (isExempt) allFlags.push("MOBILE_EXEMPT");
       var p = {
         id: "P-K-" + Date.now() + "-" + Math.random().toString(36).substr(2, 4),
         eid: emp.id,
@@ -2388,7 +2396,8 @@ function KioskView({
         accuracy: geoResult.accuracy || null,
         altitude: geoResult.altitude || null,
         speed: geoResult.speed || null,
-        flags: (geoResult.flags||[]).join(",") || null
+        flags: allFlags.join(",") || null,
+        mobileExempt: !!isExempt
       };
       onPunch(p);
       setPunchType(type);
@@ -4699,6 +4708,7 @@ function AdminView({
       rate: parseFloat(form.rate) || 16.50,
       salary: parseFloat(form.salary) || 0,
       breakExempt: form.breakExempt || false,
+      mobilePunchExempt: form.mobilePunchExempt || false,
       st: "active",
       hireDate: form.hireDate || new Date().toISOString().slice(0,10),
       termDate: null,
@@ -4724,8 +4734,8 @@ function AdminView({
   }
   var rEdit = useState(null), editEmp2 = rEdit[0], setEditEmp2 = rEdit[1];
   var rEditForm = useState({}), editForm = rEditForm[0], setEditForm = rEditForm[1];
-  function startEdit(e) { setEditForm({fn:e.fn,ln:e.ln,dept:e.dept,shiftStart:e.shiftStart||"06:00",shiftEnd:e.shiftEnd||"14:30",rate:e.rate||16,salary:e.salary||0,badge:e.badge,pin:e.pin,breakExempt:e.breakExempt||false}); setEditEmp2(e); }
-  function saveEdit() { if(!editEmp2)return; onUpdateEmps(emps.map(function(x){return x.id===editEmp2.id?Object.assign({},x,{fn:editForm.fn||x.fn,ln:editForm.ln||x.ln,dept:editForm.dept||x.dept,shiftStart:editForm.shiftStart||x.shiftStart,shiftEnd:editForm.shiftEnd||x.shiftEnd,rate:parseFloat(editForm.rate)||x.rate,salary:parseFloat(editForm.salary)||0,badge:editForm.badge||x.badge,pin:editForm.pin||x.pin,breakExempt:editForm.breakExempt!==undefined?editForm.breakExempt:x.breakExempt}):x})); logAdminAction("EDIT",editEmp2.fn+" "+editEmp2.ln+" ("+editEmp2.badge+")",staffName); setEditEmp2(null); }
+  function startEdit(e) { setEditForm({fn:e.fn,ln:e.ln,dept:e.dept,shiftStart:e.shiftStart||"06:00",shiftEnd:e.shiftEnd||"14:30",rate:e.rate||16,salary:e.salary||0,badge:e.badge,pin:e.pin,breakExempt:e.breakExempt||false,mobilePunchExempt:e.mobilePunchExempt||false}); setEditEmp2(e); }
+  function saveEdit() { if(!editEmp2)return; onUpdateEmps(emps.map(function(x){return x.id===editEmp2.id?Object.assign({},x,{fn:editForm.fn||x.fn,ln:editForm.ln||x.ln,dept:editForm.dept||x.dept,shiftStart:editForm.shiftStart||x.shiftStart,shiftEnd:editForm.shiftEnd||x.shiftEnd,rate:parseFloat(editForm.rate)||x.rate,salary:parseFloat(editForm.salary)||0,badge:editForm.badge||x.badge,pin:editForm.pin||x.pin,breakExempt:editForm.breakExempt!==undefined?editForm.breakExempt:x.breakExempt,mobilePunchExempt:editForm.mobilePunchExempt!==undefined?editForm.mobilePunchExempt:x.mobilePunchExempt}):x})); logAdminAction("EDIT",editEmp2.fn+" "+editEmp2.ln+" ("+editEmp2.badge+")",staffName); setEditEmp2(null); }
   function termEmp(id) { var emp2=emps.find(function(e){return e.id===id}); if(!emp2)return; var td=window.prompt("Enter last day for "+emp2.fn+" "+emp2.ln+" (YYYY-MM-DD):",new Date().toISOString().slice(0,10)); if(!td)return; if(!td.match(/^\d{4}-\d{2}-\d{2}$/)){alert("Invalid date format. Use YYYY-MM-DD");return} onUpdateEmps(emps.map(function(x){return x.id===id?Object.assign({},x,{st:"terminated",termDate:td}):x}),id); logAdminAction("TERMINATE",emp2.fn+" "+emp2.ln+" ("+emp2.badge+") — end date: "+td,staffName); }
   function deleteEmp(id) {
     var emp=emps.find(function(e){return e.id===id});
@@ -5468,7 +5478,10 @@ function AdminView({
         fontWeight: 600,
         color: C.t1
       }
-    }, e.fn, " ", e.ln))), /*#__PURE__*/React.createElement("td", {
+    }, e.fn, " ", e.ln), e.mobilePunchExempt && /*#__PURE__*/React.createElement("span", {
+      title: "Mobile Punch Exempt — can punch from anywhere",
+      style: { fontSize: 9, fontWeight: 700, color: "#38BDF8", background: "rgba(56,189,248,0.12)", padding: "2px 6px", borderRadius: 4, letterSpacing: 0.8, marginLeft: 4 }
+    }, "MOBILE"))), /*#__PURE__*/React.createElement("td", {
       style: {
         padding: "8px 12px"
       }
@@ -5580,6 +5593,7 @@ function AdminView({
   /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"Shift End"), /*#__PURE__*/React.createElement("input",{type:"time",value:editForm.shiftEnd||"14:30",onChange:function(ev){setEditForm(Object.assign({},editForm,{shiftEnd:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px 10px",borderRadius:6,fontSize:14,fontFamily:Fm,outline:"none"}})),
   /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"Salary/YR"), /*#__PURE__*/React.createElement("input",{type:"number",step:"1000",value:editForm.salary||"",onChange:function(ev){setEditForm(Object.assign({},editForm,{salary:ev.target.value}))},placeholder:"0 = hourly",style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.green,padding:"8px 10px",borderRadius:6,fontSize:14,fontFamily:Fm,outline:"none"}}))),
   React.createElement("div",{style:{gridColumn:"1/-1",display:"flex",alignItems:"center",gap:10,marginTop:8,padding:"10px 12px",background:editForm.breakExempt?"rgba(250,204,21,0.08)":"transparent",border:"1px solid "+(editForm.breakExempt?"rgba(250,204,21,0.25)":"#1E1E22"),borderRadius:8}},React.createElement("input",{type:"checkbox",checked:editForm.breakExempt||false,onChange:function(ev){setEditForm(Object.assign({},editForm,{breakExempt:ev.target.checked}))},style:{accentColor:"#FACC15",width:18,height:18,cursor:"pointer"}}),React.createElement("div",null,React.createElement("div",{style:{fontSize:14,fontWeight:600,color:editForm.breakExempt?"#FACC15":"#A1A1AA"}},"Lunch Break Exempt"),React.createElement("div",{style:{fontSize:12,color:"#3F3F46"}},editForm.breakExempt?"No auto 30-min lunch deduction":"Standard auto lunch deduction applies"))),
+  React.createElement("div",{style:{gridColumn:"1/-1",display:"flex",alignItems:"center",gap:10,marginTop:6,padding:"10px 12px",background:editForm.mobilePunchExempt?"rgba(56,189,248,0.08)":"transparent",border:"1px solid "+(editForm.mobilePunchExempt?"rgba(56,189,248,0.3)":"#1E1E22"),borderRadius:8}},React.createElement("input",{type:"checkbox",checked:editForm.mobilePunchExempt||false,onChange:function(ev){setEditForm(Object.assign({},editForm,{mobilePunchExempt:ev.target.checked}))},style:{accentColor:"#38BDF8",width:18,height:18,cursor:"pointer"}}),React.createElement("div",null,React.createElement("div",{style:{fontSize:14,fontWeight:600,color:editForm.mobilePunchExempt?"#38BDF8":"#A1A1AA"}},"Mobile Punch Exempt"),React.createElement("div",{style:{fontSize:12,color:"#3F3F46"}},editForm.mobilePunchExempt?"Can punch from anywhere — geofence + IP + device checks bypassed (location still logged)":"Standard geofence enforcement applies"))),
   /*#__PURE__*/React.createElement("div", {style:{display:"flex",gap:8,marginTop:16}},
   /*#__PURE__*/React.createElement("button",{onClick:function(){setEditEmp2(null)},style:{flex:1,padding:"10px",borderRadius:8,fontSize:14,fontWeight:600,color:C.t3,background:C.bg,border:"1px solid "+C.bd}},"Cancel"),
   /*#__PURE__*/React.createElement("button",{onClick:saveEdit,style:{flex:1,padding:"10px",borderRadius:8,fontSize:14,fontWeight:700,color:C.bg,background:C.spark}},"Save Changes")))),
