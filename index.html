@@ -3394,6 +3394,618 @@ function TimesheetDrilldown({emp,punches,mon,weekOffset,setWeekOffset,setSelEmp,
   )
 }
 
+
+// ═══════════════════════════════════════════════════════════════════════
+// POINTS LEDGER — full event management with filter/sort/edit/audit
+// ═══════════════════════════════════════════════════════════════════════
+function PointsLedger({ pointEvents, employees, onIssuePoint, onUpdatePointEvents, policy, readOnly, currentUser }) {
+  var POINT_LABEL = {
+    'tardy-short': 'Tardy (≤30 min)',
+    'tardy-long': 'Tardy (>30 min)',
+    'left-early': 'Left Early',
+    'unexcused': 'Unexcused Absence',
+    'no-show': 'No-Show / No-Call',
+    'called-in': 'Called In',
+    'manual': 'Manual Adjustment'
+  };
+  function lbl(t) { return POINT_LABEL[t] || (t ? t.charAt(0).toUpperCase() + t.slice(1).replace(/-/g, ' ') : 'Event'); }
+
+  var rSearch = React.useState(''); var search = rSearch[0], setSearch = rSearch[1];
+  var rType = React.useState('all'); var typeFilter = rType[0], setTypeFilter = rType[1];
+  var rRange = React.useState('30'); var rangeFilter = rRange[0], setRangeFilter = rRange[1];
+  var rFrom = React.useState(''); var customFrom = rFrom[0], setCustomFrom = rFrom[1];
+  var rTo = React.useState(''); var customTo = rTo[0], setCustomTo = rTo[1];
+  var rSort = React.useState('date-desc'); var sortBy = rSort[0], setSortBy = rSort[1];
+  var rSel = React.useState({}); var selected = rSel[0], setSelected = rSel[1];
+  var rEdit = React.useState(null); var editEv = rEdit[0], setEditEv = rEdit[1];
+  var rAudit = React.useState(null); var auditFor = rAudit[0], setAuditFor = rAudit[1];
+  var rBulkIssue = React.useState(false); var showBulkIssue = rBulkIssue[0], setShowBulkIssue = rBulkIssue[1];
+
+  // Employee lookup
+  var empById = {};
+  (employees || []).forEach(function(e) { empById[e.id] = e; });
+
+  // ── filter the data ──
+  function getCutoff() {
+    if (rangeFilter === 'all') return 0;
+    if (rangeFilter === 'custom') {
+      return customFrom ? new Date(customFrom).getTime() : 0;
+    }
+    var days = parseInt(rangeFilter);
+    return Date.now() - (days * 86400000);
+  }
+  function getMaxDate() {
+    if (rangeFilter === 'custom' && customTo) return new Date(customTo).getTime() + 86400000;
+    return Date.now() + 86400000;
+  }
+
+  var cutoff = getCutoff();
+  var maxDate = getMaxDate();
+  var filtered = (pointEvents || []).filter(function(ev) {
+    var t = new Date(ev.date).getTime();
+    if (t < cutoff || t > maxDate) return false;
+    if (typeFilter !== 'all' && ev.type !== typeFilter) return false;
+    if (search) {
+      var e = empById[ev.eid];
+      if (!e) return false;
+      var s = search.toLowerCase();
+      var name = ((e.fn || '') + ' ' + (e.ln || '')).toLowerCase();
+      if (name.indexOf(s) === -1 && (e.badge || '').indexOf(s) === -1) return false;
+    }
+    return true;
+  });
+
+  // ── sort ──
+  filtered.sort(function(a, b) {
+    if (sortBy === 'date-desc') return new Date(b.date) - new Date(a.date);
+    if (sortBy === 'date-asc') return new Date(a.date) - new Date(b.date);
+    if (sortBy === 'pts-desc') return (b.pts || 0) - (a.pts || 0);
+    if (sortBy === 'pts-asc') return (a.pts || 0) - (b.pts || 0);
+    if (sortBy === 'emp') {
+      var ea = empById[a.eid], eb = empById[b.eid];
+      return ((ea && ea.ln) || '').localeCompare((eb && eb.ln) || '');
+    }
+    return 0;
+  });
+
+  // ── summary stats ──
+  var totalPts = filtered.reduce(function(s, ev) { return s + (parseFloat(ev.pts) || 0); }, 0);
+  var typeCounts = {};
+  filtered.forEach(function(ev) { typeCounts[ev.type] = (typeCounts[ev.type] || 0) + 1; });
+  var topType = Object.keys(typeCounts).sort(function(a, b) { return typeCounts[b] - typeCounts[a]; })[0];
+
+  // Top employees by points in range
+  var empTotals = {};
+  filtered.forEach(function(ev) {
+    empTotals[ev.eid] = (empTotals[ev.eid] || 0) + (parseFloat(ev.pts) || 0);
+  });
+  var topEmps = Object.keys(empTotals).map(function(eid) {
+    return { eid: eid, total: empTotals[eid], emp: empById[eid] };
+  }).filter(function(x) { return x.emp; }).sort(function(a, b) { return b.total - a.total; }).slice(0, 5);
+
+  // Trend (events per day, last 14 days max for sparkline)
+  var sparkDays = Math.min(14, parseInt(rangeFilter) || 14);
+  var dayCounts = new Array(sparkDays).fill(0);
+  var sparkStart = new Date(); sparkStart.setHours(0,0,0,0); sparkStart.setDate(sparkStart.getDate() - sparkDays + 1);
+  filtered.forEach(function(ev) {
+    var dayIdx = Math.floor((new Date(ev.date).getTime() - sparkStart.getTime()) / 86400000);
+    if (dayIdx >= 0 && dayIdx < sparkDays) dayCounts[dayIdx]++;
+  });
+  var maxDay = Math.max.apply(null, dayCounts.concat([1]));
+
+  // ── bulk selection helpers ──
+  var selIds = Object.keys(selected).filter(function(k) { return selected[k]; });
+  var selCount = selIds.length;
+  var allSelected = filtered.length > 0 && filtered.every(function(ev) { return selected[ev.id]; });
+
+  function toggleAll() {
+    if (allSelected) { setSelected({}); }
+    else {
+      var s = {};
+      filtered.forEach(function(ev) { s[ev.id] = true; });
+      setSelected(s);
+    }
+  }
+  function toggleOne(id) {
+    var s = Object.assign({}, selected);
+    if (s[id]) delete s[id]; else s[id] = true;
+    setSelected(s);
+  }
+
+  // ── actions ──
+  async function deleteOne(ev) {
+    if (!confirm('Delete this ' + lbl(ev.type) + ' (' + (ev.pts > 0 ? '+' : '') + ev.pts + ') event for ' + (empById[ev.eid] ? empById[ev.eid].fn + ' ' + empById[ev.eid].ln : 'unknown') + '?')) return;
+    var sb = window._sb;
+    if (sb) {
+      try {
+        await sb.from('tk_audit_log').insert({
+          event_type: 'point_delete', eid: ev.eid, actor_name: currentUser || 'Manager',
+          target_id: ev.id, before_data: ev, after_data: null, reason: 'manual delete from ledger',
+          ts: new Date().toISOString()
+        });
+      } catch(e) {}
+      var r = await sb.from('tk_point_events').delete().eq('id', ev.id);
+      if (r.error) { alert('Delete failed: ' + r.error.message); return; }
+    }
+    onUpdatePointEvents && onUpdatePointEvents((pointEvents || []).filter(function(x) { return x.id !== ev.id; }));
+  }
+
+  async function bulkDelete() {
+    if (selCount === 0) return;
+    if (!confirm('Delete ' + selCount + ' selected point events? This cannot be undone (audit log will keep a record).')) return;
+    var sb = window._sb;
+    var toDelete = (pointEvents || []).filter(function(ev) { return selected[ev.id]; });
+    if (sb) {
+      try {
+        for (var i = 0; i < toDelete.length; i++) {
+          await sb.from('tk_audit_log').insert({
+            event_type: 'point_delete', eid: toDelete[i].eid, actor_name: currentUser || 'Manager',
+            target_id: toDelete[i].id, before_data: toDelete[i], after_data: null, reason: 'bulk delete from ledger',
+            ts: new Date().toISOString()
+          });
+        }
+      } catch(e) {}
+      var r = await sb.from('tk_point_events').delete().in('id', selIds);
+      if (r.error) { alert('Bulk delete failed: ' + r.error.message); return; }
+    }
+    onUpdatePointEvents && onUpdatePointEvents((pointEvents || []).filter(function(x) { return !selected[x.id]; }));
+    setSelected({});
+  }
+
+  function exportCSV() {
+    var rows = filtered.map(function(ev) {
+      var e = empById[ev.eid] || {};
+      return [
+        new Date(ev.date).toLocaleString(),
+        (e.fn || '') + ' ' + (e.ln || ''),
+        e.badge || '',
+        e.dept || '',
+        lbl(ev.type),
+        ev.pts,
+        ev.id
+      ].map(function(v) {
+        var s = String(v == null ? '' : v);
+        return s.indexOf(',') > -1 || s.indexOf('"') > -1 ? '"' + s.replace(/"/g, '""') + '"' : s;
+      }).join(',');
+    });
+    var csv = 'Date,Employee,Badge,Department,Type,Points,Event ID\n' + rows.join('\n');
+    var blob = new Blob([csv], { type: 'text/csv' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = 'points-ledger-' + new Date().toISOString().slice(0,10) + '.csv';
+    a.click();
+    setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+  }
+
+  // ── render ──
+  return React.createElement('div', { style: { color: '#e8ecf2' } },
+
+    // ── FILTER BAR ──
+    React.createElement('div', { style: { display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 16, padding: '12px 14px', background: '#11151c', border: '1px solid #1f2733', borderRadius: 10 } },
+      React.createElement('input', {
+        placeholder: 'Search name or badge...',
+        value: search,
+        onChange: function(e) { setSearch(e.target.value); },
+        style: { padding: '8px 12px', background: '#0a0d12', border: '1px solid #1f2733', color: '#e8ecf2', borderRadius: 6, fontSize: 13, outline: 'none', width: 240, fontFamily: 'inherit' }
+      }),
+      React.createElement('select', {
+        value: typeFilter,
+        onChange: function(e) { setTypeFilter(e.target.value); },
+        style: { padding: '8px 12px', background: '#0a0d12', border: '1px solid #1f2733', color: '#e8ecf2', borderRadius: 6, fontSize: 13, outline: 'none' }
+      },
+        React.createElement('option', { value: 'all' }, 'All Types'),
+        Object.keys(POINT_LABEL).map(function(k) { return React.createElement('option', { key: k, value: k }, POINT_LABEL[k]); })
+      ),
+      React.createElement('select', {
+        value: rangeFilter,
+        onChange: function(e) { setRangeFilter(e.target.value); },
+        style: { padding: '8px 12px', background: '#0a0d12', border: '1px solid #1f2733', color: '#e8ecf2', borderRadius: 6, fontSize: 13, outline: 'none' }
+      },
+        React.createElement('option', { value: '7' }, 'Last 7 days'),
+        React.createElement('option', { value: '30' }, 'Last 30 days'),
+        React.createElement('option', { value: '60' }, 'Last 60 days'),
+        React.createElement('option', { value: '90' }, 'Last 90 days'),
+        React.createElement('option', { value: 'all' }, 'All time'),
+        React.createElement('option', { value: 'custom' }, 'Custom range')
+      ),
+      rangeFilter === 'custom' && React.createElement(React.Fragment, null,
+        React.createElement('input', { type: 'date', value: customFrom, onChange: function(e) { setCustomFrom(e.target.value); }, style: { padding: '8px 10px', background: '#0a0d12', border: '1px solid #1f2733', color: '#e8ecf2', borderRadius: 6, fontSize: 12, outline: 'none' } }),
+        React.createElement('span', { style: { color: '#5b6473', fontSize: 11 } }, '→'),
+        React.createElement('input', { type: 'date', value: customTo, onChange: function(e) { setCustomTo(e.target.value); }, style: { padding: '8px 10px', background: '#0a0d12', border: '1px solid #1f2733', color: '#e8ecf2', borderRadius: 6, fontSize: 12, outline: 'none' } })
+      ),
+      React.createElement('select', {
+        value: sortBy,
+        onChange: function(e) { setSortBy(e.target.value); },
+        style: { padding: '8px 12px', background: '#0a0d12', border: '1px solid #1f2733', color: '#e8ecf2', borderRadius: 6, fontSize: 13, outline: 'none' }
+      },
+        React.createElement('option', { value: 'date-desc' }, 'Newest first'),
+        React.createElement('option', { value: 'date-asc' }, 'Oldest first'),
+        React.createElement('option', { value: 'pts-desc' }, 'Highest points'),
+        React.createElement('option', { value: 'pts-asc' }, 'Lowest points'),
+        React.createElement('option', { value: 'emp' }, 'Employee name')
+      ),
+      React.createElement('div', { style: { flex: 1 } }),
+      !readOnly && React.createElement('button', {
+        onClick: function() { setShowBulkIssue(true); },
+        style: { padding: '8px 14px', background: '#ffc233', border: 'none', color: '#000', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' }
+      }, '+ Bulk Issue'),
+      React.createElement('button', {
+        onClick: exportCSV,
+        style: { padding: '8px 14px', background: 'transparent', border: '1px solid #1f2733', color: '#8993a4', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer' }
+      }, 'Export CSV (' + filtered.length + ')')
+    ),
+
+    // ── SUMMARY STRIP ──
+    React.createElement('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 16 } },
+      // Total events
+      React.createElement('div', { style: { padding: '14px 16px', background: '#11151c', border: '1px solid #1f2733', borderRadius: 10, borderTop: '2px solid #ffc233' } },
+        React.createElement('div', { style: { fontSize: 10, color: '#5b6473', textTransform: 'uppercase', letterSpacing: 1.2, fontWeight: 700, marginBottom: 6 } }, 'Events'),
+        React.createElement('div', { style: { fontSize: 24, fontWeight: 700 } }, filtered.length),
+        React.createElement('div', { style: { fontSize: 11, color: '#8993a4', marginTop: 2 } }, totalPts.toFixed(1) + ' pts total')
+      ),
+      // Top type
+      React.createElement('div', { style: { padding: '14px 16px', background: '#11151c', border: '1px solid #1f2733', borderRadius: 10, borderTop: '2px solid #f59e0b' } },
+        React.createElement('div', { style: { fontSize: 10, color: '#5b6473', textTransform: 'uppercase', letterSpacing: 1.2, fontWeight: 700, marginBottom: 6 } }, 'Most Common'),
+        React.createElement('div', { style: { fontSize: 14, fontWeight: 700 } }, topType ? lbl(topType) : '—'),
+        React.createElement('div', { style: { fontSize: 11, color: '#8993a4', marginTop: 2 } }, topType ? typeCounts[topType] + ' events' : 'no data')
+      ),
+      // Top employees
+      React.createElement('div', { style: { padding: '14px 16px', background: '#11151c', border: '1px solid #1f2733', borderRadius: 10, borderTop: '2px solid #ef4444', gridColumn: 'span 2' } },
+        React.createElement('div', { style: { fontSize: 10, color: '#5b6473', textTransform: 'uppercase', letterSpacing: 1.2, fontWeight: 700, marginBottom: 8 } }, 'Top by Points'),
+        topEmps.length === 0
+          ? React.createElement('div', { style: { fontSize: 12, color: '#5b6473' } }, 'No data in range')
+          : React.createElement('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
+              topEmps.map(function(t) {
+                return React.createElement('button', {
+                  key: t.eid,
+                  onClick: function() { setSearch(t.emp.fn + ' ' + t.emp.ln); },
+                  title: 'Click to filter',
+                  style: { padding: '4px 10px', background: t.total >= 6 ? '#ef44441a' : t.total >= 4 ? '#f59e0b1a' : '#22c55e1a', color: t.total >= 6 ? '#ef4444' : t.total >= 4 ? '#f59e0b' : '#22c55e', border: 'none', borderRadius: 4, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }
+                }, t.emp.fn + ' ' + (t.emp.ln || '').charAt(0) + '. — ' + t.total.toFixed(1));
+              })
+            )
+      )
+    ),
+
+    // ── BULK ACTIONS BAR (when rows selected) ──
+    selCount > 0 && React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: 'rgba(255,194,51,0.08)', border: '1px solid rgba(255,194,51,0.3)', borderRadius: 8, marginBottom: 12 } },
+      React.createElement('div', { style: { fontSize: 12, fontWeight: 700, color: '#ffc233' } }, selCount + ' selected'),
+      React.createElement('div', { style: { flex: 1 } }),
+      !readOnly && React.createElement('button', {
+        onClick: bulkDelete,
+        style: { padding: '6px 14px', background: 'transparent', border: '1px solid #ef4444', color: '#ef4444', borderRadius: 5, fontSize: 11, fontWeight: 700, cursor: 'pointer' }
+      }, 'Delete Selected'),
+      React.createElement('button', {
+        onClick: function() { setSelected({}); },
+        style: { padding: '6px 12px', background: 'transparent', border: '1px solid #1f2733', color: '#8993a4', borderRadius: 5, fontSize: 11, cursor: 'pointer' }
+      }, 'Clear')
+    ),
+
+    // ── TABLE ──
+    React.createElement('div', { style: { background: '#11151c', border: '1px solid #1f2733', borderRadius: 10, overflow: 'hidden' } },
+      // Header
+      React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '36px 1.5fr 110px 1fr 80px 110px 110px', gap: 10, padding: '10px 14px', borderBottom: '1px solid #1f2733', fontSize: 10.5, textTransform: 'uppercase', letterSpacing: 0.7, color: '#5b6473', fontWeight: 700, position: 'sticky', top: 0, background: '#0d1117', zIndex: 1 } },
+        React.createElement('div', null,
+          React.createElement('input', { type: 'checkbox', checked: allSelected, onChange: toggleAll, style: { cursor: 'pointer', accentColor: '#ffc233' } })
+        ),
+        React.createElement('div', null, 'Employee'),
+        React.createElement('div', null, 'Badge'),
+        React.createElement('div', null, 'Type'),
+        React.createElement('div', { style: { textAlign: 'right' } }, 'Points'),
+        React.createElement('div', null, 'Date'),
+        React.createElement('div', { style: { textAlign: 'center' } }, 'Actions')
+      ),
+      // Rows
+      filtered.length === 0
+        ? React.createElement('div', { style: { padding: 40, textAlign: 'center', color: '#5b6473', fontSize: 13 } }, 'No point events match these filters')
+        : filtered.map(function(ev) {
+            var e = empById[ev.eid] || {};
+            var pts = parseFloat(ev.pts) || 0;
+            var color = pts > 0 ? '#ef4444' : pts < 0 ? '#22c55e' : '#8993a4';
+            var isSel = !!selected[ev.id];
+            return React.createElement('div', {
+              key: ev.id,
+              style: { display: 'grid', gridTemplateColumns: '36px 1.5fr 110px 1fr 80px 110px 110px', gap: 10, padding: '10px 14px', borderBottom: '1px solid #1a2029', alignItems: 'center', fontSize: 13, background: isSel ? 'rgba(255,194,51,0.04)' : 'transparent' }
+            },
+              React.createElement('div', null,
+                React.createElement('input', { type: 'checkbox', checked: isSel, onChange: function() { toggleOne(ev.id); }, style: { cursor: 'pointer', accentColor: '#ffc233' } })
+              ),
+              React.createElement('div', { style: { fontWeight: 600 } }, (e.fn || '—') + ' ' + (e.ln || ''),
+                e.dept && React.createElement('div', { style: { fontSize: 10.5, color: '#5b6473', marginTop: 2 } }, e.dept)
+              ),
+              React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', color: '#8993a4', fontSize: 11.5 } }, e.badge || '—'),
+              React.createElement('div', null,
+                React.createElement('span', { style: { padding: '3px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700, background: '#ffc23312', color: '#ffc233', letterSpacing: 0.4 } }, lbl(ev.type))
+              ),
+              React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: color, textAlign: 'right' } }, (pts > 0 ? '+' : '') + pts.toFixed(1)),
+              React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', color: '#8993a4', fontSize: 11 } },
+                new Date(ev.date).toLocaleDateString([], { month: 'short', day: 'numeric', year: '2-digit' }),
+                React.createElement('div', { style: { fontSize: 10, color: '#5b6473' } }, new Date(ev.date).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }))
+              ),
+              React.createElement('div', { style: { display: 'flex', gap: 4, justifyContent: 'center' } },
+                React.createElement('button', {
+                  onClick: function() { setAuditFor(ev); },
+                  title: 'Audit history',
+                  style: { width: 26, height: 26, padding: 0, background: 'transparent', border: '1px solid #1f2733', color: '#8993a4', borderRadius: 4, cursor: 'pointer', fontSize: 11 }
+                }, '◷'),
+                !readOnly && React.createElement('button', {
+                  onClick: function() { setEditEv(ev); },
+                  title: 'Edit',
+                  style: { width: 26, height: 26, padding: 0, background: 'transparent', border: '1px solid #1f2733', color: '#ffc233', borderRadius: 4, cursor: 'pointer', fontSize: 11 }
+                }, '✎'),
+                !readOnly && React.createElement('button', {
+                  onClick: function() { deleteOne(ev); },
+                  title: 'Delete',
+                  style: { width: 26, height: 26, padding: 0, background: 'transparent', border: '1px solid #1f2733', color: '#ef4444', borderRadius: 4, cursor: 'pointer', fontSize: 13, lineHeight: 1 }
+                }, '×')
+              )
+            );
+          })
+    ),
+
+    // ── EDIT MODAL ──
+    editEv && React.createElement(PointEditModal, {
+      ev: editEv,
+      emp: empById[editEv.eid],
+      currentUser: currentUser,
+      onSave: async function(updated) {
+        var sb = window._sb;
+        if (sb) {
+          try {
+            await sb.from('tk_audit_log').insert({
+              event_type: 'point_edit', eid: editEv.eid, actor_name: currentUser || 'Manager',
+              target_id: editEv.id, before_data: editEv, after_data: updated, reason: updated._reason || '',
+              ts: new Date().toISOString()
+            });
+          } catch(e) {}
+          var clean = { id: updated.id, eid: updated.eid, type: updated.type, pts: updated.pts, date: updated.date };
+          var r = await sb.from('tk_point_events').upsert(clean);
+          if (r.error) { alert('Save failed: ' + r.error.message); return; }
+        }
+        onUpdatePointEvents && onUpdatePointEvents((pointEvents || []).map(function(x) {
+          return x.id === updated.id ? { id: updated.id, eid: updated.eid, type: updated.type, pts: updated.pts, date: updated.date } : x;
+        }));
+        setEditEv(null);
+      },
+      onClose: function() { setEditEv(null); }
+    }),
+
+    // ── AUDIT DRAWER ──
+    auditFor && React.createElement(PointAuditDrawer, {
+      ev: auditFor,
+      emp: empById[auditFor.eid],
+      onClose: function() { setAuditFor(null); }
+    }),
+
+    // ── BULK ISSUE MODAL ──
+    showBulkIssue && React.createElement(BulkIssueModal, {
+      employees: employees,
+      onIssue: function(eids, type, ptsVal, date) {
+        eids.forEach(function(eid) {
+          onIssuePoint && onIssuePoint(eid, type, ptsVal, date);
+        });
+        setShowBulkIssue(false);
+      },
+      onClose: function() { setShowBulkIssue(false); }
+    })
+
+  );
+}
+
+// ── Point edit modal ──
+function PointEditModal({ ev, emp, onSave, onClose, currentUser }) {
+  var POINT_LABEL = {
+    'tardy-short': 'Tardy (≤30 min)',
+    'tardy-long': 'Tardy (>30 min)',
+    'left-early': 'Left Early',
+    'unexcused': 'Unexcused Absence',
+    'no-show': 'No-Show / No-Call',
+    'called-in': 'Called In',
+    'manual': 'Manual Adjustment'
+  };
+  var rType = React.useState(ev.type); var t = rType[0], setT = rType[1];
+  var rPts = React.useState(String(ev.pts)); var p = rPts[0], setP = rPts[1];
+  var rDate = React.useState(new Date(ev.date).toISOString().slice(0,16)); var d = rDate[0], setD = rDate[1];
+  var rReason = React.useState(''); var reason = rReason[0], setReason = rReason[1];
+
+  return React.createElement('div', { onClick: onClose, style: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20 } },
+    React.createElement('div', { onClick: function(e) { e.stopPropagation(); }, style: { background: '#11151c', border: '1px solid #1f2733', borderRadius: 12, padding: 24, width: 460, maxWidth: '92%' } },
+      React.createElement('div', { style: { fontSize: 10.5, color: '#ffc233', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 6, fontWeight: 700 } }, 'Edit Point Event'),
+      React.createElement('div', { style: { fontSize: 18, fontWeight: 700, marginBottom: 18, color: '#e8ecf2' } }, emp ? emp.fn + ' ' + emp.ln : 'Unknown'),
+
+      React.createElement('div', { style: { marginBottom: 12 } },
+        React.createElement('label', { style: { display: 'block', fontSize: 10.5, color: '#8993a4', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700, marginBottom: 5 } }, 'Type'),
+        React.createElement('select', { value: t, onChange: function(e) { setT(e.target.value); }, style: { width: '100%', background: '#0a0d12', border: '1px solid #1f2733', color: '#e8ecf2', padding: '10px 12px', borderRadius: 6, fontSize: 13, outline: 'none' } },
+          Object.keys(POINT_LABEL).map(function(k) { return React.createElement('option', { key: k, value: k }, POINT_LABEL[k]); })
+        )
+      ),
+
+      React.createElement('div', { style: { marginBottom: 12 } },
+        React.createElement('label', { style: { display: 'block', fontSize: 10.5, color: '#8993a4', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700, marginBottom: 5 } }, 'Points'),
+        React.createElement('input', { type: 'number', step: '0.5', value: p, onChange: function(e) { setP(e.target.value); }, style: { width: '100%', background: '#0a0d12', border: '2px solid #ffc233', color: '#ffc233', padding: '10px 12px', borderRadius: 6, fontSize: 14, fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, outline: 'none' } })
+      ),
+
+      React.createElement('div', { style: { marginBottom: 12 } },
+        React.createElement('label', { style: { display: 'block', fontSize: 10.5, color: '#8993a4', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700, marginBottom: 5 } }, 'Date / Time'),
+        React.createElement('input', { type: 'datetime-local', value: d, onChange: function(e) { setD(e.target.value); }, style: { width: '100%', background: '#0a0d12', border: '1px solid #1f2733', color: '#e8ecf2', padding: '10px 12px', borderRadius: 6, fontSize: 13, fontFamily: 'JetBrains Mono, monospace', outline: 'none' } })
+      ),
+
+      React.createElement('div', { style: { marginBottom: 18 } },
+        React.createElement('label', { style: { display: 'block', fontSize: 10.5, color: '#8993a4', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700, marginBottom: 5 } }, 'Reason for change ', React.createElement('span', { style: { color: '#ef4444' } }, '*')),
+        React.createElement('input', { type: 'text', value: reason, onChange: function(e) { setReason(e.target.value); }, placeholder: 'e.g. Wrong date, supervisor correction...', style: { width: '100%', background: '#0a0d12', border: '1px solid #1f2733', color: '#e8ecf2', padding: '10px 12px', borderRadius: 6, fontSize: 13, outline: 'none' } })
+      ),
+
+      React.createElement('div', { style: { display: 'flex', gap: 10, justifyContent: 'flex-end' } },
+        React.createElement('button', { onClick: onClose, style: { padding: '10px 18px', background: 'transparent', border: '1px solid #1f2733', color: '#8993a4', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 600 } }, 'Cancel'),
+        React.createElement('button', {
+          onClick: function() {
+            if (!reason.trim()) { alert('Please provide a reason for this change.'); return; }
+            var ptsVal = parseFloat(p);
+            if (isNaN(ptsVal)) { alert('Invalid points value.'); return; }
+            var dt = new Date(d);
+            if (isNaN(dt.getTime())) { alert('Invalid date.'); return; }
+            onSave(Object.assign({}, ev, { type: t, pts: ptsVal, date: dt.toISOString(), _reason: reason.trim() }));
+          },
+          style: { padding: '10px 22px', background: '#ffc233', border: 'none', color: '#000', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 700 }
+        }, 'Save Change')
+      )
+    )
+  );
+}
+
+// ── Audit drawer ──
+function PointAuditDrawer({ ev, emp, onClose }) {
+  var rLog = React.useState([]); var log = rLog[0], setLog = rLog[1];
+  var rLoading = React.useState(true); var loading = rLoading[0], setLoading = rLoading[1];
+
+  React.useEffect(function() {
+    (async function() {
+      var sb = window._sb;
+      if (!sb) { setLoading(false); return; }
+      try {
+        var r = await sb.from('tk_audit_log').select('*').eq('target_id', ev.id).order('ts', { ascending: false });
+        if (!r.error && r.data) setLog(r.data);
+      } catch(e) { console.error('audit load', e); }
+      setLoading(false);
+    })();
+  }, [ev.id]);
+
+  return React.createElement('div', { onClick: onClose, style: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 9999, display: 'flex', justifyContent: 'flex-end' } },
+    React.createElement('div', { onClick: function(e) { e.stopPropagation(); }, style: { background: '#11151c', borderLeft: '1px solid #1f2733', width: 460, maxWidth: '92%', height: '100%', padding: 24, overflowY: 'auto' } },
+      React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 } },
+        React.createElement('div', null,
+          React.createElement('div', { style: { fontSize: 10.5, color: '#ffc233', letterSpacing: 2, textTransform: 'uppercase', fontWeight: 700 } }, 'Audit History'),
+          React.createElement('div', { style: { fontSize: 16, fontWeight: 700, marginTop: 4 } }, emp ? emp.fn + ' ' + emp.ln : 'Unknown')
+        ),
+        React.createElement('button', { onClick: onClose, style: { background: 'transparent', border: 'none', color: '#8993a4', fontSize: 22, cursor: 'pointer', padding: 4 } }, '×')
+      ),
+
+      React.createElement('div', { style: { padding: '10px 12px', background: '#0a0d12', border: '1px solid #1f2733', borderRadius: 6, marginBottom: 18, fontSize: 12 } },
+        React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', marginBottom: 4 } },
+          React.createElement('span', { style: { color: '#5b6473' } }, 'Event ID'),
+          React.createElement('span', { style: { fontFamily: 'JetBrains Mono, monospace', color: '#8993a4', fontSize: 10.5 } }, ev.id)
+        ),
+        React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', marginBottom: 4 } },
+          React.createElement('span', { style: { color: '#5b6473' } }, 'Type'),
+          React.createElement('span', null, ev.type)
+        ),
+        React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between' } },
+          React.createElement('span', { style: { color: '#5b6473' } }, 'Points'),
+          React.createElement('span', { style: { color: ev.pts > 0 ? '#ef4444' : '#22c55e', fontWeight: 700 } }, (ev.pts > 0 ? '+' : '') + ev.pts)
+        )
+      ),
+
+      loading
+        ? React.createElement('div', { style: { color: '#5b6473', fontSize: 12, textAlign: 'center', padding: 30 } }, 'Loading audit log...')
+        : log.length === 0
+          ? React.createElement('div', { style: { color: '#5b6473', fontSize: 12, textAlign: 'center', padding: 30 } }, 'No audit records for this event yet.\n\nFuture edits or deletions will appear here.')
+          : log.map(function(entry, i) {
+              var ec = entry.event_type === 'point_delete' ? '#ef4444' : entry.event_type === 'point_edit' ? '#ffc233' : '#22c55e';
+              return React.createElement('div', { key: entry.id || i, style: { padding: 12, background: '#0a0d12', border: '1px solid #1a2029', borderLeft: '3px solid ' + ec, borderRadius: 6, marginBottom: 10 } },
+                React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', marginBottom: 6 } },
+                  React.createElement('span', { style: { fontSize: 11, fontWeight: 700, color: ec, textTransform: 'uppercase', letterSpacing: 0.6 } }, entry.event_type),
+                  React.createElement('span', { style: { fontSize: 10.5, color: '#5b6473', fontFamily: 'JetBrains Mono, monospace' } }, new Date(entry.ts).toLocaleString())
+                ),
+                React.createElement('div', { style: { fontSize: 12, color: '#e8ecf2', marginBottom: 4 } }, 'By ', React.createElement('b', null, entry.actor_name || 'Unknown')),
+                entry.reason && React.createElement('div', { style: { fontSize: 11.5, color: '#8993a4', marginTop: 4, padding: '6px 8px', background: '#161b24', borderRadius: 4 } }, '"' + entry.reason + '"')
+              );
+            })
+    )
+  );
+}
+
+// ── Bulk issue modal ──
+function BulkIssueModal({ employees, onIssue, onClose }) {
+  var POINT_PRESETS = [
+    { k: 'tardy-short', lbl: 'Tardy (≤30 min)', p: 0.5 },
+    { k: 'tardy-long', lbl: 'Tardy (>30 min)', p: 1 },
+    { k: 'left-early', lbl: 'Left Early', p: 1 },
+    { k: 'unexcused', lbl: 'Unexcused Absence', p: 1.5 },
+    { k: 'no-show', lbl: 'No-Show / No-Call', p: 2 },
+    { k: 'manual', lbl: 'Manual', p: 0.5 }
+  ];
+  var rType = React.useState('tardy-short'); var t = rType[0], setT = rType[1];
+  var rDate = React.useState(new Date().toISOString().slice(0,10)); var d = rDate[0], setD = rDate[1];
+  var rSel = React.useState({}); var sel = rSel[0], setSel = rSel[1];
+  var rFilter = React.useState(''); var filter = rFilter[0], setFilter = rFilter[1];
+
+  var active = (employees || []).filter(function(e) { return e.st === 'active'; });
+  var visible = active.filter(function(e) {
+    if (!filter) return true;
+    var f = filter.toLowerCase();
+    return ((e.fn || '') + ' ' + (e.ln || '')).toLowerCase().indexOf(f) > -1 ||
+           (e.badge || '').indexOf(f) > -1 ||
+           ((e.dept || '').toLowerCase().indexOf(f) > -1);
+  }).sort(function(a, b) { return (a.ln || '').localeCompare(b.ln || ''); });
+
+  var selIds = Object.keys(sel).filter(function(k) { return sel[k]; });
+  var preset = POINT_PRESETS.find(function(x) { return x.k === t; });
+
+  function toggle(id) {
+    var s = Object.assign({}, sel);
+    if (s[id]) delete s[id]; else s[id] = true;
+    setSel(s);
+  }
+
+  return React.createElement('div', { onClick: onClose, style: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20 } },
+    React.createElement('div', { onClick: function(e) { e.stopPropagation(); }, style: { background: '#11151c', border: '1px solid #1f2733', borderRadius: 12, padding: 24, width: 560, maxWidth: '92%', maxHeight: '88vh', display: 'flex', flexDirection: 'column' } },
+      React.createElement('div', { style: { fontSize: 10.5, color: '#ffc233', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 6, fontWeight: 700 } }, 'Bulk Issue Points'),
+      React.createElement('div', { style: { fontSize: 18, fontWeight: 700, marginBottom: 18, color: '#e8ecf2' } }, 'Issue ' + (preset ? preset.lbl : t) + ' to multiple employees'),
+
+      React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 } },
+        React.createElement('div', null,
+          React.createElement('label', { style: { display: 'block', fontSize: 10.5, color: '#8993a4', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700, marginBottom: 5 } }, 'Type'),
+          React.createElement('select', { value: t, onChange: function(e) { setT(e.target.value); }, style: { width: '100%', background: '#0a0d12', border: '1px solid #1f2733', color: '#e8ecf2', padding: '10px 12px', borderRadius: 6, fontSize: 13, outline: 'none' } },
+            POINT_PRESETS.map(function(r) { return React.createElement('option', { key: r.k, value: r.k }, r.lbl + ' (+' + r.p + ')'); })
+          )
+        ),
+        React.createElement('div', null,
+          React.createElement('label', { style: { display: 'block', fontSize: 10.5, color: '#8993a4', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700, marginBottom: 5 } }, 'Date'),
+          React.createElement('input', { type: 'date', value: d, onChange: function(e) { setD(e.target.value); }, style: { width: '100%', background: '#0a0d12', border: '1px solid #1f2733', color: '#e8ecf2', padding: '10px 12px', borderRadius: 6, fontSize: 13, outline: 'none' } })
+        )
+      ),
+
+      React.createElement('input', {
+        placeholder: 'Filter employees by name, badge, or dept...',
+        value: filter,
+        onChange: function(e) { setFilter(e.target.value); },
+        style: { width: '100%', background: '#0a0d12', border: '1px solid #1f2733', color: '#e8ecf2', padding: '8px 12px', borderRadius: 6, fontSize: 12.5, outline: 'none', marginBottom: 10, boxSizing: 'border-box' }
+      }),
+
+      React.createElement('div', { style: { flex: 1, overflowY: 'auto', border: '1px solid #1f2733', borderRadius: 6, padding: 4, marginBottom: 14, maxHeight: 280 } },
+        visible.length === 0
+          ? React.createElement('div', { style: { padding: 20, textAlign: 'center', color: '#5b6473', fontSize: 12 } }, 'No matches')
+          : visible.map(function(e) {
+              var isSel = !!sel[e.id];
+              return React.createElement('label', { key: e.id, style: { display: 'flex', alignItems: 'center', gap: 10, padding: '7px 10px', cursor: 'pointer', borderRadius: 4, background: isSel ? 'rgba(255,194,51,0.06)' : 'transparent', fontSize: 12.5 } },
+                React.createElement('input', { type: 'checkbox', checked: isSel, onChange: function() { toggle(e.id); }, style: { accentColor: '#ffc233', cursor: 'pointer' } }),
+                React.createElement('span', { style: { flex: 1, color: isSel ? '#e8ecf2' : '#8993a4', fontWeight: isSel ? 600 : 400 } }, e.fn + ' ' + e.ln),
+                React.createElement('span', { style: { fontFamily: 'JetBrains Mono, monospace', color: '#5b6473', fontSize: 11 } }, e.badge),
+                React.createElement('span', { style: { color: '#5b6473', fontSize: 11 } }, e.dept || '')
+              );
+            })
+      ),
+
+      React.createElement('div', { style: { display: 'flex', gap: 10, justifyContent: 'space-between', alignItems: 'center' } },
+        React.createElement('div', { style: { fontSize: 12, color: '#8993a4' } }, selIds.length + ' selected · will issue +' + (preset ? preset.p : 0) + ' pts each'),
+        React.createElement('div', { style: { display: 'flex', gap: 10 } },
+          React.createElement('button', { onClick: onClose, style: { padding: '10px 18px', background: 'transparent', border: '1px solid #1f2733', color: '#8993a4', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 600 } }, 'Cancel'),
+          React.createElement('button', {
+            onClick: function() {
+              if (selIds.length === 0) { alert('Select at least one employee.'); return; }
+              if (!confirm('Issue ' + (preset ? preset.lbl + ' (+' + preset.p + ' pts)' : t) + ' to ' + selIds.length + ' employees?')) return;
+              var date = new Date(d + 'T12:00:00').toISOString();
+              onIssue(selIds, t, preset ? preset.p : undefined, date);
+            },
+            disabled: selIds.length === 0,
+            style: { padding: '10px 22px', background: selIds.length > 0 ? '#ffc233' : '#1f2733', border: 'none', color: selIds.length > 0 ? '#000' : '#5b6473', borderRadius: 6, cursor: selIds.length > 0 ? 'pointer' : 'not-allowed', fontSize: 13, fontWeight: 700 }
+          }, 'Issue Points')
+        )
+      )
+    )
+  );
+}
+
 function ManagerView({
   emps,
   punches,
@@ -3589,7 +4201,7 @@ function ManagerView({
       }
     });
   }
-  var tabDef = [["dashboard", "Dashboard" + (violations.length > 0 ? " (" + violations.length + ")" : "")], ["whos-in", "Who's In"], ["reports", "Reports"], ["timesheets", "Timesheets"], ["profile", "Profile"], ["alerts", "Alerts" + (function(){var c=alerts.filter(function(a,i){return !dismissedAlerts[a.id||"a"+i]}).length;return c>0?" ("+c+")":""}())], ["approvals", "Approvals" + (pending.length > 0 ? " (" + pending.length + ")" : "")]].filter(function(t){return !(readOnly && t[0]==="approvals")});
+  var tabDef = [["dashboard", "Dashboard" + (violations.length > 0 ? " (" + violations.length + ")" : "")], ["whos-in", "Who's In"], ["reports", "Reports"], ["timesheets", "Timesheets"], ["ledger", "Points Ledger" + (function(){var c=(pointEvents||[]).length;return c>0?" · "+c:""}())], ["profile", "Profile"], ["alerts", "Alerts" + (function(){var c=alerts.filter(function(a,i){return !dismissedAlerts[a.id||"a"+i]}).length;return c>0?" ("+c+")":""}())], ["approvals", "Approvals" + (pending.length > 0 ? " (" + pending.length + ")" : "")]].filter(function(t){return !(readOnly && t[0]==="approvals")});
   return /*#__PURE__*/React.createElement("div", {
     style: {
       minHeight: "100vh",
@@ -4344,7 +4956,7 @@ function ManagerView({
     }, ev.pts > 0 ? "+" : "", ev.pts), ev.type === "no-show" && !readOnly && /*#__PURE__*/React.createElement("button", {onClick: function(){if(confirm("Downgrade this No-Show to Called In? Points: " + ev.pts + " \u2192 1")){downgradeEvent(ev.id)}}, style:{marginLeft:8,padding:"2px 8px",fontSize:11,background:"transparent",border:"1px solid "+(C.spark||"#FACC15"),color:C.spark||"#FACC15",borderRadius:4,cursor:"pointer",fontWeight:600}}, "\u2193 Called In"));
   }))))
   
-  , mTab === "profile" && React.createElement(EmployeeDirectory, { employees: emps, punches: punches, pointEvents: pointEvents || [], onIssuePoint: onIssuePoint, policy: P, search: search, dept: dept, onOpen: function(eid){ setActiveEid(eid); }, readOnly: readOnly }),mTab === "reports" && /*#__PURE__*/React.createElement(ReportsTab, {emps:statuses,punches:punches,policy:P,weekOffset:weekOffset,mon:mon})
+  , mTab === "ledger" && React.createElement(PointsLedger, { pointEvents: pointEvents || [], employees: emps, onIssuePoint: onIssuePoint, onUpdatePointEvents: function(updated){ if(typeof window.__tkSetPointEvents === "function") window.__tkSetPointEvents(updated); }, policy: P, readOnly: readOnly, currentUser: staffName }), mTab === "profile" && React.createElement(EmployeeDirectory, { employees: emps, punches: punches, pointEvents: pointEvents || [], onIssuePoint: onIssuePoint, policy: P, search: search, dept: dept, onOpen: function(eid){ setActiveEid(eid); }, readOnly: readOnly }),mTab === "reports" && /*#__PURE__*/React.createElement(ReportsTab, {emps:statuses,punches:punches,policy:P,weekOffset:weekOffset,mon:mon})
   ,showPunchEditor && /*#__PURE__*/React.createElement(PunchEditorPanel, {
     emps: emps,
     punches: punches,
@@ -8044,6 +8656,17 @@ function App() {
     setRequests(nr);
     persistR(nr, updated);
   }
+  // Bridge for PointsLedger to update parent state when bulk-editing
+  React.useEffect(function() {
+    window.__tkSetPointEvents = function(updated) {
+      setPEvents(updated);
+      var ne = withPts(emps, updated, policy);
+      setEmps(ne);
+      persist(ne, updated);
+    };
+    return function() { window.__tkSetPointEvents = null; };
+  });
+
   function handleIssuePoint(eid, type, pts, violationDate) {
     var rule = RULES.find(function (r) {
       return r.k === type;
