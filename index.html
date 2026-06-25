@@ -167,32 +167,40 @@ const PTYPES = [{
   c: "#EF4444",
   icon: "←"
 }];
-const SHIFTS = [{
-  k: "day-early",
-  l: "Early Day",
-  start: "05:30",
-  end: "14:00"
-}, {
-  k: "day",
-  l: "Day Shift",
-  start: "06:00",
-  end: "14:30"
-}, {
-  k: "day-late",
-  l: "Late Day",
-  start: "07:00",
-  end: "15:30"
-}, {
-  k: "swing",
-  l: "Swing Shift",
-  start: "14:00",
-  end: "22:30"
-}, {
-  k: "night",
-  l: "Night Shift",
-  start: "22:00",
-  end: "06:30"
-}];
+const SHIFTS_LEGACY=[{k:"day",l:"Day Shift",start:"06:00",end:"14:30"},{k:"night",l:"Night Shift",start:"22:00",end:"06:30"}];
+const DEFAULT_SHIFT_TEMPLATES=[
+{id:"ST01",name:"Midnight Standard",dept:"Maintenance",start:"22:30",end:"07:00",hrs:8,pattern:"Mon-Fri",workDays:[1,2,3,4,5],color:"#A855F7"},
+{id:"ST02",name:"Midnight Shift A (Sun-Thu)",dept:"Maintenance",start:"22:30",end:"07:00",hrs:8,pattern:"Shift A",workDays:[0,2,3,4,5],color:"#8B5CF6"},
+{id:"ST03",name:"Midnight Shift B (Tue-Sat)",dept:"Maintenance",start:"22:30",end:"07:00",hrs:8,pattern:"Shift B",workDays:[2,3,4,5,6],color:"#7C3AED"},
+{id:"ST04",name:"Days Standard",dept:"Maintenance",start:"06:30",end:"15:00",hrs:8,pattern:"Mon-Fri",workDays:[1,2,3,4,5],color:"#FACC15"},
+{id:"ST05",name:"Days Shift A (Sun-Thu)",dept:"Maintenance",start:"06:30",end:"15:00",hrs:8,pattern:"Shift A",workDays:[0,2,3,4,5],color:"#EAB308"},
+{id:"ST06",name:"Days Shift B (Tue-Sat)",dept:"Maintenance",start:"06:30",end:"15:00",hrs:8,pattern:"Shift B",workDays:[2,3,4,5,6],color:"#CA8A04"},
+{id:"ST07",name:"Afternoons Standard",dept:"Maintenance",start:"14:30",end:"23:00",hrs:8,pattern:"Mon-Fri",workDays:[1,2,3,4,5],color:"#FB923C"},
+{id:"ST08",name:"Afternoons Shift A (Sun-Thu)",dept:"Maintenance",start:"14:30",end:"23:00",hrs:8,pattern:"Shift A",workDays:[0,2,3,4,5],color:"#F97316"},
+{id:"ST09",name:"Afternoons Shift B (Tue-Sat)",dept:"Maintenance",start:"14:30",end:"23:00",hrs:8,pattern:"Shift B",workDays:[2,3,4,5,6],color:"#EA580C"},
+{id:"ST10",name:"Midnight Standard",dept:"Janitorial",start:"22:00",end:"06:30",hrs:8,pattern:"Mon-Fri",workDays:[1,2,3,4,5],color:"#A855F7"},
+{id:"ST11",name:"Midnight 12hr Shift A",dept:"Janitorial",start:"18:00",end:"06:00",hrs:12,pattern:"2-2-3 A",workDays:[0,3,4,5,6],color:"#8B5CF6"},
+{id:"ST12",name:"Midnight 12hr Shift B",dept:"Janitorial",start:"18:00",end:"06:00",hrs:12,pattern:"2-2-3 B",workDays:[1,2],color:"#7C3AED"},
+{id:"ST13",name:"Days Standard",dept:"Janitorial",start:"06:00",end:"14:30",hrs:8,pattern:"Mon-Fri",workDays:[1,2,3,4,5],color:"#FACC15"},
+{id:"ST14",name:"Afternoons Standard",dept:"Janitorial",start:"14:00",end:"22:30",hrs:8,pattern:"Mon-Fri",workDays:[1,2,3,4,5],color:"#FB923C"},
+{id:"ST15",name:"Days 12hr Shift A",dept:"Janitorial",start:"06:00",end:"18:00",hrs:12,pattern:"2-2-3 A",workDays:[0,3,4,5,6],color:"#EAB308"},
+{id:"ST16",name:"Days 12hr Shift B",dept:"Janitorial",start:"06:00",end:"18:00",hrs:12,pattern:"2-2-3 B",workDays:[1,2],color:"#CA8A04"},
+{id:"ST17",name:"Midnight 12hr Shift A",dept:"Technical Cleaning",start:"18:00",end:"06:00",hrs:12,pattern:"2-2-3 A",workDays:[0,3,4,5,6],color:"#8B5CF6"},
+{id:"ST18",name:"Midnight 12hr Shift B",dept:"Technical Cleaning",start:"18:00",end:"06:00",hrs:12,pattern:"2-2-3 B",workDays:[1,2],color:"#7C3AED"},
+{id:"ST19",name:"Days Standard",dept:"Technical Cleaning",start:"06:00",end:"14:30",hrs:8,pattern:"Mon-Fri",workDays:[1,2,3,4,5],color:"#FACC15"},
+{id:"ST20",name:"Days 12hr Shift A",dept:"Technical Cleaning",start:"06:00",end:"18:00",hrs:12,pattern:"2-2-3 A",workDays:[0,3,4,5,6],color:"#EAB308"},
+{id:"ST21",name:"Days 12hr Shift B",dept:"Technical Cleaning",start:"06:00",end:"18:00",hrs:12,pattern:"2-2-3 B",workDays:[1,2],color:"#CA8A04"},
+{id:"ST22",name:"Weekday Sup AM",dept:"Supervision",start:"07:00",end:"15:30",hrs:8,pattern:"Mon-Fri",workDays:[1,2,3,4,5],color:"#22C55E"},
+{id:"ST23",name:"Weekday Sup PM",dept:"Supervision",start:"15:00",end:"23:30",hrs:8,pattern:"Mon-Fri",workDays:[1,2,3,4,5],color:"#22C55E"},
+{id:"ST24",name:"Weekday Sup Mid",dept:"Supervision",start:"11:00",end:"19:30",hrs:8,pattern:"Mon-Fri",workDays:[1,2,3,4,5],color:"#22C55E"},
+{id:"ST25",name:"Weekend Sup Day",dept:"Supervision",start:"05:00",end:"17:00",hrs:12,pattern:"Wknd+Fri",workDays:[0,5,6],color:"#3B82F6"},
+{id:"ST26",name:"Weekend Sup Night",dept:"Supervision",start:"17:00",end:"05:00",hrs:12,pattern:"Wknd+Fri",workDays:[0,5,6],color:"#3B82F6"},
+{id:"ST27",name:"BMS Control Room 7-Day",dept:"Supervision",start:"07:00",end:"15:00",hrs:8,pattern:"7-Day",workDays:[0,1,2,3,4,5,6],color:"#EF4444"},
+{id:"ST28",name:"Days Standard",dept:"Pack Plant",start:"06:00",end:"14:30",hrs:8,pattern:"Mon-Fri",workDays:[1,2,3,4,5],color:"#FACC15"},
+{id:"ST29",name:"Afternoons Standard",dept:"Pack Plant",start:"14:00",end:"22:30",hrs:8,pattern:"Mon-Fri",workDays:[1,2,3,4,5],color:"#FB923C"},
+{id:"ST30",name:"Days Standard",dept:"Engineers",start:"06:00",end:"14:30",hrs:8,pattern:"Mon-Fri",workDays:[1,2,3,4,5],color:"#FACC15"}
+];
+var SHIFTS=DEFAULT_SHIFT_TEMPLATES.map(function(t){return{k:t.id,l:t.name,start:t.start,end:t.end}});
 const SEED = [{
   id: "E001",
   badge: "0001",
@@ -5196,6 +5204,8 @@ function AdminView({
   staff,
   onUpdateStaff,
   onSwitchView
+  shiftTemplates,
+  onUpdateTemplates
 }) {
   var mo = useMobile();
   var P = policy || DEFAULT_POLICY;
@@ -5203,6 +5213,15 @@ function AdminView({
   var r1 = useState("employees"),
     tab = r1[0],
     setTab = r1[1];
+  var rST=useState(shiftTemplates||DEFAULT_SHIFT_TEMPLATES),localTemplates=rST[0],setLocalTemplates=rST[1];
+  var rShowNewShift=useState(false),showNewShift=rShowNewShift[0],setShowNewShift=rShowNewShift[1];
+  var rNewShift=useState({name:"",dept:"",start:"06:00",end:"14:30",hrs:8,pattern:"Mon-Fri",workDays:[1,2,3,4,5],color:"#FACC15"}),newShift=rNewShift[0],setNewShift=rNewShift[1];
+  var rEditShift=useState(null),editShift=rEditShift[0],setEditShift=rEditShift[1];
+  var rShiftDeptFilter=useState("all"),shiftDeptFilter=rShiftDeptFilter[0],setShiftDeptFilter=rShiftDeptFilter[1];
+  function addShiftTemplate(){if(!newShift.name)return;var ns=localTemplates.concat([Object.assign({},newShift,{id:"ST-"+Date.now().toString(36)})]);setLocalTemplates(ns);if(onUpdateTemplates)onUpdateTemplates(ns);setNewShift({name:"",dept:"",start:"06:00",end:"14:30",hrs:8,pattern:"Mon-Fri",workDays:[1,2,3,4,5],color:"#FACC15"});setShowNewShift(false);logAdminAction("ADD_SHIFT",newShift.name,staffName)}
+  function deleteShiftTemplate(id){var ns=localTemplates.filter(function(t){return t.id!==id});setLocalTemplates(ns);if(onUpdateTemplates)onUpdateTemplates(ns);logAdminAction("DEL_SHIFT","ID:"+id,staffName)}
+  function saveEditShift(){if(!editShift)return;var ns=localTemplates.map(function(t){return t.id===editShift.id?editShift:t});setLocalTemplates(ns);if(onUpdateTemplates)onUpdateTemplates(ns);logAdminAction("EDIT_SHIFT",editShift.name,staffName);setEditShift(null)}
+  function assignTemplate(eid,tmplId){var tmpl=localTemplates.find(function(t){return t.id===tmplId});if(!tmpl)return;onUpdateEmps(emps.map(function(x){return x.id===eid?Object.assign({},x,{shiftStart:tmpl.start,shiftEnd:tmpl.end,workDays:tmpl.workDays.slice(),shift:tmpl.id,shiftTemplateName:tmpl.name}):x}),eid);logAdminAction("ASSIGN_SHIFT",tmpl.name+" -> "+(emps.find(function(e){return e.id===eid})||{fn:"?"}).fn,staffName)}
   var r2 = useState(false),
     showAdd = r2[0],
     setShowAdd = r2[1];
@@ -6223,6 +6242,7 @@ function AdminView({
   /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"Badge"), /*#__PURE__*/React.createElement("input",{value:editForm.badge||"",onChange:function(ev){setEditForm(Object.assign({},editForm,{badge:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px 10px",borderRadius:6,fontSize:14,fontFamily:Fm,outline:"none"}})),
   /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"PIN"), /*#__PURE__*/React.createElement("input",{value:editForm.pin||"",maxLength:4,onChange:function(ev){setEditForm(Object.assign({},editForm,{pin:ev.target.value.replace(/\D/g,"")}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px 10px",borderRadius:6,fontSize:14,fontFamily:Fm,fontWeight:700,letterSpacing:4,outline:"none"}})),
   /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"Department"), /*#__PURE__*/React.createElement("select",{value:editForm.dept||"Assembly",onChange:function(ev){setEditForm(Object.assign({},editForm,{dept:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.t1,padding:"8px 10px",borderRadius:6,fontSize:14,outline:"none",appearance:"none"}}, (function(){var allDepts=DEPTS.slice();emps.forEach(function(e){if(e.dept&&allDepts.indexOf(e.dept)===-1)allDepts.push(e.dept)});return allDepts.sort()})().map(function(d){return /*#__PURE__*/React.createElement("option",{key:d,value:d},d)}))),
+  React.createElement("div",{style:{gridColumn:"1/-1",marginBottom:4}},React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:4}},"Shift Template (auto-fills times & days)"),React.createElement("select",{value:"",onChange:function(ev){var t=(shiftTemplates||DEFAULT_SHIFT_TEMPLATES).find(function(x){return x.id===ev.target.value});if(t)setEditForm(Object.assign({},editForm,{shiftStart:t.start,shiftEnd:t.end}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.spark+"44",color:C.t1,padding:"8px 10px",borderRadius:6,fontSize:13,outline:"none",appearance:"auto"}},React.createElement("option",{value:""},"Manual (keep current)"),(shiftTemplates||DEFAULT_SHIFT_TEMPLATES).map(function(t){return React.createElement("option",{key:t.id,value:t.id},(t.dept?t.dept+" - ":"")+t.name+" ("+t.start+"\u2013"+t.end+")")}))),
   /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"Rate/HR"), /*#__PURE__*/React.createElement("input",{type:"number",step:"0.50",value:editForm.rate||"",onChange:function(ev){setEditForm(Object.assign({},editForm,{rate:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px 10px",borderRadius:6,fontSize:14,fontFamily:Fm,outline:"none"}})),
   /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"Shift Start"), /*#__PURE__*/React.createElement("input",{type:"time",value:editForm.shiftStart||"06:00",onChange:function(ev){setEditForm(Object.assign({},editForm,{shiftStart:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px 10px",borderRadius:6,fontSize:14,fontFamily:Fm,outline:"none"}})),
   /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"Shift End"), /*#__PURE__*/React.createElement("input",{type:"time",value:editForm.shiftEnd||"14:30",onChange:function(ev){setEditForm(Object.assign({},editForm,{shiftEnd:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px 10px",borderRadius:6,fontSize:14,fontFamily:Fm,outline:"none"}})),
@@ -6522,213 +6542,7 @@ function AdminView({
       fontSize: 13,
       color: C.t4
     }
-  }, "Staff tap the copyright text at the bottom of the kiosk screen to open the login. Managers see the Manager Dashboard. Admins see this Administration panel. Each person has their own PIN \u2014 no shared codes. Employees cannot see or access this feature."))), tab === "schedules" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      fontWeight: 700,
-      color: C.t1,
-      marginBottom: 4
-    }
-  }, "Shift Schedule Manager"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      color: C.t4,
-      marginBottom: 14
-    }
-  }, "Assign shifts and working days for each employee"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "grid",
-      gridTemplateColumns: mo ? "1fr" : "1fr 1fr",
-      gap: mo ? 8 : 12,
-      marginBottom: 16
-    }
-  }, SHIFTS.map(function (s) {
-    return /*#__PURE__*/React.createElement("div", {
-      key: s.k,
-      style: {
-        background: C.sf,
-        border: "1px solid " + C.bd,
-        borderRadius: 10,
-        padding: "10px 14px",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center"
-      }
-    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 14,
-        fontWeight: 700,
-        color: C.t1
-      }
-    }, s.l), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontFamily: Fm,
-        fontSize: 13,
-        color: C.spark
-      }
-    }, s.start, " \u2013 ", s.end)), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontFamily: Fm,
-        fontSize: 13,
-        color: C.t4
-      }
-    }, emps.filter(function (e) {
-      return e.st === "active" && e.shiftStart === s.start;
-    }).length, " assigned"));
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: C.sf,
-      border: "1px solid " + C.bd,
-      borderRadius: 12,
-      overflow: "hidden"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      maxHeight: 500,
-      overflowY: "auto"
-    }
-  }, /*#__PURE__*/React.createElement("table", {
-    style: {
-      width: "100%",
-      borderCollapse: "collapse"
-    }
-  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, ["Employee", "Dept", "Start", "End", "M", "T", "W", "T", "F", "S", "S"].map(function (h) {
-    return /*#__PURE__*/React.createElement("th", {
-      key: h,
-      style: {
-        padding: "8px 8px",
-        textAlign: "center",
-        fontFamily: Fb,
-        fontSize: 13,
-        fontWeight: 600,
-        color: C.t4,
-        letterSpacing: 1,
-        borderBottom: "1px solid " + C.bd
-      }
-    }, h);
-  }))), /*#__PURE__*/React.createElement("tbody", null, emps.filter(function (e) {
-    return e.st === "active";
-  }).map(function (e) {
-    var dayNums = [1, 2, 3, 4, 5, 6, 0];
-    var wd = e.workDays || [1, 2, 3, 4, 5];
-    function toggleDay(d) {
-      var nwd = wd.includes(d) ? wd.filter(function (x) {
-        return x !== d;
-      }) : wd.concat([d]);
-      onUpdateEmps(emps.map(function (x) {
-        return x.id === e.id ? Object.assign({}, x, {
-          workDays: nwd
-        }) : x;
-      }));
-    }
-    function setShift(start, end) {
-      onUpdateEmps(emps.map(function (x) {
-        return x.id === e.id ? Object.assign({}, x, {
-          shiftStart: start,
-          shiftEnd: end
-        }) : x;
-      }));
-    }
-    return /*#__PURE__*/React.createElement("tr", {
-      key: e.id
-    }, /*#__PURE__*/React.createElement("td", {
-      style: {
-        padding: "8px 10px",
-        textAlign: "left"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 6
-      }
-    }, /*#__PURE__*/React.createElement(Av, {
-      fn: e.fn,
-      ln: e.ln,
-      sz: 24
-    }), /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 13,
-        fontWeight: 600,
-        color: C.t1
-      }
-    }, e.fn, " ", e.ln))), /*#__PURE__*/React.createElement("td", {
-      style: {
-        padding: "8px 6px",
-        textAlign: "center",
-        fontSize: 13,
-        color: C.t3
-      }
-    }, e.dept), /*#__PURE__*/React.createElement("td", {
-      style: {
-        padding: "8px 4px",
-        textAlign: "center"
-      }
-    }, /*#__PURE__*/React.createElement("input", {
-      type: "time",
-      value: e.shiftStart || "06:00",
-      onChange: function (ev) {
-        setShift(ev.target.value, e.shiftEnd || "14:30");
-      },
-      style: {
-        background: C.bg,
-        border: "1px solid " + C.bd,
-        color: C.spark,
-        fontFamily: Fm,
-        fontSize: 13,
-        padding: "3px 4px",
-        borderRadius: 5,
-        width: 70,
-        textAlign: "center",
-        outline: "none"
-      }
-    })), /*#__PURE__*/React.createElement("td", {
-      style: {
-        padding: "8px 4px",
-        textAlign: "center"
-      }
-    }, /*#__PURE__*/React.createElement("input", {
-      type: "time",
-      value: e.shiftEnd || "14:30",
-      onChange: function (ev) {
-        setShift(e.shiftStart || "06:00", ev.target.value);
-      },
-      style: {
-        background: C.bg,
-        border: "1px solid " + C.bd,
-        color: C.spark,
-        fontFamily: Fm,
-        fontSize: 13,
-        padding: "3px 4px",
-        borderRadius: 5,
-        width: 70,
-        textAlign: "center",
-        outline: "none"
-      }
-    })), dayNums.map(function (d) {
-      var active2 = wd.includes(d);
-      return /*#__PURE__*/React.createElement("td", {
-        key: d,
-        style: {
-          padding: "6px 2px",
-          textAlign: "center"
-        }
-      }, /*#__PURE__*/React.createElement("button", {
-        onClick: function () {
-          toggleDay(d);
-        },
-        style: {
-          width: 26,
-          height: 26,
-          borderRadius: 5,
-          fontSize: 13,
-          fontWeight: 700,
-          color: active2 ? C.bg : C.t4,
-          background: active2 ? C.spark : "transparent",
-          border: "1px solid " + (active2 ? C.spark : C.bd)
-        }
-      }, active2 ? "✓" : "·"));
-    }));
+  }, "Staff tap the copyright text at the bottom of the kiosk screen to open the login. Managers see the Manager Dashboard. Admins see this Administration panel. Each person has their own PIN \u2014 no shared codes. Employees cannot see or access this feature."))),  tab === "schedules" && React.createElement("div",null,   // ── HEADER ──   React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}},     React.createElement("div",null,       React.createElement("div",{style:{fontSize:20,fontWeight:800,color:C.t1}},"Shift Builder"),       React.createElement("div",{style:{fontSize:13,color:C.t3,marginTop:2}},"Create shift templates and assign to employees. "+localTemplates.length+" templates loaded.")     ),     React.createElement("div",{style:{display:"flex",gap:8}},       React.createElement("select",{value:shiftDeptFilter,onChange:function(ev){setShiftDeptFilter(ev.target.value)},style:{padding:"8px 12px",background:C.bg,border:"1px solid "+C.bd,color:C.t1,borderRadius:6,fontSize:13,outline:"none",fontFamily:"inherit",appearance:"auto"}},         React.createElement("option",{value:"all"},"All Departments"),         localTemplates.map(function(t){return t.dept}).filter(function(v,i,a){return v&&a.indexOf(v)===i}).sort().map(function(d){return React.createElement("option",{key:d,value:d},d)})       ),       React.createElement("button",{onClick:function(){setShowNewShift(!showNewShift)},style:{padding:"8px 16px",borderRadius:8,fontSize:13,fontWeight:700,color:C.bg,background:C.spark}},showNewShift?"Cancel":"+ New Template")     )   ),   // ── NEW TEMPLATE FORM ──   showNewShift&&React.createElement("div",{style:{background:C.sf,border:"2px solid "+C.spark+"44",borderRadius:12,padding:20,marginBottom:16}},     React.createElement("div",{style:{fontSize:15,fontWeight:700,color:C.spark,marginBottom:14}},"Create Shift Template"),     React.createElement("div",{style:{display:"grid",gridTemplateColumns:mo?"1fr 1fr":"1fr 1fr 1fr 1fr 1fr",gap:10,marginBottom:12}},       React.createElement("div",null,React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:4}},"Template Name"),React.createElement("input",{value:newShift.name,onChange:function(ev){setNewShift(Object.assign({},newShift,{name:ev.target.value}))},placeholder:"e.g. Midnight Shift A",style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.t1,padding:"8px",borderRadius:6,fontSize:13,outline:"none"}})),       React.createElement("div",null,React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:4}},"Department"),React.createElement("input",{value:newShift.dept,onChange:function(ev){setNewShift(Object.assign({},newShift,{dept:ev.target.value}))},placeholder:"e.g. Maintenance",style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.t1,padding:"8px",borderRadius:6,fontSize:13,outline:"none"}})),       React.createElement("div",null,React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:4}},"Start Time"),React.createElement("input",{type:"time",value:newShift.start,onChange:function(ev){setNewShift(Object.assign({},newShift,{start:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px",borderRadius:6,fontSize:13,fontFamily:Fm,outline:"none"}})),       React.createElement("div",null,React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:4}},"End Time"),React.createElement("input",{type:"time",value:newShift.end,onChange:function(ev){setNewShift(Object.assign({},newShift,{end:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px",borderRadius:6,fontSize:13,fontFamily:Fm,outline:"none"}})),       React.createElement("div",null,React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:4}},"Hours"),React.createElement("input",{type:"number",value:newShift.hrs,onChange:function(ev){setNewShift(Object.assign({},newShift,{hrs:parseFloat(ev.target.value)||8}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px",borderRadius:6,fontSize:13,fontFamily:Fm,outline:"none"}}))     ),     React.createElement("div",{style:{marginBottom:12}},       React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:6}},"Work Days"),       React.createElement("div",{style:{display:"flex",gap:4}},         [{d:0,l:"Sun"},{d:1,l:"Mon"},{d:2,l:"Tue"},{d:3,l:"Wed"},{d:4,l:"Thu"},{d:5,l:"Fri"},{d:6,l:"Sat"}].map(function(x){           var on=newShift.workDays.includes(x.d);           return React.createElement("button",{key:x.d,onClick:function(){var nw=on?newShift.workDays.filter(function(v){return v!==x.d}):newShift.workDays.concat([x.d]);setNewShift(Object.assign({},newShift,{workDays:nw}))},style:{padding:"8px 12px",borderRadius:6,fontSize:13,fontWeight:700,color:on?C.bg:C.t4,background:on?C.spark:"transparent",border:"1px solid "+(on?C.spark:C.bd)}},x.l)         })       ),       React.createElement("div",{style:{display:"flex",gap:6,marginTop:8}},         [["Mon-Fri",[1,2,3,4,5]],["Shift A (Sun,Tue-Sat)",[0,2,3,4,5,6]],["Shift B (Tue-Sat)",[2,3,4,5,6]],["2-2-3 A (Sun,Wed-Sat)",[0,3,4,5,6]],["2-2-3 B (Mon-Tue)",[1,2]],["7-Day",[0,1,2,3,4,5,6]]].map(function(p){           return React.createElement("button",{key:p[0],onClick:function(){setNewShift(Object.assign({},newShift,{workDays:p[1],pattern:p[0].split(" ")[0]}))},style:{padding:"4px 10px",borderRadius:5,fontSize:11,fontWeight:600,color:C.t3,background:C.bg,border:"1px solid "+C.bd,cursor:"pointer"}},p[0])         })       )     ),     React.createElement("div",{style:{display:"flex",gap:8}},       React.createElement("button",{onClick:addShiftTemplate,disabled:!newShift.name,style:{padding:"10px 24px",borderRadius:8,fontSize:13,fontWeight:700,color:C.bg,background:newShift.name?C.green:C.t4}},"Create Template"),       React.createElement("button",{onClick:function(){setShowNewShift(false)},style:{padding:"10px 16px",borderRadius:8,fontSize:13,fontWeight:600,color:C.t3,background:C.bg,border:"1px solid "+C.bd}},"Cancel")     )   ),   // ── EDIT TEMPLATE MODAL ──   editShift&&React.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,padding:16},onClick:function(){setEditShift(null)}},     React.createElement("div",{onClick:function(ev){ev.stopPropagation()},style:{background:C.sf,border:"1px solid "+C.bd,borderRadius:16,padding:24,width:520,maxWidth:"100%"}},       React.createElement("div",{style:{fontSize:16,fontWeight:700,color:C.t1,marginBottom:16}},"Edit Shift Template"),       React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}},         React.createElement("div",null,React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:4}},"Name"),React.createElement("input",{value:editShift.name,onChange:function(ev){setEditShift(Object.assign({},editShift,{name:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.t1,padding:"8px",borderRadius:6,fontSize:13,outline:"none"}})),         React.createElement("div",null,React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:4}},"Department"),React.createElement("input",{value:editShift.dept,onChange:function(ev){setEditShift(Object.assign({},editShift,{dept:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.t1,padding:"8px",borderRadius:6,fontSize:13,outline:"none"}})),         React.createElement("div",null,React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:4}},"Start"),React.createElement("input",{type:"time",value:editShift.start,onChange:function(ev){setEditShift(Object.assign({},editShift,{start:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px",borderRadius:6,fontSize:13,fontFamily:Fm,outline:"none"}})),         React.createElement("div",null,React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:4}},"End"),React.createElement("input",{type:"time",value:editShift.end,onChange:function(ev){setEditShift(Object.assign({},editShift,{end:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px",borderRadius:6,fontSize:13,fontFamily:Fm,outline:"none"}})),         React.createElement("div",null,React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:4}},"Hours"),React.createElement("input",{type:"number",value:editShift.hrs,onChange:function(ev){setEditShift(Object.assign({},editShift,{hrs:parseFloat(ev.target.value)||8}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px",borderRadius:6,fontSize:13,fontFamily:Fm,outline:"none"}}))       ),       React.createElement("div",{style:{marginBottom:14}},         React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:6}},"Work Days"),         React.createElement("div",{style:{display:"flex",gap:4}},           [{d:0,l:"Sun"},{d:1,l:"Mon"},{d:2,l:"Tue"},{d:3,l:"Wed"},{d:4,l:"Thu"},{d:5,l:"Fri"},{d:6,l:"Sat"}].map(function(x){             var on=(editShift.workDays||[]).includes(x.d);             return React.createElement("button",{key:x.d,onClick:function(){var nw=on?editShift.workDays.filter(function(v){return v!==x.d}):editShift.workDays.concat([x.d]);setEditShift(Object.assign({},editShift,{workDays:nw}))},style:{padding:"8px 12px",borderRadius:6,fontSize:13,fontWeight:700,color:on?C.bg:C.t4,background:on?C.spark:"transparent",border:"1px solid "+(on?C.spark:C.bd)}},x.l)           })         )       ),       React.createElement("div",{style:{display:"flex",gap:8}},         React.createElement("button",{onClick:function(){setEditShift(null)},style:{flex:1,padding:"10px",borderRadius:8,fontSize:13,fontWeight:600,color:C.t3,background:C.bg,border:"1px solid "+C.bd}},"Cancel"),         React.createElement("button",{onClick:saveEditShift,style:{flex:1,padding:"10px",borderRadius:8,fontSize:13,fontWeight:700,color:C.bg,background:C.spark}},"Save Changes")       )     )   ),   // ── TEMPLATE CARDS ──   React.createElement("div",{style:{display:"grid",gridTemplateColumns:mo?"1fr":"1fr 1fr 1fr",gap:10,marginBottom:20}},     localTemplates.filter(function(t){return shiftDeptFilter==="all"||t.dept===shiftDeptFilter}).map(function(t){       var assigned=emps.filter(function(e){return e.st==="active"&&e.shiftStart===t.start&&e.shiftEnd===t.end&&JSON.stringify((e.workDays||[]).sort())===JSON.stringify((t.workDays||[]).sort())});       var dayLabels=["Su","Mo","Tu","We","Th","Fr","Sa"];       return React.createElement("div",{key:t.id,style:{background:C.sf,border:"1px solid "+C.bd,borderRadius:10,padding:14,borderLeft:"4px solid "+(t.color||C.spark),position:"relative"}},         React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}},           React.createElement("div",null,             React.createElement("div",{style:{fontSize:14,fontWeight:700,color:C.t1}},t.name),             React.createElement("div",{style:{fontSize:12,color:C.t3,marginTop:2}},t.dept||"General")           ),           React.createElement("div",{style:{display:"flex",gap:4}},             React.createElement("button",{onClick:function(){setEditShift(Object.assign({},t))},style:{padding:"3px 8px",fontSize:11,color:C.spark,background:"transparent",border:"1px solid "+C.spark+"44",borderRadius:4,cursor:"pointer",fontWeight:600}},"Edit"),             React.createElement("button",{onClick:function(){if(confirm("Delete template: "+t.name+"?"))deleteShiftTemplate(t.id)},style:{padding:"3px 8px",fontSize:11,color:C.red,background:"transparent",border:"1px solid "+C.red+"44",borderRadius:4,cursor:"pointer",fontWeight:600}},"Del")           )         ),         React.createElement("div",{style:{fontFamily:Fm,fontSize:15,fontWeight:700,color:t.color||C.spark,marginBottom:6}},t.start," \u2013 ",t.end,React.createElement("span",{style:{fontSize:12,fontWeight:400,color:C.t4,marginLeft:6}},t.hrs+"hr")),         React.createElement("div",{style:{display:"flex",gap:3,marginBottom:8}},           [0,1,2,3,4,5,6].map(function(d){             var on=(t.workDays||[]).includes(d);             return React.createElement("div",{key:d,style:{width:24,height:24,borderRadius:4,fontSize:10,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",color:on?C.bg:C.t4,background:on?(t.color||C.spark)+"CC":"transparent",border:"1px solid "+(on?(t.color||C.spark)+"44":C.bd)}},dayLabels[d])           })         ),         React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center"}},           React.createElement("div",{style:{fontSize:12,color:C.t3}},t.pattern||"Custom"),           React.createElement("div",{style:{fontSize:13,fontWeight:700,color:assigned.length>0?C.green:C.t4}},assigned.length," assigned")         )       )     })   ),   // ── EMPLOYEE ASSIGNMENT TABLE ──   React.createElement("div",{style:{background:C.sf,border:"1px solid "+C.bd,borderRadius:12,padding:16}},     React.createElement("div",{style:{fontSize:15,fontWeight:700,color:C.t1,marginBottom:12}},"Quick Assign"),     React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:10}},"Select a shift template from the dropdown to assign it to an employee. This updates their start/end times and work days automatically."),     React.createElement("div",{style:{maxHeight:400,overflowY:"auto"}},       React.createElement("table",{style:{width:"100%",borderCollapse:"collapse"}},         React.createElement("thead",null,React.createElement("tr",null,           ["Employee","Dept","Current Shift","Template",""].map(function(h){return React.createElement("th",{key:h,style:{padding:"8px 10px",textAlign:"left",fontSize:11,fontWeight:700,color:C.t4,textTransform:"uppercase",borderBottom:"1px solid "+C.bd}},h)})         )),         React.createElement("tbody",null,           emps.filter(function(e){return e.st==="active"}).sort(function(a,b){return(a.ln||"").localeCompare(b.ln||"")}).filter(function(e){return shiftDeptFilter==="all"||e.dept===shiftDeptFilter}).map(function(e){             var curTmpl=localTemplates.find(function(t){return t.start===e.shiftStart&&t.end===e.shiftEnd&&JSON.stringify((t.workDays||[]).sort())===JSON.stringify(((e.workDays||[1,2,3,4,5])).sort())});             return React.createElement("tr",{key:e.id,style:{borderBottom:"1px solid "+C.bd+"22"}},               React.createElement("td",{style:{padding:"8px 10px"}},React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},React.createElement(Av,{fn:e.fn,ln:e.ln,sz:24}),React.createElement("span",{style:{fontSize:13,fontWeight:600,color:C.t1}},e.fn," ",e.ln))),               React.createElement("td",{style:{padding:"8px 10px",fontSize:13,color:C.t3}},e.dept||"-"),               React.createElement("td",{style:{padding:"8px 10px",fontFamily:Fm,fontSize:12,color:curTmpl?C.spark:C.t4}},curTmpl?curTmpl.name:(e.shiftStart||"?")+"\u2013"+(e.shiftEnd||"?")),               React.createElement("td",{style:{padding:"8px 10px"}},                 React.createElement("select",{value:curTmpl?curTmpl.id:"",onChange:function(ev){if(ev.target.value)assignTemplate(e.id,ev.target.value)},style:{padding:"6px 8px",background:C.bg,border:"1px solid "+C.bd,color:C.t1,borderRadius:6,fontSize:12,outline:"none",fontFamily:"inherit",appearance:"auto",maxWidth:220}},                   React.createElement("option",{value:""},"Select template..."),                   localTemplates.map(function(t){return React.createElement("option",{key:t.id,value:t.id},(t.dept?t.dept+" \u2013 ":"")+t.name+" ("+t.start+"\u2013"+t.end+")")})                 )               ),               React.createElement("td",{style:{padding:"8px 10px",textAlign:"center"}},curTmpl&&React.createElement("div",{style:{width:8,height:8,borderRadius:4,background:curTmpl.color||C.spark}}))             )           })         )       )     )   ) ), tab === "policy" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
   })))))), tab === "policy" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
@@ -8514,6 +8328,7 @@ function App() {
   var r10 = useState(DEFAULT_POLICY),
     policy = r10[0],
     setPolicy = r10[1];
+  var rTemplates=useState(DEFAULT_SHIFT_TEMPLATES),shiftTemplates=rTemplates[0],setShiftTemplates=rTemplates[1];
   var r12 = useState(DEFAULT_GEO),
     geoConfig = r12[0],
     setGeoConfig = r12[1];
@@ -8529,6 +8344,7 @@ function App() {
           var sbReqs = await sbLoadRequests();
           var sbStf = await sbLoadStaff();
           var sbPol = await sbLoadConfig("policy");
+          var sbShifts = await sbLoadConfig("shifts");
           var sbGeo = await sbLoadConfig("geo");
           if (sbEmps && sbEmps.length > 0) {
             setEmps(withPts(sbEmps, sbPe || [], sbPol || DEFAULT_POLICY));
@@ -8544,6 +8360,7 @@ function App() {
           try{localStorage.setItem("tk-v7-punches-backup",JSON.stringify(sbPch||[]))}catch(e){}
           setRequests(sbReqs || []);
           if (sbPol) setPolicy(sbPol);
+          if (sbShifts && sbShifts.length>0) setShiftTemplates(sbShifts);
           if (sbGeo) setGeoConfig(sbGeo);
           if (sbStf && sbStf.length > 0) setStaff(sbStf);
           /* subscribe to realtime updates across ALL tables */
@@ -8595,6 +8412,7 @@ function App() {
           var pch = await sGet("tk-v7-punches");
           var reqs = await sGet("tk-v7-requests");
           var pol = await sGet("tk-v7-policy");
+          var shifts = await sGet("tk-v7-shifts");
           var geo = await sGet("tk-v7-geo");
           var stf = await sGet("tk-v7-staff");
           if (store && store.employees && store.employees.length > 0) {
@@ -8617,6 +8435,7 @@ function App() {
           setPunches(pch || []);
           setRequests(reqs || []);
           if (pol) setPolicy(pol);
+          if (shifts && shifts.length>0) setShiftTemplates(shifts);
           if (geo) setGeoConfig(geo);
           if (stf && stf.length > 0) setStaff(stf);
         }
@@ -8956,6 +8775,8 @@ function App() {
     onSwitchView: switchView,
     staffName: loggedIn.fn + " " + loggedIn.ln,
     staff: staff,
+    shiftTemplates: shiftTemplates,
+    onUpdateTemplates: function(nt){setShiftTemplates(nt);sSet("tk-v7-shifts",nt);if(useSupa())sbSaveConfig("shifts",nt)},
     onUpdateStaff: handleUpdateStaff
   }));
 }
