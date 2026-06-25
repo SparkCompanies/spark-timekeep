@@ -3276,7 +3276,6 @@ function TimesheetDrilldown({emp,punches,mon,weekOffset,setWeekOffset,setSelEmp,
   var thS=Object.assign({},cellS,{fontWeight:700,color:C.t4,fontSize:11,textTransform:"uppercase",letterSpacing:1});
 
   return React.createElement("div",{style:hdr},
-    // ── HEADER ──
     React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16}},
       React.createElement("div",{style:{display:"flex",alignItems:"center",gap:12}},
         React.createElement(Av,{fn:emp.fn,ln:emp.ln,sz:44}),
@@ -3288,7 +3287,6 @@ function TimesheetDrilldown({emp,punches,mon,weekOffset,setWeekOffset,setSelEmp,
       React.createElement("button",{onClick:function(){setSelEmp(null);setSelDay(null)},style:{padding:"8px 16px",background:"transparent",border:"1px solid "+C.bd,color:C.t3,borderRadius:8,cursor:"pointer",fontSize:13,fontWeight:600}},"Close ✕")
     ),
 
-    // ── WEEK NAV ──
     React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,padding:"12px 16px",background:C.bg,borderRadius:8,border:"1px solid "+C.bd}},
       React.createElement("button",{onClick:function(){setWeekOffset(weekOffset-1);setSelDay(null)},style:{padding:"6px 14px",background:"transparent",border:"1px solid "+C.bd,color:C.t2,borderRadius:6,cursor:"pointer",fontSize:13,fontWeight:600}},"◀ Prev Week"),
       React.createElement("div",{style:{textAlign:"center"}},
@@ -3298,7 +3296,6 @@ function TimesheetDrilldown({emp,punches,mon,weekOffset,setWeekOffset,setSelEmp,
       React.createElement("button",{onClick:function(){setWeekOffset(Math.min(0,weekOffset+1));setSelDay(null)},style:{padding:"6px 14px",background:"transparent",border:"1px solid "+C.bd,color:C.t2,borderRadius:6,cursor:"pointer",fontSize:13,fontWeight:600}},"Next Week ▶")
     ),
 
-    // ── SUMMARY BAR ──
     React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:8,marginBottom:16}},
       [{l:"Total",v:weekTotal.toFixed(1)+"h",c:C.spark},
        {l:"Regular",v:regHrs.toFixed(1)+"h",c:C.t1},
@@ -3313,7 +3310,6 @@ function TimesheetDrilldown({emp,punches,mon,weekOffset,setWeekOffset,setSelEmp,
       })
     ),
 
-    // ── TIME ENTRY TABLE ──
     React.createElement("div",{style:{overflowX:"auto",marginBottom:16}},
       React.createElement("table",{style:{width:"100%",borderCollapse:"collapse"}},
         React.createElement("thead",null,
@@ -3356,7 +3352,6 @@ function TimesheetDrilldown({emp,punches,mon,weekOffset,setWeekOffset,setSelEmp,
       )
     ),
 
-    // ── SELECTED DAY DETAIL ──
     selDay!==null&&daily[selDay]&&React.createElement("div",{style:{background:C.bg,border:"1px solid "+C.bd,borderRadius:8,padding:16,marginBottom:16}},
       React.createElement("div",{style:{fontSize:14,fontWeight:700,color:C.t1,marginBottom:12}},daily[selDay].day," ",daily[selDay].date?daily[selDay].date.toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"}):"",React.createElement("span",{style:{color:C.t4,fontWeight:400}}," — Punch Detail")),
       (daily[selDay].punches||[]).length===0?React.createElement("div",{style:{color:C.t4,fontSize:13}},"No punches recorded"):
@@ -3379,7 +3374,6 @@ function TimesheetDrilldown({emp,punches,mon,weekOffset,setWeekOffset,setSelEmp,
       )
     ),
 
-    // ── ALL PUNCHES THIS WEEK ──
     React.createElement("div",{style:{marginBottom:16}},
       React.createElement("div",{style:{fontSize:14,fontWeight:700,color:C.t1,marginBottom:8}},"All Punches This Week (",allWeekPunches.length,")"),
       allWeekPunches.length===0?React.createElement("div",{style:{color:C.t4,fontSize:13}},"No punches this week"):
@@ -3396,7 +3390,6 @@ function TimesheetDrilldown({emp,punches,mon,weekOffset,setWeekOffset,setSelEmp,
       }))
     ),
 
-    // ── ISSUE POINTS ──
     React.createElement("div",{style:{borderTop:"1px solid "+C.bd,paddingTop:12}},
       React.createElement("div",{style:{fontSize:13,fontWeight:700,color:C.t1,marginBottom:8}},"Issue Points"),
       React.createElement("div",{style:{display:"flex",gap:6,flexWrap:"wrap"}},RULES.map(function(r){
@@ -3437,7 +3430,6 @@ function PointsLedger({ pointEvents, employees, onIssuePoint, onUpdatePointEvent
   var empById = {};
   (employees || []).forEach(function(e) { empById[e.id] = e; });
 
-  // ── filter the data ──
   function getCutoff() {
     if (rangeFilter === 'all') return 0;
     if (rangeFilter === 'custom') {
@@ -3467,7 +3459,6 @@ function PointsLedger({ pointEvents, employees, onIssuePoint, onUpdatePointEvent
     return true;
   });
 
-  // ── sort ──
   filtered.sort(function(a, b) {
     if (sortBy === 'date-desc') return new Date(b.date) - new Date(a.date);
     if (sortBy === 'date-asc') return new Date(a.date) - new Date(b.date);
@@ -3480,7 +3471,6 @@ function PointsLedger({ pointEvents, employees, onIssuePoint, onUpdatePointEvent
     return 0;
   });
 
-  // ── summary stats ──
   var totalPts = filtered.reduce(function(s, ev) { return s + (parseFloat(ev.pts) || 0); }, 0);
   var typeCounts = {};
   filtered.forEach(function(ev) { typeCounts[ev.type] = (typeCounts[ev.type] || 0) + 1; });
@@ -3505,7 +3495,6 @@ function PointsLedger({ pointEvents, employees, onIssuePoint, onUpdatePointEvent
   });
   var maxDay = Math.max.apply(null, dayCounts.concat([1]));
 
-  // ── bulk selection helpers ──
   var selIds = Object.keys(selected).filter(function(k) { return selected[k]; });
   var selCount = selIds.length;
   var allSelected = filtered.length > 0 && filtered.every(function(ev) { return selected[ev.id]; });
@@ -3524,7 +3513,6 @@ function PointsLedger({ pointEvents, employees, onIssuePoint, onUpdatePointEvent
     setSelected(s);
   }
 
-  // ── actions ──
   async function deleteOne(ev) {
     if (!confirm('Delete this ' + lbl(ev.type) + ' (' + (ev.pts > 0 ? '+' : '') + ev.pts + ') event for ' + (empById[ev.eid] ? empById[ev.eid].fn + ' ' + empById[ev.eid].ln : 'unknown') + '?')) return;
     var sb = window._sb;
@@ -3589,10 +3577,8 @@ function PointsLedger({ pointEvents, employees, onIssuePoint, onUpdatePointEvent
     setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
   }
 
-  // ── render ──
   return React.createElement('div', { style: { color: '#e8ecf2' } },
 
-    // ── FILTER BAR ──
     React.createElement('div', { style: { display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginBottom: 16, padding: '12px 14px', background: '#11151c', border: '1px solid #1f2733', borderRadius: 10 } },
       React.createElement('input', {
         placeholder: 'Search name or badge...',
@@ -3647,7 +3633,6 @@ function PointsLedger({ pointEvents, employees, onIssuePoint, onUpdatePointEvent
       }, 'Export CSV (' + filtered.length + ')')
     ),
 
-    // ── SUMMARY STRIP ──
     React.createElement('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 16 } },
       // Total events
       React.createElement('div', { style: { padding: '14px 16px', background: '#11151c', border: '1px solid #1f2733', borderRadius: 10, borderTop: '2px solid #ffc233' } },
@@ -3679,7 +3664,7 @@ function PointsLedger({ pointEvents, employees, onIssuePoint, onUpdatePointEvent
       )
     ),
 
-    // ── BULK ACTIONS BAR (when rows selected) ──
+    
     selCount > 0 && React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: 'rgba(255,194,51,0.08)', border: '1px solid rgba(255,194,51,0.3)', borderRadius: 8, marginBottom: 12 } },
       React.createElement('div', { style: { fontSize: 12, fontWeight: 700, color: '#ffc233' } }, selCount + ' selected'),
       React.createElement('div', { style: { flex: 1 } }),
@@ -3693,7 +3678,6 @@ function PointsLedger({ pointEvents, employees, onIssuePoint, onUpdatePointEvent
       }, 'Clear')
     ),
 
-    // ── TABLE ──
     React.createElement('div', { style: { background: '#11151c', border: '1px solid #1f2733', borderRadius: 10, overflow: 'hidden' } },
       // Header
       React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '36px 1.5fr 110px 1fr 80px 110px 110px', gap: 10, padding: '10px 14px', borderBottom: '1px solid #1f2733', fontSize: 10.5, textTransform: 'uppercase', letterSpacing: 0.7, color: '#5b6473', fontWeight: 700, position: 'sticky', top: 0, background: '#0d1117', zIndex: 1 } },
@@ -3755,7 +3739,6 @@ function PointsLedger({ pointEvents, employees, onIssuePoint, onUpdatePointEvent
           })
     ),
 
-    // ── EDIT MODAL ──
     editEv && React.createElement(PointEditModal, {
       ev: editEv,
       emp: empById[editEv.eid],
@@ -3782,14 +3765,12 @@ function PointsLedger({ pointEvents, employees, onIssuePoint, onUpdatePointEvent
       onClose: function() { setEditEv(null); }
     }),
 
-    // ── AUDIT DRAWER ──
     auditFor && React.createElement(PointAuditDrawer, {
       ev: auditFor,
       emp: empById[auditFor.eid],
       onClose: function() { setAuditFor(null); }
     }),
 
-    // ── BULK ISSUE MODAL ──
     showBulkIssue && React.createElement(BulkIssueModal, {
       employees: employees,
       onIssue: function(eids, type, ptsVal, date) {
@@ -3804,7 +3785,6 @@ function PointsLedger({ pointEvents, employees, onIssuePoint, onUpdatePointEvent
   );
 }
 
-// ── Point edit modal ──
 function PointEditModal({ ev, emp, onSave, onClose, currentUser }) {
   var POINT_LABEL = {
     'tardy-short': 'Tardy (≤30 min)',
@@ -3865,7 +3845,6 @@ function PointEditModal({ ev, emp, onSave, onClose, currentUser }) {
   );
 }
 
-// ── Audit drawer ──
 function PointAuditDrawer({ ev, emp, onClose }) {
   var rLog = React.useState([]); var log = rLog[0], setLog = rLog[1];
   var rLoading = React.useState(true); var loading = rLoading[0], setLoading = rLoading[1];
@@ -3926,7 +3905,6 @@ function PointAuditDrawer({ ev, emp, onClose }) {
   );
 }
 
-// ── Bulk issue modal ──
 function BulkIssueModal({ employees, onIssue, onClose }) {
   var POINT_PRESETS = [
     { k: 'tardy-short', lbl: 'Tardy (≤30 min)', p: 0.5 },
@@ -4194,7 +4172,7 @@ function ManagerView({
     return (b.sev || 0) - (a.sev || 0);
   });
   var totalBadges = pending.length;
-  // ── PHASE 1: employee profile takes over when an employee is selected
+  
   if (activeEid) {
     return React.createElement(EmployeeProfile, {
       eid: activeEid,
@@ -4333,7 +4311,6 @@ function ManagerView({
     }
   }, "\u25B6")), mTab === "dashboard" && React.createElement(window.CommandCenter, { employees: emps, punches: validPunches, orphanCount: orphanCount, policy: P, statuses: statuses, clockedIn: clockedIn, onBreak: onBreak, notIn: notIn, allExcs: allExcs, otCount: otCount, atRisk: atRisk, totalLabor: totalLabor, alerts: alerts, dismissedAlerts: dismissedAlerts, pending: pending, mon: mon, weekOffset: weekOffset, search: search, dept: dept, onDismissAlert: function(id){ var d = Object.assign({}, dismissedAlerts); d[id] = true; setDismissedAlerts(d); }, onOpenEmp: function(eid){ setActiveEid(eid); }, onSwitchTab: function(tab){ setMTab(tab); } }), mTab === "whos-in" && React.createElement("div",null,
 
-  // ── KANBAN BOARD ──
   (function(){
     var srch=search?search.toLowerCase():"";
     var filterFn=function(e){
@@ -4362,7 +4339,6 @@ function ManagerView({
     }
 
     return React.createElement("div",{style:{display:"grid",gridTemplateColumns:mo?"1fr":"1fr 1fr 1fr",gap:12,alignItems:"flex-start"}},
-      // ── WORKING COLUMN ──
       React.createElement("div",{style:{background:C.sf,border:"1px solid "+C.green+"33",borderRadius:12,padding:14}},
         React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}},
           React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
@@ -4375,7 +4351,6 @@ function ManagerView({
         React.createElement("div",{style:{maxHeight:400,overflowY:"auto"}},fWorking.map(function(e){return empCard(e,C.green)}))
       ),
 
-      // ── ON BREAK COLUMN ──
       React.createElement("div",{style:{background:C.sf,border:"1px solid "+(C.blue||"#3B82F6")+"33",borderRadius:12,padding:14}},
         React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}},
           React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
@@ -4388,7 +4363,6 @@ function ManagerView({
         React.createElement("div",{style:{maxHeight:400,overflowY:"auto"}},fBreak.map(function(e){return empCard(e,C.blue||"#3B82F6")}))
       ),
 
-      // ── NOT IN COLUMN ──
       React.createElement("div",{style:{background:C.sf,border:"1px solid "+C.red+"33",borderRadius:12,padding:14}},
         React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}},
           React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
@@ -6542,7 +6516,7 @@ function AdminView({
       fontSize: 13,
       color: C.t4
     }
-  }, "Staff tap the copyright text at the bottom of the kiosk screen to open the login. Managers see the Manager Dashboard. Admins see this Administration panel. Each person has their own PIN \u2014 no shared codes. Employees cannot see or access this feature."))),  tab === "schedules" && React.createElement("div",null,   // ── HEADER ──   React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}},     React.createElement("div",null,       React.createElement("div",{style:{fontSize:20,fontWeight:800,color:C.t1}},"Shift Builder"),       React.createElement("div",{style:{fontSize:13,color:C.t3,marginTop:2}},"Create shift templates and assign to employees. "+localTemplates.length+" templates loaded.")     ),     React.createElement("div",{style:{display:"flex",gap:8}},       React.createElement("select",{value:shiftDeptFilter,onChange:function(ev){setShiftDeptFilter(ev.target.value)},style:{padding:"8px 12px",background:C.bg,border:"1px solid "+C.bd,color:C.t1,borderRadius:6,fontSize:13,outline:"none",fontFamily:"inherit",appearance:"auto"}},         React.createElement("option",{value:"all"},"All Departments"),         localTemplates.map(function(t){return t.dept}).filter(function(v,i,a){return v&&a.indexOf(v)===i}).sort().map(function(d){return React.createElement("option",{key:d,value:d},d)})       ),       React.createElement("button",{onClick:function(){setShowNewShift(!showNewShift)},style:{padding:"8px 16px",borderRadius:8,fontSize:13,fontWeight:700,color:C.bg,background:C.spark}},showNewShift?"Cancel":"+ New Template")     )   ),   // ── NEW TEMPLATE FORM ──   showNewShift&&React.createElement("div",{style:{background:C.sf,border:"2px solid "+C.spark+"44",borderRadius:12,padding:20,marginBottom:16}},     React.createElement("div",{style:{fontSize:15,fontWeight:700,color:C.spark,marginBottom:14}},"Create Shift Template"),     React.createElement("div",{style:{display:"grid",gridTemplateColumns:mo?"1fr 1fr":"1fr 1fr 1fr 1fr 1fr",gap:10,marginBottom:12}},       React.createElement("div",null,React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:4}},"Template Name"),React.createElement("input",{value:newShift.name,onChange:function(ev){setNewShift(Object.assign({},newShift,{name:ev.target.value}))},placeholder:"e.g. Midnight Shift A",style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.t1,padding:"8px",borderRadius:6,fontSize:13,outline:"none"}})),       React.createElement("div",null,React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:4}},"Department"),React.createElement("input",{value:newShift.dept,onChange:function(ev){setNewShift(Object.assign({},newShift,{dept:ev.target.value}))},placeholder:"e.g. Maintenance",style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.t1,padding:"8px",borderRadius:6,fontSize:13,outline:"none"}})),       React.createElement("div",null,React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:4}},"Start Time"),React.createElement("input",{type:"time",value:newShift.start,onChange:function(ev){setNewShift(Object.assign({},newShift,{start:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px",borderRadius:6,fontSize:13,fontFamily:Fm,outline:"none"}})),       React.createElement("div",null,React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:4}},"End Time"),React.createElement("input",{type:"time",value:newShift.end,onChange:function(ev){setNewShift(Object.assign({},newShift,{end:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px",borderRadius:6,fontSize:13,fontFamily:Fm,outline:"none"}})),       React.createElement("div",null,React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:4}},"Hours"),React.createElement("input",{type:"number",value:newShift.hrs,onChange:function(ev){setNewShift(Object.assign({},newShift,{hrs:parseFloat(ev.target.value)||8}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px",borderRadius:6,fontSize:13,fontFamily:Fm,outline:"none"}}))     ),     React.createElement("div",{style:{marginBottom:12}},       React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:6}},"Work Days"),       React.createElement("div",{style:{display:"flex",gap:4}},         [{d:0,l:"Sun"},{d:1,l:"Mon"},{d:2,l:"Tue"},{d:3,l:"Wed"},{d:4,l:"Thu"},{d:5,l:"Fri"},{d:6,l:"Sat"}].map(function(x){           var on=newShift.workDays.includes(x.d);           return React.createElement("button",{key:x.d,onClick:function(){var nw=on?newShift.workDays.filter(function(v){return v!==x.d}):newShift.workDays.concat([x.d]);setNewShift(Object.assign({},newShift,{workDays:nw}))},style:{padding:"8px 12px",borderRadius:6,fontSize:13,fontWeight:700,color:on?C.bg:C.t4,background:on?C.spark:"transparent",border:"1px solid "+(on?C.spark:C.bd)}},x.l)         })       ),       React.createElement("div",{style:{display:"flex",gap:6,marginTop:8}},         [["Mon-Fri",[1,2,3,4,5]],["Shift A (Sun,Tue-Sat)",[0,2,3,4,5,6]],["Shift B (Tue-Sat)",[2,3,4,5,6]],["2-2-3 A (Sun,Wed-Sat)",[0,3,4,5,6]],["2-2-3 B (Mon-Tue)",[1,2]],["7-Day",[0,1,2,3,4,5,6]]].map(function(p){           return React.createElement("button",{key:p[0],onClick:function(){setNewShift(Object.assign({},newShift,{workDays:p[1],pattern:p[0].split(" ")[0]}))},style:{padding:"4px 10px",borderRadius:5,fontSize:11,fontWeight:600,color:C.t3,background:C.bg,border:"1px solid "+C.bd,cursor:"pointer"}},p[0])         })       )     ),     React.createElement("div",{style:{display:"flex",gap:8}},       React.createElement("button",{onClick:addShiftTemplate,disabled:!newShift.name,style:{padding:"10px 24px",borderRadius:8,fontSize:13,fontWeight:700,color:C.bg,background:newShift.name?C.green:C.t4}},"Create Template"),       React.createElement("button",{onClick:function(){setShowNewShift(false)},style:{padding:"10px 16px",borderRadius:8,fontSize:13,fontWeight:600,color:C.t3,background:C.bg,border:"1px solid "+C.bd}},"Cancel")     )   ),   // ── EDIT TEMPLATE MODAL ──   editShift&&React.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,padding:16},onClick:function(){setEditShift(null)}},     React.createElement("div",{onClick:function(ev){ev.stopPropagation()},style:{background:C.sf,border:"1px solid "+C.bd,borderRadius:16,padding:24,width:520,maxWidth:"100%"}},       React.createElement("div",{style:{fontSize:16,fontWeight:700,color:C.t1,marginBottom:16}},"Edit Shift Template"),       React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}},         React.createElement("div",null,React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:4}},"Name"),React.createElement("input",{value:editShift.name,onChange:function(ev){setEditShift(Object.assign({},editShift,{name:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.t1,padding:"8px",borderRadius:6,fontSize:13,outline:"none"}})),         React.createElement("div",null,React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:4}},"Department"),React.createElement("input",{value:editShift.dept,onChange:function(ev){setEditShift(Object.assign({},editShift,{dept:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.t1,padding:"8px",borderRadius:6,fontSize:13,outline:"none"}})),         React.createElement("div",null,React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:4}},"Start"),React.createElement("input",{type:"time",value:editShift.start,onChange:function(ev){setEditShift(Object.assign({},editShift,{start:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px",borderRadius:6,fontSize:13,fontFamily:Fm,outline:"none"}})),         React.createElement("div",null,React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:4}},"End"),React.createElement("input",{type:"time",value:editShift.end,onChange:function(ev){setEditShift(Object.assign({},editShift,{end:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px",borderRadius:6,fontSize:13,fontFamily:Fm,outline:"none"}})),         React.createElement("div",null,React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:4}},"Hours"),React.createElement("input",{type:"number",value:editShift.hrs,onChange:function(ev){setEditShift(Object.assign({},editShift,{hrs:parseFloat(ev.target.value)||8}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px",borderRadius:6,fontSize:13,fontFamily:Fm,outline:"none"}}))       ),       React.createElement("div",{style:{marginBottom:14}},         React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:6}},"Work Days"),         React.createElement("div",{style:{display:"flex",gap:4}},           [{d:0,l:"Sun"},{d:1,l:"Mon"},{d:2,l:"Tue"},{d:3,l:"Wed"},{d:4,l:"Thu"},{d:5,l:"Fri"},{d:6,l:"Sat"}].map(function(x){             var on=(editShift.workDays||[]).includes(x.d);             return React.createElement("button",{key:x.d,onClick:function(){var nw=on?editShift.workDays.filter(function(v){return v!==x.d}):editShift.workDays.concat([x.d]);setEditShift(Object.assign({},editShift,{workDays:nw}))},style:{padding:"8px 12px",borderRadius:6,fontSize:13,fontWeight:700,color:on?C.bg:C.t4,background:on?C.spark:"transparent",border:"1px solid "+(on?C.spark:C.bd)}},x.l)           })         )       ),       React.createElement("div",{style:{display:"flex",gap:8}},         React.createElement("button",{onClick:function(){setEditShift(null)},style:{flex:1,padding:"10px",borderRadius:8,fontSize:13,fontWeight:600,color:C.t3,background:C.bg,border:"1px solid "+C.bd}},"Cancel"),         React.createElement("button",{onClick:saveEditShift,style:{flex:1,padding:"10px",borderRadius:8,fontSize:13,fontWeight:700,color:C.bg,background:C.spark}},"Save Changes")       )     )   ),   // ── TEMPLATE CARDS ──   React.createElement("div",{style:{display:"grid",gridTemplateColumns:mo?"1fr":"1fr 1fr 1fr",gap:10,marginBottom:20}},     localTemplates.filter(function(t){return shiftDeptFilter==="all"||t.dept===shiftDeptFilter}).map(function(t){       var assigned=emps.filter(function(e){return e.st==="active"&&e.shiftStart===t.start&&e.shiftEnd===t.end&&JSON.stringify((e.workDays||[]).sort())===JSON.stringify((t.workDays||[]).sort())});       var dayLabels=["Su","Mo","Tu","We","Th","Fr","Sa"];       return React.createElement("div",{key:t.id,style:{background:C.sf,border:"1px solid "+C.bd,borderRadius:10,padding:14,borderLeft:"4px solid "+(t.color||C.spark),position:"relative"}},         React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}},           React.createElement("div",null,             React.createElement("div",{style:{fontSize:14,fontWeight:700,color:C.t1}},t.name),             React.createElement("div",{style:{fontSize:12,color:C.t3,marginTop:2}},t.dept||"General")           ),           React.createElement("div",{style:{display:"flex",gap:4}},             React.createElement("button",{onClick:function(){setEditShift(Object.assign({},t))},style:{padding:"3px 8px",fontSize:11,color:C.spark,background:"transparent",border:"1px solid "+C.spark+"44",borderRadius:4,cursor:"pointer",fontWeight:600}},"Edit"),             React.createElement("button",{onClick:function(){if(confirm("Delete template: "+t.name+"?"))deleteShiftTemplate(t.id)},style:{padding:"3px 8px",fontSize:11,color:C.red,background:"transparent",border:"1px solid "+C.red+"44",borderRadius:4,cursor:"pointer",fontWeight:600}},"Del")           )         ),         React.createElement("div",{style:{fontFamily:Fm,fontSize:15,fontWeight:700,color:t.color||C.spark,marginBottom:6}},t.start," \u2013 ",t.end,React.createElement("span",{style:{fontSize:12,fontWeight:400,color:C.t4,marginLeft:6}},t.hrs+"hr")),         React.createElement("div",{style:{display:"flex",gap:3,marginBottom:8}},           [0,1,2,3,4,5,6].map(function(d){             var on=(t.workDays||[]).includes(d);             return React.createElement("div",{key:d,style:{width:24,height:24,borderRadius:4,fontSize:10,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",color:on?C.bg:C.t4,background:on?(t.color||C.spark)+"CC":"transparent",border:"1px solid "+(on?(t.color||C.spark)+"44":C.bd)}},dayLabels[d])           })         ),         React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center"}},           React.createElement("div",{style:{fontSize:12,color:C.t3}},t.pattern||"Custom"),           React.createElement("div",{style:{fontSize:13,fontWeight:700,color:assigned.length>0?C.green:C.t4}},assigned.length," assigned")         )       )     })   ),   // ── EMPLOYEE ASSIGNMENT TABLE ──   React.createElement("div",{style:{background:C.sf,border:"1px solid "+C.bd,borderRadius:12,padding:16}},     React.createElement("div",{style:{fontSize:15,fontWeight:700,color:C.t1,marginBottom:12}},"Quick Assign"),     React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:10}},"Select a shift template from the dropdown to assign it to an employee. This updates their start/end times and work days automatically."),     React.createElement("div",{style:{maxHeight:400,overflowY:"auto"}},       React.createElement("table",{style:{width:"100%",borderCollapse:"collapse"}},         React.createElement("thead",null,React.createElement("tr",null,           ["Employee","Dept","Current Shift","Template",""].map(function(h){return React.createElement("th",{key:h,style:{padding:"8px 10px",textAlign:"left",fontSize:11,fontWeight:700,color:C.t4,textTransform:"uppercase",borderBottom:"1px solid "+C.bd}},h)})         )),         React.createElement("tbody",null,           emps.filter(function(e){return e.st==="active"}).sort(function(a,b){return(a.ln||"").localeCompare(b.ln||"")}).filter(function(e){return shiftDeptFilter==="all"||e.dept===shiftDeptFilter}).map(function(e){             var curTmpl=localTemplates.find(function(t){return t.start===e.shiftStart&&t.end===e.shiftEnd&&JSON.stringify((t.workDays||[]).sort())===JSON.stringify(((e.workDays||[1,2,3,4,5])).sort())});             return React.createElement("tr",{key:e.id,style:{borderBottom:"1px solid "+C.bd+"22"}},               React.createElement("td",{style:{padding:"8px 10px"}},React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},React.createElement(Av,{fn:e.fn,ln:e.ln,sz:24}),React.createElement("span",{style:{fontSize:13,fontWeight:600,color:C.t1}},e.fn," ",e.ln))),               React.createElement("td",{style:{padding:"8px 10px",fontSize:13,color:C.t3}},e.dept||"-"),               React.createElement("td",{style:{padding:"8px 10px",fontFamily:Fm,fontSize:12,color:curTmpl?C.spark:C.t4}},curTmpl?curTmpl.name:(e.shiftStart||"?")+"\u2013"+(e.shiftEnd||"?")),               React.createElement("td",{style:{padding:"8px 10px"}},                 React.createElement("select",{value:curTmpl?curTmpl.id:"",onChange:function(ev){if(ev.target.value)assignTemplate(e.id,ev.target.value)},style:{padding:"6px 8px",background:C.bg,border:"1px solid "+C.bd,color:C.t1,borderRadius:6,fontSize:12,outline:"none",fontFamily:"inherit",appearance:"auto",maxWidth:220}},                   React.createElement("option",{value:""},"Select template..."),                   localTemplates.map(function(t){return React.createElement("option",{key:t.id,value:t.id},(t.dept?t.dept+" \u2013 ":"")+t.name+" ("+t.start+"\u2013"+t.end+")")})                 )               ),               React.createElement("td",{style:{padding:"8px 10px",textAlign:"center"}},curTmpl&&React.createElement("div",{style:{width:8,height:8,borderRadius:4,background:curTmpl.color||C.spark}}))             )           })         )       )     )   ) ), tab === "policy" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  }, "Staff tap the copyright text at the bottom of the kiosk screen to open the login. Managers see the Manager Dashboard. Admins see this Administration panel. Each person has their own PIN \u2014 no shared codes. Employees cannot see or access this feature."))),  tab === "schedules" && React.createElement("div",null,   React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}},     React.createElement("div",null,       React.createElement("div",{style:{fontSize:20,fontWeight:800,color:C.t1}},"Shift Builder"),       React.createElement("div",{style:{fontSize:13,color:C.t3,marginTop:2}},"Create shift templates and assign to employees. "+localTemplates.length+" templates loaded.")     ),     React.createElement("div",{style:{display:"flex",gap:8}},       React.createElement("select",{value:shiftDeptFilter,onChange:function(ev){setShiftDeptFilter(ev.target.value)},style:{padding:"8px 12px",background:C.bg,border:"1px solid "+C.bd,color:C.t1,borderRadius:6,fontSize:13,outline:"none",fontFamily:"inherit",appearance:"auto"}},         React.createElement("option",{value:"all"},"All Departments"),         localTemplates.map(function(t){return t.dept}).filter(function(v,i,a){return v&&a.indexOf(v)===i}).sort().map(function(d){return React.createElement("option",{key:d,value:d},d)})       ),       React.createElement("button",{onClick:function(){setShowNewShift(!showNewShift)},style:{padding:"8px 16px",borderRadius:8,fontSize:13,fontWeight:700,color:C.bg,background:C.spark}},showNewShift?"Cancel":"+ New Template")     )   ),   showNewShift&&React.createElement("div",{style:{background:C.sf,border:"2px solid "+C.spark+"44",borderRadius:12,padding:20,marginBottom:16}},     React.createElement("div",{style:{fontSize:15,fontWeight:700,color:C.spark,marginBottom:14}},"Create Shift Template"),     React.createElement("div",{style:{display:"grid",gridTemplateColumns:mo?"1fr 1fr":"1fr 1fr 1fr 1fr 1fr",gap:10,marginBottom:12}},       React.createElement("div",null,React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:4}},"Template Name"),React.createElement("input",{value:newShift.name,onChange:function(ev){setNewShift(Object.assign({},newShift,{name:ev.target.value}))},placeholder:"e.g. Midnight Shift A",style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.t1,padding:"8px",borderRadius:6,fontSize:13,outline:"none"}})),       React.createElement("div",null,React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:4}},"Department"),React.createElement("input",{value:newShift.dept,onChange:function(ev){setNewShift(Object.assign({},newShift,{dept:ev.target.value}))},placeholder:"e.g. Maintenance",style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.t1,padding:"8px",borderRadius:6,fontSize:13,outline:"none"}})),       React.createElement("div",null,React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:4}},"Start Time"),React.createElement("input",{type:"time",value:newShift.start,onChange:function(ev){setNewShift(Object.assign({},newShift,{start:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px",borderRadius:6,fontSize:13,fontFamily:Fm,outline:"none"}})),       React.createElement("div",null,React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:4}},"End Time"),React.createElement("input",{type:"time",value:newShift.end,onChange:function(ev){setNewShift(Object.assign({},newShift,{end:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px",borderRadius:6,fontSize:13,fontFamily:Fm,outline:"none"}})),       React.createElement("div",null,React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:4}},"Hours"),React.createElement("input",{type:"number",value:newShift.hrs,onChange:function(ev){setNewShift(Object.assign({},newShift,{hrs:parseFloat(ev.target.value)||8}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px",borderRadius:6,fontSize:13,fontFamily:Fm,outline:"none"}}))     ),     React.createElement("div",{style:{marginBottom:12}},       React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:6}},"Work Days"),       React.createElement("div",{style:{display:"flex",gap:4}},         [{d:0,l:"Sun"},{d:1,l:"Mon"},{d:2,l:"Tue"},{d:3,l:"Wed"},{d:4,l:"Thu"},{d:5,l:"Fri"},{d:6,l:"Sat"}].map(function(x){           var on=newShift.workDays.includes(x.d);           return React.createElement("button",{key:x.d,onClick:function(){var nw=on?newShift.workDays.filter(function(v){return v!==x.d}):newShift.workDays.concat([x.d]);setNewShift(Object.assign({},newShift,{workDays:nw}))},style:{padding:"8px 12px",borderRadius:6,fontSize:13,fontWeight:700,color:on?C.bg:C.t4,background:on?C.spark:"transparent",border:"1px solid "+(on?C.spark:C.bd)}},x.l)         })       ),       React.createElement("div",{style:{display:"flex",gap:6,marginTop:8}},         [["Mon-Fri",[1,2,3,4,5]],["Shift A (Sun,Tue-Sat)",[0,2,3,4,5,6]],["Shift B (Tue-Sat)",[2,3,4,5,6]],["2-2-3 A (Sun,Wed-Sat)",[0,3,4,5,6]],["2-2-3 B (Mon-Tue)",[1,2]],["7-Day",[0,1,2,3,4,5,6]]].map(function(p){           return React.createElement("button",{key:p[0],onClick:function(){setNewShift(Object.assign({},newShift,{workDays:p[1],pattern:p[0].split(" ")[0]}))},style:{padding:"4px 10px",borderRadius:5,fontSize:11,fontWeight:600,color:C.t3,background:C.bg,border:"1px solid "+C.bd,cursor:"pointer"}},p[0])         })       )     ),     React.createElement("div",{style:{display:"flex",gap:8}},       React.createElement("button",{onClick:addShiftTemplate,disabled:!newShift.name,style:{padding:"10px 24px",borderRadius:8,fontSize:13,fontWeight:700,color:C.bg,background:newShift.name?C.green:C.t4}},"Create Template"),       React.createElement("button",{onClick:function(){setShowNewShift(false)},style:{padding:"10px 16px",borderRadius:8,fontSize:13,fontWeight:600,color:C.t3,background:C.bg,border:"1px solid "+C.bd}},"Cancel")     )   ),   editShift&&React.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,padding:16},onClick:function(){setEditShift(null)}},     React.createElement("div",{onClick:function(ev){ev.stopPropagation()},style:{background:C.sf,border:"1px solid "+C.bd,borderRadius:16,padding:24,width:520,maxWidth:"100%"}},       React.createElement("div",{style:{fontSize:16,fontWeight:700,color:C.t1,marginBottom:16}},"Edit Shift Template"),       React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}},         React.createElement("div",null,React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:4}},"Name"),React.createElement("input",{value:editShift.name,onChange:function(ev){setEditShift(Object.assign({},editShift,{name:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.t1,padding:"8px",borderRadius:6,fontSize:13,outline:"none"}})),         React.createElement("div",null,React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:4}},"Department"),React.createElement("input",{value:editShift.dept,onChange:function(ev){setEditShift(Object.assign({},editShift,{dept:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.t1,padding:"8px",borderRadius:6,fontSize:13,outline:"none"}})),         React.createElement("div",null,React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:4}},"Start"),React.createElement("input",{type:"time",value:editShift.start,onChange:function(ev){setEditShift(Object.assign({},editShift,{start:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px",borderRadius:6,fontSize:13,fontFamily:Fm,outline:"none"}})),         React.createElement("div",null,React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:4}},"End"),React.createElement("input",{type:"time",value:editShift.end,onChange:function(ev){setEditShift(Object.assign({},editShift,{end:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px",borderRadius:6,fontSize:13,fontFamily:Fm,outline:"none"}})),         React.createElement("div",null,React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:4}},"Hours"),React.createElement("input",{type:"number",value:editShift.hrs,onChange:function(ev){setEditShift(Object.assign({},editShift,{hrs:parseFloat(ev.target.value)||8}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px",borderRadius:6,fontSize:13,fontFamily:Fm,outline:"none"}}))       ),       React.createElement("div",{style:{marginBottom:14}},         React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:6}},"Work Days"),         React.createElement("div",{style:{display:"flex",gap:4}},           [{d:0,l:"Sun"},{d:1,l:"Mon"},{d:2,l:"Tue"},{d:3,l:"Wed"},{d:4,l:"Thu"},{d:5,l:"Fri"},{d:6,l:"Sat"}].map(function(x){             var on=(editShift.workDays||[]).includes(x.d);             return React.createElement("button",{key:x.d,onClick:function(){var nw=on?editShift.workDays.filter(function(v){return v!==x.d}):editShift.workDays.concat([x.d]);setEditShift(Object.assign({},editShift,{workDays:nw}))},style:{padding:"8px 12px",borderRadius:6,fontSize:13,fontWeight:700,color:on?C.bg:C.t4,background:on?C.spark:"transparent",border:"1px solid "+(on?C.spark:C.bd)}},x.l)           })         )       ),       React.createElement("div",{style:{display:"flex",gap:8}},         React.createElement("button",{onClick:function(){setEditShift(null)},style:{flex:1,padding:"10px",borderRadius:8,fontSize:13,fontWeight:600,color:C.t3,background:C.bg,border:"1px solid "+C.bd}},"Cancel"),         React.createElement("button",{onClick:saveEditShift,style:{flex:1,padding:"10px",borderRadius:8,fontSize:13,fontWeight:700,color:C.bg,background:C.spark}},"Save Changes")       )     )   ),   React.createElement("div",{style:{display:"grid",gridTemplateColumns:mo?"1fr":"1fr 1fr 1fr",gap:10,marginBottom:20}},     localTemplates.filter(function(t){return shiftDeptFilter==="all"||t.dept===shiftDeptFilter}).map(function(t){       var assigned=emps.filter(function(e){return e.st==="active"&&e.shiftStart===t.start&&e.shiftEnd===t.end&&JSON.stringify((e.workDays||[]).sort())===JSON.stringify((t.workDays||[]).sort())});       var dayLabels=["Su","Mo","Tu","We","Th","Fr","Sa"];       return React.createElement("div",{key:t.id,style:{background:C.sf,border:"1px solid "+C.bd,borderRadius:10,padding:14,borderLeft:"4px solid "+(t.color||C.spark),position:"relative"}},         React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}},           React.createElement("div",null,             React.createElement("div",{style:{fontSize:14,fontWeight:700,color:C.t1}},t.name),             React.createElement("div",{style:{fontSize:12,color:C.t3,marginTop:2}},t.dept||"General")           ),           React.createElement("div",{style:{display:"flex",gap:4}},             React.createElement("button",{onClick:function(){setEditShift(Object.assign({},t))},style:{padding:"3px 8px",fontSize:11,color:C.spark,background:"transparent",border:"1px solid "+C.spark+"44",borderRadius:4,cursor:"pointer",fontWeight:600}},"Edit"),             React.createElement("button",{onClick:function(){if(confirm("Delete template: "+t.name+"?"))deleteShiftTemplate(t.id)},style:{padding:"3px 8px",fontSize:11,color:C.red,background:"transparent",border:"1px solid "+C.red+"44",borderRadius:4,cursor:"pointer",fontWeight:600}},"Del")           )         ),         React.createElement("div",{style:{fontFamily:Fm,fontSize:15,fontWeight:700,color:t.color||C.spark,marginBottom:6}},t.start," \u2013 ",t.end,React.createElement("span",{style:{fontSize:12,fontWeight:400,color:C.t4,marginLeft:6}},t.hrs+"hr")),         React.createElement("div",{style:{display:"flex",gap:3,marginBottom:8}},           [0,1,2,3,4,5,6].map(function(d){             var on=(t.workDays||[]).includes(d);             return React.createElement("div",{key:d,style:{width:24,height:24,borderRadius:4,fontSize:10,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",color:on?C.bg:C.t4,background:on?(t.color||C.spark)+"CC":"transparent",border:"1px solid "+(on?(t.color||C.spark)+"44":C.bd)}},dayLabels[d])           })         ),         React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center"}},           React.createElement("div",{style:{fontSize:12,color:C.t3}},t.pattern||"Custom"),           React.createElement("div",{style:{fontSize:13,fontWeight:700,color:assigned.length>0?C.green:C.t4}},assigned.length," assigned")         )       )     })   ),   React.createElement("div",{style:{background:C.sf,border:"1px solid "+C.bd,borderRadius:12,padding:16}},     React.createElement("div",{style:{fontSize:15,fontWeight:700,color:C.t1,marginBottom:12}},"Quick Assign"),     React.createElement("div",{style:{fontSize:12,color:C.t4,marginBottom:10}},"Select a shift template from the dropdown to assign it to an employee. This updates their start/end times and work days automatically."),     React.createElement("div",{style:{maxHeight:400,overflowY:"auto"}},       React.createElement("table",{style:{width:"100%",borderCollapse:"collapse"}},         React.createElement("thead",null,React.createElement("tr",null,           ["Employee","Dept","Current Shift","Template",""].map(function(h){return React.createElement("th",{key:h,style:{padding:"8px 10px",textAlign:"left",fontSize:11,fontWeight:700,color:C.t4,textTransform:"uppercase",borderBottom:"1px solid "+C.bd}},h)})         )),         React.createElement("tbody",null,           emps.filter(function(e){return e.st==="active"}).sort(function(a,b){return(a.ln||"").localeCompare(b.ln||"")}).filter(function(e){return shiftDeptFilter==="all"||e.dept===shiftDeptFilter}).map(function(e){             var curTmpl=localTemplates.find(function(t){return t.start===e.shiftStart&&t.end===e.shiftEnd&&JSON.stringify((t.workDays||[]).sort())===JSON.stringify(((e.workDays||[1,2,3,4,5])).sort())});             return React.createElement("tr",{key:e.id,style:{borderBottom:"1px solid "+C.bd+"22"}},               React.createElement("td",{style:{padding:"8px 10px"}},React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6}},React.createElement(Av,{fn:e.fn,ln:e.ln,sz:24}),React.createElement("span",{style:{fontSize:13,fontWeight:600,color:C.t1}},e.fn," ",e.ln))),               React.createElement("td",{style:{padding:"8px 10px",fontSize:13,color:C.t3}},e.dept||"-"),               React.createElement("td",{style:{padding:"8px 10px",fontFamily:Fm,fontSize:12,color:curTmpl?C.spark:C.t4}},curTmpl?curTmpl.name:(e.shiftStart||"?")+"\u2013"+(e.shiftEnd||"?")),               React.createElement("td",{style:{padding:"8px 10px"}},                 React.createElement("select",{value:curTmpl?curTmpl.id:"",onChange:function(ev){if(ev.target.value)assignTemplate(e.id,ev.target.value)},style:{padding:"6px 8px",background:C.bg,border:"1px solid "+C.bd,color:C.t1,borderRadius:6,fontSize:12,outline:"none",fontFamily:"inherit",appearance:"auto",maxWidth:220}},                   React.createElement("option",{value:""},"Select template..."),                   localTemplates.map(function(t){return React.createElement("option",{key:t.id,value:t.id},(t.dept?t.dept+" \u2013 ":"")+t.name+" ("+t.start+"\u2013"+t.end+")")})                 )               ),               React.createElement("td",{style:{padding:"8px 10px",textAlign:"center"}},curTmpl&&React.createElement("div",{style:{width:8,height:8,borderRadius:4,background:curTmpl.color||C.spark}}))             )           })         )       )     )   ) ), tab === "policy" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       fontWeight: 700,
@@ -7426,7 +7400,6 @@ function EmployeeDirectory({ employees, punches, pointEvents, onIssuePoint, poli
   var rs = React.useState('name'), sortBy = rs[0], setSortBy = rs[1];
   var rss = React.useState('active'), statusFilter = rss[0], setStatusFilter = rss[1];
 
-  // ── filter + sort ─────────────────────────────────────────────────
   var list = (employees || []).filter(function (e) {
     if (statusFilter === 'active' && e.st !== 'active') return false;
     if (statusFilter === 'inactive' && e.st === 'active') return false;
@@ -7491,7 +7464,6 @@ function EmployeeDirectory({ employees, punches, pointEvents, onIssuePoint, poli
     return { color: '#5b6473', label: 'OUT' };
   };
 
-  // ── toolbar ───────────────────────────────────────────────────────
   return React.createElement('div', { style: { color: '#e8ecf2' } },
 
     // Toolbar
@@ -7557,7 +7529,6 @@ function EmployeeDirectory({ employees, punches, pointEvents, onIssuePoint, poli
     // Empty state
     list.length === 0 && React.createElement('div', { style: { textAlign: 'center', padding: 60, color: '#5b6473', fontSize: 13 } }, 'No employees match those filters.'),
 
-    // ── GRID VIEW ───────────────────────────────────────────────────
     viewMode === 'grid' && list.length > 0 && React.createElement('div', {
       style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12 }
     },
@@ -7611,7 +7582,6 @@ function EmployeeDirectory({ employees, punches, pointEvents, onIssuePoint, poli
       })
     ),
 
-    // ── LIST VIEW ───────────────────────────────────────────────────
     viewMode === 'list' && list.length > 0 && React.createElement('div', {
       style: { background: '#11151c', border: '1px solid #1f2733', borderRadius: 10, overflow: 'hidden' }
     },
@@ -7703,7 +7673,6 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
   const [loading, setLoading] = React.useState(true);
   const [expandedCell, setExpandedCell] = React.useState(null); // {weekIdx, dayIdx} or null
 
-  // ── load employee + points + notes ────────────────────────────────
   React.useEffect(function () {
     var found = (employees || []).find(function (e) { return e.id === eid; });
     setEmp(found || null);
@@ -7767,7 +7736,6 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
     );
   }
 
-  // ── derive metrics from punches ───────────────────────────────────
   var empPunches = (punches || []).filter(function (p) { return p.eid === eid; });
   var sortedPunches = empPunches.slice().sort(function (a, b) { return new Date(b.time) - new Date(a.time); });
 
@@ -7832,7 +7800,6 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
   var statusColor = emp.st === 'active' ? '#22c55e' : '#8993a4';
   var statusLabel = (emp.st || 'unknown').toUpperCase();
 
-  // ── render ─────────────────────────────────────────────────────────
   return React.createElement('div', { style: { padding: 22, maxWidth: 1480, margin: '0 auto', color: '#e8ecf2' } },
 
     // BACK BAR
@@ -7925,7 +7892,6 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
       tabBtn('notes', 'Notes · ' + notes.length, activeTab, setActiveTab)
     ),
 
-    // ── OVERVIEW TAB ─────────────────────────────────────────────────
     activeTab === 'overview' && React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: 18 } },
 
       // LEFT: timesheet + heatmap
@@ -7972,7 +7938,7 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
             })
           )
         ),
-        // ── EXPANDED DAY PUNCHES (shown when a day cell is clicked) ───
+        
         expandedCell && (function () {
           var w = weeks[expandedCell.weekIdx];
           if (!w) return null;
@@ -8068,7 +8034,6 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
       )
     ),
 
-    // ── TIMESHEETS TAB ────────────────────────────────────────────────
     activeTab === 'timesheets' && panel('Full Timesheets · last 12 weeks',
       React.createElement('div', null,
         weeks.map(function (w, wi) {
@@ -8112,7 +8077,6 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
       )
     ),
 
-    // ── PUNCHES TAB ───────────────────────────────────────────────────
     activeTab === 'punches' && panel('All Punches · ' + empPunches.length,
       React.createElement('div', null,
         sortedPunches.map(function (p) {
@@ -8136,7 +8100,6 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
       )
     ),
 
-    // ── POINTS TAB ────────────────────────────────────────────────────
     activeTab === 'points' && panel('Points History · ' + totalPoints.toFixed(1) + ' total',
       React.createElement('div', null,
         // Quick-issue toolbar
@@ -8231,7 +8194,6 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
       )
     ),
 
-    // ── NOTES TAB ─────────────────────────────────────────────────────
     activeTab === 'notes' && panel('Supervisor Notes',
       React.createElement('div', null,
         React.createElement('textarea', {
@@ -8264,7 +8226,6 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
   );
 }
 
-// ── small helpers used by EmployeeProfile ────────────────────────────
 function statCard(label, value, delta, accent) {
   return React.createElement('div', { style: { background: '#11151c', border: '1px solid #1f2733', borderRadius: 10, padding: '14px 16px', borderTop: '2px solid ' + accent } },
     React.createElement('div', { style: { fontSize: 10.5, textTransform: 'uppercase', letterSpacing: 0.8, color: '#5b6473', marginBottom: 6, fontWeight: 600 } }, label),
