@@ -3392,7 +3392,7 @@ function TimesheetDrilldown({emp,punches,mon,weekOffset,setWeekOffset,setSelEmp,
     React.createElement("div",{style:{borderTop:"1px solid "+C.bd,paddingTop:12}},
       React.createElement("div",{style:{fontSize:13,fontWeight:700,color:C.t1,marginBottom:8}},"Issue Points"),
       React.createElement("div",{style:{display:"flex",gap:6,flexWrap:"wrap"}},RULES.map(function(r){
-        return React.createElement("button",{key:r.k,onClick:function(){onIssuePoint(emp.id,r.k)},style:{padding:"5px 10px",borderRadius:6,fontSize:12,fontWeight:600,color:C.bg,background:C.spark,border:"none",cursor:"pointer"}},r.v," (+",r.p,")")
+        return React.createElement("button",{key:r.k,onClick:function(){var d=prompt("Date for this violation (YYYY-MM-DD):",new Date().toISOString().slice(0,10));if(d)onIssuePoint(emp.id,r.k,undefined,d+"T12:00:00.000Z")},style:{padding:"5px 10px",borderRadius:6,fontSize:12,fontWeight:600,color:C.bg,background:C.spark,border:"none",cursor:"pointer"}},r.v," (+",r.p,")")
       }))
     )
   )
@@ -5878,6 +5878,7 @@ function AdminView({
     },
     placeholder: "e.g. Assembly",
     style: inp
+React.createElement("div", null, React.createElement("label", {style:{fontSize:13,fontWeight:600,color:C.t4,fontFamily:Fb,letterSpacing:1.5,display:"block",marginBottom:3}},"SHIFT TEMPLATE"), React.createElement("select",{value:"",onChange:function(e){var sh=SHIFTS.find(function(s){return s.k===e.target.value});if(sh)setForm(function(f){return Object.assign({},f,{shiftStart:sh.start,shiftEnd:sh.end})})},style:Object.assign({},inp,{appearance:"auto"})},React.createElement("option",{value:""},"Manual..."),SHIFTS.map(function(s){return React.createElement("option",{key:s.k,value:s.k},s.l+" ("+s.start+"\u2013"+s.end+")")}))), 
   })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
     style: {
       fontSize: 13,
