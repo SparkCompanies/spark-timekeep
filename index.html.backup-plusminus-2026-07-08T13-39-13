@@ -418,7 +418,6 @@ async function sbLoadEmployees() {
     return {
       id: e.id,
       badge: String(e.badge || ""),
-      gsId: e.gs_id || "",
       fn: e.fn,
       ln: e.ln,
       pin: String(e.pin || ""),
@@ -565,7 +564,6 @@ async function sbSaveEmployee(e) {
   await sb.from("tk_employees").upsert({
     id: e.id,
     badge: String(e.badge || ""),
-    gs_id: e.gsId || "",
     fn: e.fn,
     ln: e.ln,
     pin: String(e.pin || ""),
@@ -5372,8 +5370,8 @@ function AdminView({
   }
   var rEdit = useState(null), editEmp2 = rEdit[0], setEditEmp2 = rEdit[1];
   var rEditForm = useState({}), editForm = rEditForm[0], setEditForm = rEditForm[1];
-  function startEdit(e) { setEditForm({fn:e.fn,ln:e.ln,dept:e.dept,shiftStart:e.shiftStart||"06:00",shiftEnd:e.shiftEnd||"14:30",rate:e.rate||16,salary:e.salary||0,badge:e.badge,pin:e.pin,gsId:e.gsId||"",breakExempt:e.breakExempt||false,mobilePunchExempt:e.mobilePunchExempt||false}); setEditEmp2(e); }
-  function saveEdit() { if(!editEmp2)return; onUpdateEmps(emps.map(function(x){return x.id===editEmp2.id?Object.assign({},x,{fn:editForm.fn||x.fn,ln:editForm.ln||x.ln,dept:editForm.dept||x.dept,shiftStart:editForm.shiftStart||x.shiftStart,shiftEnd:editForm.shiftEnd||x.shiftEnd,rate:parseFloat(editForm.rate)||x.rate,salary:parseFloat(editForm.salary)||0,badge:editForm.badge||x.badge,pin:editForm.pin||x.pin,gsId:editForm.gsId||x.gsId||"",breakExempt:editForm.breakExempt!==undefined?editForm.breakExempt:x.breakExempt,mobilePunchExempt:editForm.mobilePunchExempt!==undefined?editForm.mobilePunchExempt:x.mobilePunchExempt}):x})); logAdminAction("EDIT",editEmp2.fn+" "+editEmp2.ln+" ("+editEmp2.badge+")",staffName); setEditEmp2(null); }
+  function startEdit(e) { setEditForm({fn:e.fn,ln:e.ln,dept:e.dept,shiftStart:e.shiftStart||"06:00",shiftEnd:e.shiftEnd||"14:30",rate:e.rate||16,salary:e.salary||0,badge:e.badge,pin:e.pin,breakExempt:e.breakExempt||false,mobilePunchExempt:e.mobilePunchExempt||false}); setEditEmp2(e); }
+  function saveEdit() { if(!editEmp2)return; onUpdateEmps(emps.map(function(x){return x.id===editEmp2.id?Object.assign({},x,{fn:editForm.fn||x.fn,ln:editForm.ln||x.ln,dept:editForm.dept||x.dept,shiftStart:editForm.shiftStart||x.shiftStart,shiftEnd:editForm.shiftEnd||x.shiftEnd,rate:parseFloat(editForm.rate)||x.rate,salary:parseFloat(editForm.salary)||0,badge:editForm.badge||x.badge,pin:editForm.pin||x.pin,breakExempt:editForm.breakExempt!==undefined?editForm.breakExempt:x.breakExempt,mobilePunchExempt:editForm.mobilePunchExempt!==undefined?editForm.mobilePunchExempt:x.mobilePunchExempt}):x})); logAdminAction("EDIT",editEmp2.fn+" "+editEmp2.ln+" ("+editEmp2.badge+")",staffName); setEditEmp2(null); }
   function termEmp(id) { var emp2=emps.find(function(e){return e.id===id}); if(!emp2)return; var td=window.prompt("Enter last day for "+emp2.fn+" "+emp2.ln+" (YYYY-MM-DD):",new Date().toISOString().slice(0,10)); if(!td)return; if(!td.match(/^\d{4}-\d{2}-\d{2}$/)){alert("Invalid date format. Use YYYY-MM-DD");return} onUpdateEmps(emps.map(function(x){return x.id===id?Object.assign({},x,{st:"terminated",termDate:td}):x}),id); logAdminAction("TERMINATE",emp2.fn+" "+emp2.ln+" ("+emp2.badge+") — end date: "+td,staffName); }
   function deleteEmp(id) {
     var emp=emps.find(function(e){return e.id===id});
@@ -5436,7 +5434,7 @@ function AdminView({
   function doExport(type) {
     if (type === "timesheet") {
       var monday = reportMon || getMonday();
-      var rows = ["Employee,GS ID,Badge,Dept,Title,Mon Net,Mon Gross,Mon Break,Tue Net,Tue Gross,Tue Break,Wed Net,Wed Gross,Wed Break,Thu Net,Thu Gross,Thu Break,Fri Net,Fri Gross,Fri Break,Sat Net,Sat Gross,Sat Break,Sun Net,Sun Gross,Sun Break,Week Gross,Week Break,Week Net,Week OT,Lunch Exempt"];
+      var rows = ["Employee,Badge,Dept,Title,Mon Net,Mon Gross,Mon Break,Tue Net,Tue Gross,Tue Break,Wed Net,Wed Gross,Wed Break,Thu Net,Thu Gross,Thu Break,Fri Net,Fri Gross,Fri Break,Sat Net,Sat Gross,Sat Break,Sun Net,Sun Gross,Sun Break,Week Gross,Week Break,Week Net,Week OT,Lunch Exempt"];
       emps.filter(function (e) {
         return e.st === "active";
       }).sort(function(a,b){return(a.ln||"").localeCompare(b.ln||"")}).forEach(function (e) {
@@ -5447,7 +5445,7 @@ function AdminView({
         var dayCells = daily.map(function(d) {
           return (d.netH || 0).toFixed(2) + "," + (d.grossH || 0).toFixed(2) + "," + ((d.breakH || 0) * 60).toFixed(0) + "m";
         }).join(",");
-        rows.push(e.fn + " " + e.ln + "," + (e.gsId||"") + "," + e.badge + "," + (e.gsId||"") + "," + (e.dept||"") + "," + (e.role||"") + "," + dayCells + "," + totalGross.toFixed(2) + "," + (totalBreak * 60).toFixed(0) + "m," + totalNet.toFixed(2) + "," + Math.max(0, totalNet - P.otWeekly).toFixed(2) + "," + (e.breakExempt ? "YES" : "no"));
+        rows.push(e.fn + " " + e.ln + "," + e.badge + "," + (e.dept||"") + "," + (e.role||"") + "," + dayCells + "," + totalGross.toFixed(2) + "," + (totalBreak * 60).toFixed(0) + "m," + totalNet.toFixed(2) + "," + Math.max(0, totalNet - P.otWeekly).toFixed(2) + "," + (e.breakExempt ? "YES" : "no"));
       });
       var blob = new Blob([rows.join("\n")], {
         type: "text/csv"
@@ -5459,7 +5457,7 @@ function AdminView({
       a.click();
     }
     if (type === "points") {
-      var rows2 = ["Employee,GS ID,Badge,Type,Points,Date"];
+      var rows2 = ["Employee,Badge,Type,Points,Date"];
       pointEvents.forEach(function (ev) {
         var emp = emps.find(function (e) {
           return e.id === ev.eid;
@@ -5469,7 +5467,7 @@ function AdminView({
         }) || {
           v: ev.type
         };
-        rows2.push((emp ? emp.fn + " " + emp.ln : "?") + "," + ((emp?emp.gsId||"":"") + "," + (emp ? emp.badge : "?")) + "," + rule.v + "," + ev.pts + "," + new Date(ev.date).toLocaleDateString());
+        rows2.push((emp ? emp.fn + " " + emp.ln : "?") + "," + (emp ? emp.badge : "?") + "," + rule.v + "," + ev.pts + "," + new Date(ev.date).toLocaleDateString());
       });
       var blob2 = new Blob([rows2.join("\n")], {
         type: "text/csv"
@@ -5482,7 +5480,7 @@ function AdminView({
     }
     if (type === "detailed") {
       var monday = reportMon || getMonday();
-      var drows = ["Employee,GS ID,Badge,Dept,Shift,Date,Clock In,Clock Out,Break Out,Break In,Gross Hours,Auto Lunch Deducted,Net Hours,Lunch Exempt"];
+      var drows = ["Employee,Badge,Dept,Shift,Date,Clock In,Clock Out,Break Out,Break In,Gross Hours,Auto Lunch Deducted,Net Hours,Lunch Exempt"];
       emps.filter(function(e){return e.st==="active"}).sort(function(a,b){return(a.ln||"").localeCompare(b.ln||"")}).forEach(function(e){
         for(var di=0;di<7;di++){
           var ds=new Date(monday);ds.setDate(ds.getDate()+di);ds.setHours(0,0,0,0);
@@ -5494,20 +5492,20 @@ function AdminView({
           var outs=dp.filter(function(p){return p.type==="out"});
           var bouts=dp.filter(function(p){return p.type==="break-out"});
           var bins=dp.filter(function(p){return p.type==="break-in"});
-          drows.push(e.fn+" "+e.ln+","+(e.gsId||"")+","+e.badge+","+(e.dept||"")+","+(function(){var s=e.shiftStart||"06:00",n=e.shiftEnd||"14:30";function f(t){var p=t.split(":");var h=+p[0];return(h>12?h-12:h||12)+":"+p[1]+(h>=12?"PM":"AM")}return f(s)+"-"+f(n)})()+","+ds.toLocaleDateString()+","+(ins[0]?new Date(ins[0].time).toLocaleTimeString():"")+ ","+(outs[outs.length-1]?new Date(outs[outs.length-1].time).toLocaleTimeString():"")+ ","+(bouts[0]?new Date(bouts[0].time).toLocaleTimeString():"")+ ","+(bins[0]?new Date(bins[0].time).toLocaleTimeString():"")+ ","+hrs.grossH.toFixed(2)+","+(hrs.breakH > 0 ? (hrs.breakH * 60).toFixed(0) + "m" : "no")+","+hrs.netH.toFixed(2)+","+(e.breakExempt ? "YES" : "no"));
+          drows.push(e.fn+" "+e.ln+","+e.badge+","+(e.dept||"")+","+(function(){var s=e.shiftStart||"06:00",n=e.shiftEnd||"14:30";function f(t){var p=t.split(":");var h=+p[0];return(h>12?h-12:h||12)+":"+p[1]+(h>=12?"PM":"AM")}return f(s)+"-"+f(n)})()+","+ds.toLocaleDateString()+","+(ins[0]?new Date(ins[0].time).toLocaleTimeString():"")+ ","+(outs[outs.length-1]?new Date(outs[outs.length-1].time).toLocaleTimeString():"")+ ","+(bouts[0]?new Date(bouts[0].time).toLocaleTimeString():"")+ ","+(bins[0]?new Date(bins[0].time).toLocaleTimeString():"")+ ","+hrs.grossH.toFixed(2)+","+(hrs.breakH > 0 ? (hrs.breakH * 60).toFixed(0) + "m" : "no")+","+hrs.netH.toFixed(2)+","+(e.breakExempt ? "YES" : "no"));
         }
       });
       var dblob=new Blob([drows.join("\n")],{type:"text/csv"});var durl=URL.createObjectURL(dblob);var da=document.createElement("a");da.href=durl;da.download="detailed-punches-"+monday.toISOString().slice(0,10)+".csv";da.click();
     }
         if (type === "audit") {
-      var rows3 = ["Employee,GS ID,Badge,Type,Time,Device,IP,Lat,Lng,Distance,Accuracy,Altitude,Speed,Flags"];
+      var rows3 = ["Employee,Badge,Type,Time,Device,IP,Lat,Lng,Distance,Accuracy,Altitude,Speed,Flags"];
       punches.slice().sort(function (a, b) {
         return new Date(b.time) - new Date(a.time);
       }).forEach(function (p) {
         var emp = emps.find(function (e) {
           return e.id === p.eid;
         });
-        rows3.push((emp ? emp.fn + " " + emp.ln : "?") + "," + ((emp?emp.gsId||"":"") + "," + (emp ? emp.badge : "?")) + "," + p.type + "," + new Date(p.time).toLocaleString() + "," + (p.dev || "") + "," + (p.ip || "") + "," + (p.lat || "") + "," + (p.lng || "") + "," + (p.dist != null ? p.dist : "") + "," + (p.accuracy || "") + "," + (p.altitude || "") + "," + (p.speed || "") + "," + (p.flags || ""));
+        rows3.push((emp ? emp.fn + " " + emp.ln : "?") + "," + (emp ? emp.badge : "?") + "," + p.type + "," + new Date(p.time).toLocaleString() + "," + (p.dev || "") + "," + (p.ip || "") + "," + (p.lat || "") + "," + (p.lng || "") + "," + (p.dist != null ? p.dist : "") + "," + (p.accuracy || "") + "," + (p.altitude || "") + "," + (p.speed || "") + "," + (p.flags || ""));
       });
       var blob3 = new Blob([rows3.join("\n")], {
         type: "text/csv"
@@ -6066,7 +6064,7 @@ function AdminView({
       width: "100%",
       borderCollapse: "collapse"
     }
-  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, [/*#__PURE__*/React.createElement("th",{key:"chk",style:{padding:"8px 12px",borderBottom:"1px solid "+C.bd,width:32}},/*#__PURE__*/React.createElement("input",{type:"checkbox",style:{cursor:"pointer",accentColor:C.spark,width:14,height:14},checked:selEmps&&selEmps.length>0&&selEmps.length===emps.filter(function(e){return e.st==="active"}).length,onChange:function(ev){if(ev.target.checked){setSelEmps(emps.filter(function(e){return e.st==="active"}).map(function(e){return e.id}))}else{setSelEmps([])}}}))].concat(["Badge", "GS ID", "Name", "PIN", "Dept", "Shift", "Rate", "Salary", "Points", "Actions"].map(function (h) {
+  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, [/*#__PURE__*/React.createElement("th",{key:"chk",style:{padding:"8px 12px",borderBottom:"1px solid "+C.bd,width:32}},/*#__PURE__*/React.createElement("input",{type:"checkbox",style:{cursor:"pointer",accentColor:C.spark,width:14,height:14},checked:selEmps&&selEmps.length>0&&selEmps.length===emps.filter(function(e){return e.st==="active"}).length,onChange:function(ev){if(ev.target.checked){setSelEmps(emps.filter(function(e){return e.st==="active"}).map(function(e){return e.id}))}else{setSelEmps([])}}}))].concat(["Badge", "Name", "PIN", "Dept", "Shift", "Rate", "Salary", "Points", "Actions"].map(function (h) {
     return /*#__PURE__*/React.createElement("th", {
       key: h,
       style: {
@@ -6097,7 +6095,7 @@ function AdminView({
         color: C.spark,
         fontWeight: 700
       }
-    }, e.badge)), /*#__PURE__*/React.createElement("td",{style:{padding:"8px 12px",fontFamily:Fm,fontSize:13,color:C.t3}},e.gsId||"-"), /*#__PURE__*/React.createElement("td", {
+    }, e.badge)), /*#__PURE__*/React.createElement("td", {
       style: {
         padding: "8px 12px"
       }
@@ -6225,7 +6223,6 @@ function AdminView({
   /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"First Name"), /*#__PURE__*/React.createElement("input",{value:editForm.fn||"",onChange:function(ev){setEditForm(Object.assign({},editForm,{fn:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.t1,padding:"8px 10px",borderRadius:6,fontSize:14,outline:"none"}})),
   /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"Last Name"), /*#__PURE__*/React.createElement("input",{value:editForm.ln||"",onChange:function(ev){setEditForm(Object.assign({},editForm,{ln:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.t1,padding:"8px 10px",borderRadius:6,fontSize:14,outline:"none"}})),
   /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"Badge"), /*#__PURE__*/React.createElement("input",{value:editForm.badge||"",onChange:function(ev){setEditForm(Object.assign({},editForm,{badge:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px 10px",borderRadius:6,fontSize:14,fontFamily:Fm,outline:"none"}})),
-  /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"GS ID"), /*#__PURE__*/React.createElement("input",{value:editForm.gsId||"",onChange:function(ev){setEditForm(Object.assign({},editForm,{gsId:ev.target.value}))},placeholder:"Greenshades ID",style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px 10px",borderRadius:6,fontSize:14,fontFamily:Fm,outline:"none"}})),
   /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"PIN"), /*#__PURE__*/React.createElement("input",{value:editForm.pin||"",maxLength:4,onChange:function(ev){setEditForm(Object.assign({},editForm,{pin:ev.target.value.replace(/\D/g,"")}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px 10px",borderRadius:6,fontSize:14,fontFamily:Fm,fontWeight:700,letterSpacing:4,outline:"none"}})),
   /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"Department"), /*#__PURE__*/React.createElement("select",{value:editForm.dept||"Assembly",onChange:function(ev){setEditForm(Object.assign({},editForm,{dept:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.t1,padding:"8px 10px",borderRadius:6,fontSize:14,outline:"none",appearance:"none"}}, (function(){var allDepts=DEPTS.slice();emps.forEach(function(e){if(e.dept&&allDepts.indexOf(e.dept)===-1)allDepts.push(e.dept)});return allDepts.sort()})().map(function(d){return /*#__PURE__*/React.createElement("option",{key:d,value:d},d)}))),
   /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"Rate/HR"), /*#__PURE__*/React.createElement("input",{type:"number",step:"0.50",value:editForm.rate||"",onChange:function(ev){setEditForm(Object.assign({},editForm,{rate:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px 10px",borderRadius:6,fontSize:14,fontFamily:Fm,outline:"none"}})),
@@ -7602,7 +7599,7 @@ function AdminView({
 /* ═══ MAIN APP ═══ */
 
 /* ═══ QUICK ISSUE MODAL — unified point issuing with incident date ═══ */
-function QuickIssueModal({ emp, presetType, presetPts, onIssue, onClose }) {
+function QuickIssueModal({ emp, presetType, onIssue, onClose }) {
   var QI_PRESETS = [
     { k: 'tardy-short', lbl: 'Tardy (\u226430 min)', p: 0.5 },
     { k: 'tardy-long', lbl: 'Tardy (>30 min)', p: 1 },
@@ -7617,7 +7614,7 @@ function QuickIssueModal({ emp, presetType, presetPts, onIssue, onClose }) {
   }
   var initPreset = QI_PRESETS.find(function (x) { return x.k === (presetType || 'tardy-short'); }) || QI_PRESETS[0];
   var rT = React.useState(initPreset.k); var t = rT[0], setT = rT[1];
-  var rP = React.useState(String(presetPts !== undefined && presetPts !== null ? presetPts : initPreset.p)); var p = rP[0], setP = rP[1];
+  var rP = React.useState(String(initPreset.p)); var p = rP[0], setP = rP[1];
   var todayStr = qiLocalDate();
   var rD = React.useState(todayStr); var d = rD[0], setD = rD[1];
   function changeType(nt) {
@@ -7820,10 +7817,8 @@ function EmployeeDirectory({ employees, punches, pointEvents, onIssuePoint, poli
     ),
 
     quickIssueFor && React.createElement(QuickIssueModal, {
-      emp: quickIssueFor.emp,
-      presetType: quickIssueFor.presetType,
-      presetPts: quickIssueFor.presetPts,
-      onIssue: function(type, pts, dateISO) { if (onIssuePoint) onIssuePoint(quickIssueFor.emp.id, type, pts, dateISO); setQuickIssueFor(null); },
+      emp: quickIssueFor,
+      onIssue: function(type, pts, dateISO) { if (onIssuePoint) onIssuePoint(quickIssueFor.id, type, pts, dateISO); setQuickIssueFor(null); },
       onClose: function() { setQuickIssueFor(null); }
     }),
 
@@ -7918,13 +7913,13 @@ function EmployeeDirectory({ employees, punches, pointEvents, onIssuePoint, poli
           React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', color: '#a9b3c1', fontSize: 11 } }, lastStr),
           React.createElement('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }, onClick: function(ev){ ev.stopPropagation(); } },
             !readOnly && React.createElement('button', {
-              onClick: function(ev){ ev.stopPropagation(); if(onIssuePoint && data.totalPts > 0) setQuickIssueFor({ emp: e, presetType: 'manual', presetPts: -0.5 }); },
+              onClick: function(ev){ ev.stopPropagation(); if(onIssuePoint && data.totalPts > 0) { if(confirm('Remove 0.5 point from ' + e.fn + ' ' + e.ln + '?')) onIssuePoint(e.id, 'manual', -0.5); } },
               title: 'Subtract 0.5',
               style: { width: 22, height: 22, borderRadius: 4, background: '#0a0d12', color: '#a9b3c1', fontSize: 14, lineHeight: 1, border: '1px solid #1f2733', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, opacity: data.totalPts > 0 ? 1 : 0.3 }
             }, '−'),
             React.createElement('span', { style: { fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: data.totalPts >= 6 ? '#ef4444' : data.totalPts >= 4 ? '#f59e0b' : data.totalPts > 0 ? '#22c55e' : '#7f8a9b', minWidth: 32, textAlign: 'center', fontSize: 13 } }, (data.totalPts || 0).toFixed(1)),
             !readOnly && React.createElement('button', {
-              onClick: function(ev){ ev.stopPropagation(); if(onIssuePoint) setQuickIssueFor({ emp: e, presetType: 'manual', presetPts: 0.5 }); },
+              onClick: function(ev){ ev.stopPropagation(); if(onIssuePoint) { if(confirm('Add 0.5 point to ' + e.fn + ' ' + e.ln + '?')) onIssuePoint(e.id, 'manual', 0.5); } },
               title: 'Add 0.5',
               style: { width: 22, height: 22, borderRadius: 4, background: '#0a0d12', color: '#ffc233', fontSize: 14, lineHeight: 1, border: '1px solid #1f2733', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }
             }, '+'),
@@ -7932,7 +7927,7 @@ function EmployeeDirectory({ employees, punches, pointEvents, onIssuePoint, poli
               onClick: function(ev){
                 ev.stopPropagation();
                 if(!onIssuePoint) return;
-                setQuickIssueFor({ emp: e });
+                setQuickIssueFor(e);
               },
               title: 'Issue point with reason',
               style: { width: 22, height: 22, borderRadius: 4, background: '#0a0d12', color: '#a9b3c1', fontSize: 11, lineHeight: 1, border: '1px solid #1f2733', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, marginLeft: 2 }

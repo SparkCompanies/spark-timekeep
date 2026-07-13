@@ -418,7 +418,6 @@ async function sbLoadEmployees() {
     return {
       id: e.id,
       badge: String(e.badge || ""),
-      gsId: e.gs_id || "",
       fn: e.fn,
       ln: e.ln,
       pin: String(e.pin || ""),
@@ -565,7 +564,6 @@ async function sbSaveEmployee(e) {
   await sb.from("tk_employees").upsert({
     id: e.id,
     badge: String(e.badge || ""),
-    gs_id: e.gsId || "",
     fn: e.fn,
     ln: e.ln,
     pin: String(e.pin || ""),
@@ -3249,7 +3247,6 @@ function TimesheetDrilldown({emp,punches,mon,weekOffset,setWeekOffset,setSelEmp,
   var P=policy||{graceMins:7,otWeekly:40};
   var Fm="'JetBrains Mono',monospace";
   var mo=useMobile();
-  var rQI=React.useState(null),qiType=rQI[0],setQiType=rQI[1];
   var daily=getDailyBreakdownForWeek(punches,emp.id,mon);
   var weekTotal=daily.reduce(function(s,d){return s+d.hrs},0);
   var otHrs=Math.max(0,weekTotal-(P.otWeekly||40));
@@ -3395,9 +3392,8 @@ function TimesheetDrilldown({emp,punches,mon,weekOffset,setWeekOffset,setSelEmp,
     React.createElement("div",{style:{borderTop:"1px solid "+C.bd,paddingTop:12}},
       React.createElement("div",{style:{fontSize:13,fontWeight:700,color:C.t1,marginBottom:8}},"Issue Points"),
       React.createElement("div",{style:{display:"flex",gap:6,flexWrap:"wrap"}},RULES.map(function(r){
-        return React.createElement("button",{key:r.k,onClick:function(){setQiType(r.k)},style:{padding:"5px 10px",borderRadius:6,fontSize:12,fontWeight:600,color:C.bg,background:C.spark,border:"none",cursor:"pointer"}},r.v," (+",r.p,")")
-      })),
-      qiType && React.createElement(QuickIssueModal,{emp:emp,presetType:qiType,onIssue:function(type,pts,dateISO){onIssuePoint(emp.id,type,pts,dateISO);setQiType(null)},onClose:function(){setQiType(null)}})
+        return React.createElement("button",{key:r.k,onClick:function(){var d=prompt("Date for this violation (YYYY-MM-DD):",new Date().toISOString().slice(0,10));if(d)onIssuePoint(emp.id,r.k,undefined,d+"T12:00:00.000Z")},style:{padding:"5px 10px",borderRadius:6,fontSize:12,fontWeight:600,color:C.bg,background:C.spark,border:"none",cursor:"pointer"}},r.v," (+",r.p,")")
+      }))
     )
   )
 }
@@ -3618,7 +3614,7 @@ function PointsLedger({ pointEvents, employees, onIssuePoint, onUpdatePointEvent
       ),
       rangeFilter === 'custom' && React.createElement(React.Fragment, null,
         React.createElement('input', { type: 'date', value: customFrom, onChange: function(e) { setCustomFrom(e.target.value); }, style: { padding: '8px 10px', background: '#0a0d12', border: '1px solid #1f2733', color: '#e8ecf2', borderRadius: 6, fontSize: 12, outline: 'none' } }),
-        React.createElement('span', { style: { color: '#7f8a9b', fontSize: 11 } }, '→'),
+        React.createElement('span', { style: { color: '#5b6473', fontSize: 11 } }, '→'),
         React.createElement('input', { type: 'date', value: customTo, onChange: function(e) { setCustomTo(e.target.value); }, style: { padding: '8px 10px', background: '#0a0d12', border: '1px solid #1f2733', color: '#e8ecf2', borderRadius: 6, fontSize: 12, outline: 'none' } })
       ),
       React.createElement('select', {
@@ -3639,7 +3635,7 @@ function PointsLedger({ pointEvents, employees, onIssuePoint, onUpdatePointEvent
       }, '+ Bulk Issue'),
       React.createElement('button', {
         onClick: exportCSV,
-        style: { padding: '8px 14px', background: 'transparent', border: '1px solid #1f2733', color: '#a9b3c1', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer' }
+        style: { padding: '8px 14px', background: 'transparent', border: '1px solid #1f2733', color: '#8993a4', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer' }
       }, 'Export CSV (' + filtered.length + ')')
     ),
 
@@ -3647,21 +3643,21 @@ function PointsLedger({ pointEvents, employees, onIssuePoint, onUpdatePointEvent
     React.createElement('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 16 } },
       // Total events
       React.createElement('div', { style: { padding: '14px 16px', background: '#11151c', border: '1px solid #1f2733', borderRadius: 10, borderTop: '2px solid #ffc233' } },
-        React.createElement('div', { style: { fontSize: 10, color: '#7f8a9b', textTransform: 'uppercase', letterSpacing: 1.2, fontWeight: 700, marginBottom: 6 } }, 'Events'),
+        React.createElement('div', { style: { fontSize: 10, color: '#5b6473', textTransform: 'uppercase', letterSpacing: 1.2, fontWeight: 700, marginBottom: 6 } }, 'Events'),
         React.createElement('div', { style: { fontSize: 24, fontWeight: 700 } }, filtered.length),
-        React.createElement('div', { style: { fontSize: 11, color: '#a9b3c1', marginTop: 2 } }, totalPts.toFixed(1) + ' pts total')
+        React.createElement('div', { style: { fontSize: 11, color: '#8993a4', marginTop: 2 } }, totalPts.toFixed(1) + ' pts total')
       ),
       // Top type
       React.createElement('div', { style: { padding: '14px 16px', background: '#11151c', border: '1px solid #1f2733', borderRadius: 10, borderTop: '2px solid #f59e0b' } },
-        React.createElement('div', { style: { fontSize: 10, color: '#7f8a9b', textTransform: 'uppercase', letterSpacing: 1.2, fontWeight: 700, marginBottom: 6 } }, 'Most Common'),
+        React.createElement('div', { style: { fontSize: 10, color: '#5b6473', textTransform: 'uppercase', letterSpacing: 1.2, fontWeight: 700, marginBottom: 6 } }, 'Most Common'),
         React.createElement('div', { style: { fontSize: 14, fontWeight: 700 } }, topType ? lbl(topType) : '—'),
-        React.createElement('div', { style: { fontSize: 11, color: '#a9b3c1', marginTop: 2 } }, topType ? typeCounts[topType] + ' events' : 'no data')
+        React.createElement('div', { style: { fontSize: 11, color: '#8993a4', marginTop: 2 } }, topType ? typeCounts[topType] + ' events' : 'no data')
       ),
       // Top employees
       React.createElement('div', { style: { padding: '14px 16px', background: '#11151c', border: '1px solid #1f2733', borderRadius: 10, borderTop: '2px solid #ef4444', gridColumn: 'span 2' } },
-        React.createElement('div', { style: { fontSize: 10, color: '#7f8a9b', textTransform: 'uppercase', letterSpacing: 1.2, fontWeight: 700, marginBottom: 8 } }, 'Top by Points'),
+        React.createElement('div', { style: { fontSize: 10, color: '#5b6473', textTransform: 'uppercase', letterSpacing: 1.2, fontWeight: 700, marginBottom: 8 } }, 'Top by Points'),
         topEmps.length === 0
-          ? React.createElement('div', { style: { fontSize: 12, color: '#7f8a9b' } }, 'No data in range')
+          ? React.createElement('div', { style: { fontSize: 12, color: '#5b6473' } }, 'No data in range')
           : React.createElement('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap' } },
               topEmps.map(function(t) {
                 return React.createElement('button', {
@@ -3685,14 +3681,14 @@ function PointsLedger({ pointEvents, employees, onIssuePoint, onUpdatePointEvent
       }, 'Delete Selected'),
       React.createElement('button', {
         onClick: function() { setSelected({}); },
-        style: { padding: '6px 12px', background: 'transparent', border: '1px solid #1f2733', color: '#a9b3c1', borderRadius: 5, fontSize: 11, cursor: 'pointer' }
+        style: { padding: '6px 12px', background: 'transparent', border: '1px solid #1f2733', color: '#8993a4', borderRadius: 5, fontSize: 11, cursor: 'pointer' }
       }, 'Clear')
     ),
 
     // ── TABLE ──
     React.createElement('div', { style: { background: '#11151c', border: '1px solid #1f2733', borderRadius: 10, overflow: 'hidden' } },
       // Header
-      React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '36px 1.5fr 110px 1fr 80px 110px 110px', gap: 10, padding: '10px 14px', borderBottom: '1px solid #1f2733', fontSize: 10.5, textTransform: 'uppercase', letterSpacing: 0.7, color: '#7f8a9b', fontWeight: 700, position: 'sticky', top: 0, background: '#0d1117', zIndex: 1 } },
+      React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '36px 1.5fr 110px 1fr 80px 110px 110px', gap: 10, padding: '10px 14px', borderBottom: '1px solid #1f2733', fontSize: 10.5, textTransform: 'uppercase', letterSpacing: 0.7, color: '#5b6473', fontWeight: 700, position: 'sticky', top: 0, background: '#0d1117', zIndex: 1 } },
         React.createElement('div', null,
           React.createElement('input', { type: 'checkbox', checked: allSelected, onChange: toggleAll, style: { cursor: 'pointer', accentColor: '#ffc233' } })
         ),
@@ -3705,11 +3701,11 @@ function PointsLedger({ pointEvents, employees, onIssuePoint, onUpdatePointEvent
       ),
       // Rows
       filtered.length === 0
-        ? React.createElement('div', { style: { padding: 40, textAlign: 'center', color: '#7f8a9b', fontSize: 13 } }, 'No point events match these filters')
+        ? React.createElement('div', { style: { padding: 40, textAlign: 'center', color: '#5b6473', fontSize: 13 } }, 'No point events match these filters')
         : filtered.map(function(ev) {
             var e = empById[ev.eid] || {};
             var pts = parseFloat(ev.pts) || 0;
-            var color = pts > 0 ? '#ef4444' : pts < 0 ? '#22c55e' : '#a9b3c1';
+            var color = pts > 0 ? '#ef4444' : pts < 0 ? '#22c55e' : '#8993a4';
             var isSel = !!selected[ev.id];
             return React.createElement('div', {
               key: ev.id,
@@ -3719,22 +3715,22 @@ function PointsLedger({ pointEvents, employees, onIssuePoint, onUpdatePointEvent
                 React.createElement('input', { type: 'checkbox', checked: isSel, onChange: function() { toggleOne(ev.id); }, style: { cursor: 'pointer', accentColor: '#ffc233' } })
               ),
               React.createElement('div', { style: { fontWeight: 600 } }, (e.fn || '—') + ' ' + (e.ln || ''),
-                e.dept && React.createElement('div', { style: { fontSize: 10.5, color: '#7f8a9b', marginTop: 2 } }, e.dept)
+                e.dept && React.createElement('div', { style: { fontSize: 10.5, color: '#5b6473', marginTop: 2 } }, e.dept)
               ),
-              React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', color: '#a9b3c1', fontSize: 11.5 } }, e.badge || '—'),
+              React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', color: '#8993a4', fontSize: 11.5 } }, e.badge || '—'),
               React.createElement('div', null,
                 React.createElement('span', { style: { padding: '3px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700, background: '#ffc23312', color: '#ffc233', letterSpacing: 0.4 } }, lbl(ev.type))
               ),
               React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: color, textAlign: 'right' } }, (pts > 0 ? '+' : '') + pts.toFixed(1)),
-              React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', color: '#a9b3c1', fontSize: 11 } },
+              React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', color: '#8993a4', fontSize: 11 } },
                 new Date(ev.date).toLocaleDateString([], { month: 'short', day: 'numeric', year: '2-digit' }),
-                React.createElement('div', { style: { fontSize: 10, color: '#7f8a9b' } }, new Date(ev.date).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }))
+                React.createElement('div', { style: { fontSize: 10, color: '#5b6473' } }, new Date(ev.date).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }))
               ),
               React.createElement('div', { style: { display: 'flex', gap: 4, justifyContent: 'center' } },
                 React.createElement('button', {
                   onClick: function() { setAuditFor(ev); },
                   title: 'Audit history',
-                  style: { width: 26, height: 26, padding: 0, background: 'transparent', border: '1px solid #1f2733', color: '#a9b3c1', borderRadius: 4, cursor: 'pointer', fontSize: 11 }
+                  style: { width: 26, height: 26, padding: 0, background: 'transparent', border: '1px solid #1f2733', color: '#8993a4', borderRadius: 4, cursor: 'pointer', fontSize: 11 }
                 }, '◷'),
                 !readOnly && React.createElement('button', {
                   onClick: function() { setEditEv(ev); },
@@ -3822,29 +3818,29 @@ function PointEditModal({ ev, emp, onSave, onClose, currentUser }) {
       React.createElement('div', { style: { fontSize: 18, fontWeight: 700, marginBottom: 18, color: '#e8ecf2' } }, emp ? emp.fn + ' ' + emp.ln : 'Unknown'),
 
       React.createElement('div', { style: { marginBottom: 12 } },
-        React.createElement('label', { style: { display: 'block', fontSize: 10.5, color: '#a9b3c1', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700, marginBottom: 5 } }, 'Type'),
+        React.createElement('label', { style: { display: 'block', fontSize: 10.5, color: '#8993a4', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700, marginBottom: 5 } }, 'Type'),
         React.createElement('select', { value: t, onChange: function(e) { setT(e.target.value); }, style: { width: '100%', background: '#0a0d12', border: '1px solid #1f2733', color: '#e8ecf2', padding: '10px 12px', borderRadius: 6, fontSize: 13, outline: 'none' } },
           Object.keys(POINT_LABEL).map(function(k) { return React.createElement('option', { key: k, value: k }, POINT_LABEL[k]); })
         )
       ),
 
       React.createElement('div', { style: { marginBottom: 12 } },
-        React.createElement('label', { style: { display: 'block', fontSize: 10.5, color: '#a9b3c1', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700, marginBottom: 5 } }, 'Points'),
+        React.createElement('label', { style: { display: 'block', fontSize: 10.5, color: '#8993a4', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700, marginBottom: 5 } }, 'Points'),
         React.createElement('input', { type: 'number', step: '0.5', value: p, onChange: function(e) { setP(e.target.value); }, style: { width: '100%', background: '#0a0d12', border: '2px solid #ffc233', color: '#ffc233', padding: '10px 12px', borderRadius: 6, fontSize: 14, fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, outline: 'none' } })
       ),
 
       React.createElement('div', { style: { marginBottom: 12 } },
-        React.createElement('label', { style: { display: 'block', fontSize: 10.5, color: '#a9b3c1', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700, marginBottom: 5 } }, 'Date / Time'),
+        React.createElement('label', { style: { display: 'block', fontSize: 10.5, color: '#8993a4', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700, marginBottom: 5 } }, 'Date / Time'),
         React.createElement('input', { type: 'datetime-local', value: d, onChange: function(e) { setD(e.target.value); }, style: { width: '100%', background: '#0a0d12', border: '1px solid #1f2733', color: '#e8ecf2', padding: '10px 12px', borderRadius: 6, fontSize: 13, fontFamily: 'JetBrains Mono, monospace', outline: 'none' } })
       ),
 
       React.createElement('div', { style: { marginBottom: 18 } },
-        React.createElement('label', { style: { display: 'block', fontSize: 10.5, color: '#a9b3c1', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700, marginBottom: 5 } }, 'Reason for change ', React.createElement('span', { style: { color: '#ef4444' } }, '*')),
+        React.createElement('label', { style: { display: 'block', fontSize: 10.5, color: '#8993a4', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700, marginBottom: 5 } }, 'Reason for change ', React.createElement('span', { style: { color: '#ef4444' } }, '*')),
         React.createElement('input', { type: 'text', value: reason, onChange: function(e) { setReason(e.target.value); }, placeholder: 'e.g. Wrong date, supervisor correction...', style: { width: '100%', background: '#0a0d12', border: '1px solid #1f2733', color: '#e8ecf2', padding: '10px 12px', borderRadius: 6, fontSize: 13, outline: 'none' } })
       ),
 
       React.createElement('div', { style: { display: 'flex', gap: 10, justifyContent: 'flex-end' } },
-        React.createElement('button', { onClick: onClose, style: { padding: '10px 18px', background: 'transparent', border: '1px solid #1f2733', color: '#a9b3c1', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 600 } }, 'Cancel'),
+        React.createElement('button', { onClick: onClose, style: { padding: '10px 18px', background: 'transparent', border: '1px solid #1f2733', color: '#8993a4', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 600 } }, 'Cancel'),
         React.createElement('button', {
           onClick: function() {
             if (!reason.trim()) { alert('Please provide a reason for this change.'); return; }
@@ -3885,37 +3881,37 @@ function PointAuditDrawer({ ev, emp, onClose }) {
           React.createElement('div', { style: { fontSize: 10.5, color: '#ffc233', letterSpacing: 2, textTransform: 'uppercase', fontWeight: 700 } }, 'Audit History'),
           React.createElement('div', { style: { fontSize: 16, fontWeight: 700, marginTop: 4 } }, emp ? emp.fn + ' ' + emp.ln : 'Unknown')
         ),
-        React.createElement('button', { onClick: onClose, style: { background: 'transparent', border: 'none', color: '#a9b3c1', fontSize: 22, cursor: 'pointer', padding: 4 } }, '×')
+        React.createElement('button', { onClick: onClose, style: { background: 'transparent', border: 'none', color: '#8993a4', fontSize: 22, cursor: 'pointer', padding: 4 } }, '×')
       ),
 
       React.createElement('div', { style: { padding: '10px 12px', background: '#0a0d12', border: '1px solid #1f2733', borderRadius: 6, marginBottom: 18, fontSize: 12 } },
         React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', marginBottom: 4 } },
-          React.createElement('span', { style: { color: '#7f8a9b' } }, 'Event ID'),
-          React.createElement('span', { style: { fontFamily: 'JetBrains Mono, monospace', color: '#a9b3c1', fontSize: 10.5 } }, ev.id)
+          React.createElement('span', { style: { color: '#5b6473' } }, 'Event ID'),
+          React.createElement('span', { style: { fontFamily: 'JetBrains Mono, monospace', color: '#8993a4', fontSize: 10.5 } }, ev.id)
         ),
         React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', marginBottom: 4 } },
-          React.createElement('span', { style: { color: '#7f8a9b' } }, 'Type'),
+          React.createElement('span', { style: { color: '#5b6473' } }, 'Type'),
           React.createElement('span', null, ev.type)
         ),
         React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between' } },
-          React.createElement('span', { style: { color: '#7f8a9b' } }, 'Points'),
+          React.createElement('span', { style: { color: '#5b6473' } }, 'Points'),
           React.createElement('span', { style: { color: ev.pts > 0 ? '#ef4444' : '#22c55e', fontWeight: 700 } }, (ev.pts > 0 ? '+' : '') + ev.pts)
         )
       ),
 
       loading
-        ? React.createElement('div', { style: { color: '#7f8a9b', fontSize: 12, textAlign: 'center', padding: 30 } }, 'Loading audit log...')
+        ? React.createElement('div', { style: { color: '#5b6473', fontSize: 12, textAlign: 'center', padding: 30 } }, 'Loading audit log...')
         : log.length === 0
-          ? React.createElement('div', { style: { color: '#7f8a9b', fontSize: 12, textAlign: 'center', padding: 30 } }, 'No audit records for this event yet.\n\nFuture edits or deletions will appear here.')
+          ? React.createElement('div', { style: { color: '#5b6473', fontSize: 12, textAlign: 'center', padding: 30 } }, 'No audit records for this event yet.\n\nFuture edits or deletions will appear here.')
           : log.map(function(entry, i) {
               var ec = entry.event_type === 'point_delete' ? '#ef4444' : entry.event_type === 'point_edit' ? '#ffc233' : '#22c55e';
               return React.createElement('div', { key: entry.id || i, style: { padding: 12, background: '#0a0d12', border: '1px solid #1a2029', borderLeft: '3px solid ' + ec, borderRadius: 6, marginBottom: 10 } },
                 React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', marginBottom: 6 } },
                   React.createElement('span', { style: { fontSize: 11, fontWeight: 700, color: ec, textTransform: 'uppercase', letterSpacing: 0.6 } }, entry.event_type),
-                  React.createElement('span', { style: { fontSize: 10.5, color: '#7f8a9b', fontFamily: 'JetBrains Mono, monospace' } }, new Date(entry.ts).toLocaleString())
+                  React.createElement('span', { style: { fontSize: 10.5, color: '#5b6473', fontFamily: 'JetBrains Mono, monospace' } }, new Date(entry.ts).toLocaleString())
                 ),
                 React.createElement('div', { style: { fontSize: 12, color: '#e8ecf2', marginBottom: 4 } }, 'By ', React.createElement('b', null, entry.actor_name || 'Unknown')),
-                entry.reason && React.createElement('div', { style: { fontSize: 11.5, color: '#a9b3c1', marginTop: 4, padding: '6px 8px', background: '#161b24', borderRadius: 4 } }, '"' + entry.reason + '"')
+                entry.reason && React.createElement('div', { style: { fontSize: 11.5, color: '#8993a4', marginTop: 4, padding: '6px 8px', background: '#161b24', borderRadius: 4 } }, '"' + entry.reason + '"')
               );
             })
     )
@@ -3962,13 +3958,13 @@ function BulkIssueModal({ employees, onIssue, onClose }) {
 
       React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 } },
         React.createElement('div', null,
-          React.createElement('label', { style: { display: 'block', fontSize: 10.5, color: '#a9b3c1', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700, marginBottom: 5 } }, 'Type'),
+          React.createElement('label', { style: { display: 'block', fontSize: 10.5, color: '#8993a4', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700, marginBottom: 5 } }, 'Type'),
           React.createElement('select', { value: t, onChange: function(e) { setT(e.target.value); }, style: { width: '100%', background: '#0a0d12', border: '1px solid #1f2733', color: '#e8ecf2', padding: '10px 12px', borderRadius: 6, fontSize: 13, outline: 'none' } },
             POINT_PRESETS.map(function(r) { return React.createElement('option', { key: r.k, value: r.k }, r.lbl + ' (+' + r.p + ')'); })
           )
         ),
         React.createElement('div', null,
-          React.createElement('label', { style: { display: 'block', fontSize: 10.5, color: '#a9b3c1', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700, marginBottom: 5 } }, 'Date'),
+          React.createElement('label', { style: { display: 'block', fontSize: 10.5, color: '#8993a4', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700, marginBottom: 5 } }, 'Date'),
           React.createElement('input', { type: 'date', value: d, onChange: function(e) { setD(e.target.value); }, style: { width: '100%', background: '#0a0d12', border: '1px solid #1f2733', color: '#e8ecf2', padding: '10px 12px', borderRadius: 6, fontSize: 13, outline: 'none' } })
         )
       ),
@@ -3982,22 +3978,22 @@ function BulkIssueModal({ employees, onIssue, onClose }) {
 
       React.createElement('div', { style: { flex: 1, overflowY: 'auto', border: '1px solid #1f2733', borderRadius: 6, padding: 4, marginBottom: 14, maxHeight: 280 } },
         visible.length === 0
-          ? React.createElement('div', { style: { padding: 20, textAlign: 'center', color: '#7f8a9b', fontSize: 12 } }, 'No matches')
+          ? React.createElement('div', { style: { padding: 20, textAlign: 'center', color: '#5b6473', fontSize: 12 } }, 'No matches')
           : visible.map(function(e) {
               var isSel = !!sel[e.id];
               return React.createElement('label', { key: e.id, style: { display: 'flex', alignItems: 'center', gap: 10, padding: '7px 10px', cursor: 'pointer', borderRadius: 4, background: isSel ? 'rgba(255,194,51,0.06)' : 'transparent', fontSize: 12.5 } },
                 React.createElement('input', { type: 'checkbox', checked: isSel, onChange: function() { toggle(e.id); }, style: { accentColor: '#ffc233', cursor: 'pointer' } }),
-                React.createElement('span', { style: { flex: 1, color: isSel ? '#e8ecf2' : '#a9b3c1', fontWeight: isSel ? 600 : 400 } }, e.fn + ' ' + e.ln),
-                React.createElement('span', { style: { fontFamily: 'JetBrains Mono, monospace', color: '#7f8a9b', fontSize: 11 } }, e.badge),
-                React.createElement('span', { style: { color: '#7f8a9b', fontSize: 11 } }, e.dept || '')
+                React.createElement('span', { style: { flex: 1, color: isSel ? '#e8ecf2' : '#8993a4', fontWeight: isSel ? 600 : 400 } }, e.fn + ' ' + e.ln),
+                React.createElement('span', { style: { fontFamily: 'JetBrains Mono, monospace', color: '#5b6473', fontSize: 11 } }, e.badge),
+                React.createElement('span', { style: { color: '#5b6473', fontSize: 11 } }, e.dept || '')
               );
             })
       ),
 
       React.createElement('div', { style: { display: 'flex', gap: 10, justifyContent: 'space-between', alignItems: 'center' } },
-        React.createElement('div', { style: { fontSize: 12, color: '#a9b3c1' } }, selIds.length + ' selected · will issue +' + (preset ? preset.p : 0) + ' pts each'),
+        React.createElement('div', { style: { fontSize: 12, color: '#8993a4' } }, selIds.length + ' selected · will issue +' + (preset ? preset.p : 0) + ' pts each'),
         React.createElement('div', { style: { display: 'flex', gap: 10 } },
-          React.createElement('button', { onClick: onClose, style: { padding: '10px 18px', background: 'transparent', border: '1px solid #1f2733', color: '#a9b3c1', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 600 } }, 'Cancel'),
+          React.createElement('button', { onClick: onClose, style: { padding: '10px 18px', background: 'transparent', border: '1px solid #1f2733', color: '#8993a4', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 600 } }, 'Cancel'),
           React.createElement('button', {
             onClick: function() {
               if (selIds.length === 0) { alert('Select at least one employee.'); return; }
@@ -4006,7 +4002,7 @@ function BulkIssueModal({ employees, onIssue, onClose }) {
               onIssue(selIds, t, preset ? preset.p : undefined, date);
             },
             disabled: selIds.length === 0,
-            style: { padding: '10px 22px', background: selIds.length > 0 ? '#ffc233' : '#1f2733', border: 'none', color: selIds.length > 0 ? '#000' : '#7f8a9b', borderRadius: 6, cursor: selIds.length > 0 ? 'pointer' : 'not-allowed', fontSize: 13, fontWeight: 700 }
+            style: { padding: '10px 22px', background: selIds.length > 0 ? '#ffc233' : '#1f2733', border: 'none', color: selIds.length > 0 ? '#000' : '#5b6473', borderRadius: 6, cursor: selIds.length > 0 ? 'pointer' : 'not-allowed', fontSize: 13, fontWeight: 700 }
           }, 'Issue Points')
         )
       )
@@ -5372,8 +5368,8 @@ function AdminView({
   }
   var rEdit = useState(null), editEmp2 = rEdit[0], setEditEmp2 = rEdit[1];
   var rEditForm = useState({}), editForm = rEditForm[0], setEditForm = rEditForm[1];
-  function startEdit(e) { setEditForm({fn:e.fn,ln:e.ln,dept:e.dept,shiftStart:e.shiftStart||"06:00",shiftEnd:e.shiftEnd||"14:30",rate:e.rate||16,salary:e.salary||0,badge:e.badge,pin:e.pin,gsId:e.gsId||"",breakExempt:e.breakExempt||false,mobilePunchExempt:e.mobilePunchExempt||false}); setEditEmp2(e); }
-  function saveEdit() { if(!editEmp2)return; onUpdateEmps(emps.map(function(x){return x.id===editEmp2.id?Object.assign({},x,{fn:editForm.fn||x.fn,ln:editForm.ln||x.ln,dept:editForm.dept||x.dept,shiftStart:editForm.shiftStart||x.shiftStart,shiftEnd:editForm.shiftEnd||x.shiftEnd,rate:parseFloat(editForm.rate)||x.rate,salary:parseFloat(editForm.salary)||0,badge:editForm.badge||x.badge,pin:editForm.pin||x.pin,gsId:editForm.gsId||x.gsId||"",breakExempt:editForm.breakExempt!==undefined?editForm.breakExempt:x.breakExempt,mobilePunchExempt:editForm.mobilePunchExempt!==undefined?editForm.mobilePunchExempt:x.mobilePunchExempt}):x})); logAdminAction("EDIT",editEmp2.fn+" "+editEmp2.ln+" ("+editEmp2.badge+")",staffName); setEditEmp2(null); }
+  function startEdit(e) { setEditForm({fn:e.fn,ln:e.ln,dept:e.dept,shiftStart:e.shiftStart||"06:00",shiftEnd:e.shiftEnd||"14:30",rate:e.rate||16,salary:e.salary||0,badge:e.badge,pin:e.pin,breakExempt:e.breakExempt||false,mobilePunchExempt:e.mobilePunchExempt||false}); setEditEmp2(e); }
+  function saveEdit() { if(!editEmp2)return; onUpdateEmps(emps.map(function(x){return x.id===editEmp2.id?Object.assign({},x,{fn:editForm.fn||x.fn,ln:editForm.ln||x.ln,dept:editForm.dept||x.dept,shiftStart:editForm.shiftStart||x.shiftStart,shiftEnd:editForm.shiftEnd||x.shiftEnd,rate:parseFloat(editForm.rate)||x.rate,salary:parseFloat(editForm.salary)||0,badge:editForm.badge||x.badge,pin:editForm.pin||x.pin,breakExempt:editForm.breakExempt!==undefined?editForm.breakExempt:x.breakExempt,mobilePunchExempt:editForm.mobilePunchExempt!==undefined?editForm.mobilePunchExempt:x.mobilePunchExempt}):x})); logAdminAction("EDIT",editEmp2.fn+" "+editEmp2.ln+" ("+editEmp2.badge+")",staffName); setEditEmp2(null); }
   function termEmp(id) { var emp2=emps.find(function(e){return e.id===id}); if(!emp2)return; var td=window.prompt("Enter last day for "+emp2.fn+" "+emp2.ln+" (YYYY-MM-DD):",new Date().toISOString().slice(0,10)); if(!td)return; if(!td.match(/^\d{4}-\d{2}-\d{2}$/)){alert("Invalid date format. Use YYYY-MM-DD");return} onUpdateEmps(emps.map(function(x){return x.id===id?Object.assign({},x,{st:"terminated",termDate:td}):x}),id); logAdminAction("TERMINATE",emp2.fn+" "+emp2.ln+" ("+emp2.badge+") — end date: "+td,staffName); }
   function deleteEmp(id) {
     var emp=emps.find(function(e){return e.id===id});
@@ -5436,7 +5432,7 @@ function AdminView({
   function doExport(type) {
     if (type === "timesheet") {
       var monday = reportMon || getMonday();
-      var rows = ["Employee,GS ID,Badge,Dept,Title,Mon Net,Mon Gross,Mon Break,Tue Net,Tue Gross,Tue Break,Wed Net,Wed Gross,Wed Break,Thu Net,Thu Gross,Thu Break,Fri Net,Fri Gross,Fri Break,Sat Net,Sat Gross,Sat Break,Sun Net,Sun Gross,Sun Break,Week Gross,Week Break,Week Net,Week OT,Lunch Exempt"];
+      var rows = ["Employee,Badge,Dept,Title,Mon Net,Mon Gross,Mon Break,Tue Net,Tue Gross,Tue Break,Wed Net,Wed Gross,Wed Break,Thu Net,Thu Gross,Thu Break,Fri Net,Fri Gross,Fri Break,Sat Net,Sat Gross,Sat Break,Sun Net,Sun Gross,Sun Break,Week Gross,Week Break,Week Net,Week OT,Lunch Exempt"];
       emps.filter(function (e) {
         return e.st === "active";
       }).sort(function(a,b){return(a.ln||"").localeCompare(b.ln||"")}).forEach(function (e) {
@@ -5447,7 +5443,7 @@ function AdminView({
         var dayCells = daily.map(function(d) {
           return (d.netH || 0).toFixed(2) + "," + (d.grossH || 0).toFixed(2) + "," + ((d.breakH || 0) * 60).toFixed(0) + "m";
         }).join(",");
-        rows.push(e.fn + " " + e.ln + "," + (e.gsId||"") + "," + e.badge + "," + (e.gsId||"") + "," + (e.dept||"") + "," + (e.role||"") + "," + dayCells + "," + totalGross.toFixed(2) + "," + (totalBreak * 60).toFixed(0) + "m," + totalNet.toFixed(2) + "," + Math.max(0, totalNet - P.otWeekly).toFixed(2) + "," + (e.breakExempt ? "YES" : "no"));
+        rows.push(e.fn + " " + e.ln + "," + e.badge + "," + (e.dept||"") + "," + (e.role||"") + "," + dayCells + "," + totalGross.toFixed(2) + "," + (totalBreak * 60).toFixed(0) + "m," + totalNet.toFixed(2) + "," + Math.max(0, totalNet - P.otWeekly).toFixed(2) + "," + (e.breakExempt ? "YES" : "no"));
       });
       var blob = new Blob([rows.join("\n")], {
         type: "text/csv"
@@ -5459,7 +5455,7 @@ function AdminView({
       a.click();
     }
     if (type === "points") {
-      var rows2 = ["Employee,GS ID,Badge,Type,Points,Date"];
+      var rows2 = ["Employee,Badge,Type,Points,Date"];
       pointEvents.forEach(function (ev) {
         var emp = emps.find(function (e) {
           return e.id === ev.eid;
@@ -5469,7 +5465,7 @@ function AdminView({
         }) || {
           v: ev.type
         };
-        rows2.push((emp ? emp.fn + " " + emp.ln : "?") + "," + ((emp?emp.gsId||"":"") + "," + (emp ? emp.badge : "?")) + "," + rule.v + "," + ev.pts + "," + new Date(ev.date).toLocaleDateString());
+        rows2.push((emp ? emp.fn + " " + emp.ln : "?") + "," + (emp ? emp.badge : "?") + "," + rule.v + "," + ev.pts + "," + new Date(ev.date).toLocaleDateString());
       });
       var blob2 = new Blob([rows2.join("\n")], {
         type: "text/csv"
@@ -5482,7 +5478,7 @@ function AdminView({
     }
     if (type === "detailed") {
       var monday = reportMon || getMonday();
-      var drows = ["Employee,GS ID,Badge,Dept,Shift,Date,Clock In,Clock Out,Break Out,Break In,Gross Hours,Auto Lunch Deducted,Net Hours,Lunch Exempt"];
+      var drows = ["Employee,Badge,Dept,Shift,Date,Clock In,Clock Out,Break Out,Break In,Gross Hours,Auto Lunch Deducted,Net Hours,Lunch Exempt"];
       emps.filter(function(e){return e.st==="active"}).sort(function(a,b){return(a.ln||"").localeCompare(b.ln||"")}).forEach(function(e){
         for(var di=0;di<7;di++){
           var ds=new Date(monday);ds.setDate(ds.getDate()+di);ds.setHours(0,0,0,0);
@@ -5494,20 +5490,20 @@ function AdminView({
           var outs=dp.filter(function(p){return p.type==="out"});
           var bouts=dp.filter(function(p){return p.type==="break-out"});
           var bins=dp.filter(function(p){return p.type==="break-in"});
-          drows.push(e.fn+" "+e.ln+","+(e.gsId||"")+","+e.badge+","+(e.dept||"")+","+(function(){var s=e.shiftStart||"06:00",n=e.shiftEnd||"14:30";function f(t){var p=t.split(":");var h=+p[0];return(h>12?h-12:h||12)+":"+p[1]+(h>=12?"PM":"AM")}return f(s)+"-"+f(n)})()+","+ds.toLocaleDateString()+","+(ins[0]?new Date(ins[0].time).toLocaleTimeString():"")+ ","+(outs[outs.length-1]?new Date(outs[outs.length-1].time).toLocaleTimeString():"")+ ","+(bouts[0]?new Date(bouts[0].time).toLocaleTimeString():"")+ ","+(bins[0]?new Date(bins[0].time).toLocaleTimeString():"")+ ","+hrs.grossH.toFixed(2)+","+(hrs.breakH > 0 ? (hrs.breakH * 60).toFixed(0) + "m" : "no")+","+hrs.netH.toFixed(2)+","+(e.breakExempt ? "YES" : "no"));
+          drows.push(e.fn+" "+e.ln+","+e.badge+","+(e.dept||"")+","+(function(){var s=e.shiftStart||"06:00",n=e.shiftEnd||"14:30";function f(t){var p=t.split(":");var h=+p[0];return(h>12?h-12:h||12)+":"+p[1]+(h>=12?"PM":"AM")}return f(s)+"-"+f(n)})()+","+ds.toLocaleDateString()+","+(ins[0]?new Date(ins[0].time).toLocaleTimeString():"")+ ","+(outs[outs.length-1]?new Date(outs[outs.length-1].time).toLocaleTimeString():"")+ ","+(bouts[0]?new Date(bouts[0].time).toLocaleTimeString():"")+ ","+(bins[0]?new Date(bins[0].time).toLocaleTimeString():"")+ ","+hrs.grossH.toFixed(2)+","+(hrs.breakH > 0 ? (hrs.breakH * 60).toFixed(0) + "m" : "no")+","+hrs.netH.toFixed(2)+","+(e.breakExempt ? "YES" : "no"));
         }
       });
       var dblob=new Blob([drows.join("\n")],{type:"text/csv"});var durl=URL.createObjectURL(dblob);var da=document.createElement("a");da.href=durl;da.download="detailed-punches-"+monday.toISOString().slice(0,10)+".csv";da.click();
     }
         if (type === "audit") {
-      var rows3 = ["Employee,GS ID,Badge,Type,Time,Device,IP,Lat,Lng,Distance,Accuracy,Altitude,Speed,Flags"];
+      var rows3 = ["Employee,Badge,Type,Time,Device,IP,Lat,Lng,Distance,Accuracy,Altitude,Speed,Flags"];
       punches.slice().sort(function (a, b) {
         return new Date(b.time) - new Date(a.time);
       }).forEach(function (p) {
         var emp = emps.find(function (e) {
           return e.id === p.eid;
         });
-        rows3.push((emp ? emp.fn + " " + emp.ln : "?") + "," + ((emp?emp.gsId||"":"") + "," + (emp ? emp.badge : "?")) + "," + p.type + "," + new Date(p.time).toLocaleString() + "," + (p.dev || "") + "," + (p.ip || "") + "," + (p.lat || "") + "," + (p.lng || "") + "," + (p.dist != null ? p.dist : "") + "," + (p.accuracy || "") + "," + (p.altitude || "") + "," + (p.speed || "") + "," + (p.flags || ""));
+        rows3.push((emp ? emp.fn + " " + emp.ln : "?") + "," + (emp ? emp.badge : "?") + "," + p.type + "," + new Date(p.time).toLocaleString() + "," + (p.dev || "") + "," + (p.ip || "") + "," + (p.lat || "") + "," + (p.lng || "") + "," + (p.dist != null ? p.dist : "") + "," + (p.accuracy || "") + "," + (p.altitude || "") + "," + (p.speed || "") + "," + (p.flags || ""));
       });
       var blob3 = new Blob([rows3.join("\n")], {
         type: "text/csv"
@@ -6066,7 +6062,7 @@ function AdminView({
       width: "100%",
       borderCollapse: "collapse"
     }
-  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, [/*#__PURE__*/React.createElement("th",{key:"chk",style:{padding:"8px 12px",borderBottom:"1px solid "+C.bd,width:32}},/*#__PURE__*/React.createElement("input",{type:"checkbox",style:{cursor:"pointer",accentColor:C.spark,width:14,height:14},checked:selEmps&&selEmps.length>0&&selEmps.length===emps.filter(function(e){return e.st==="active"}).length,onChange:function(ev){if(ev.target.checked){setSelEmps(emps.filter(function(e){return e.st==="active"}).map(function(e){return e.id}))}else{setSelEmps([])}}}))].concat(["Badge", "GS ID", "Name", "PIN", "Dept", "Shift", "Rate", "Salary", "Points", "Actions"].map(function (h) {
+  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, [/*#__PURE__*/React.createElement("th",{key:"chk",style:{padding:"8px 12px",borderBottom:"1px solid "+C.bd,width:32}},/*#__PURE__*/React.createElement("input",{type:"checkbox",style:{cursor:"pointer",accentColor:C.spark,width:14,height:14},checked:selEmps&&selEmps.length>0&&selEmps.length===emps.filter(function(e){return e.st==="active"}).length,onChange:function(ev){if(ev.target.checked){setSelEmps(emps.filter(function(e){return e.st==="active"}).map(function(e){return e.id}))}else{setSelEmps([])}}}))].concat(["Badge", "Name", "PIN", "Dept", "Shift", "Rate", "Salary", "Points", "Actions"].map(function (h) {
     return /*#__PURE__*/React.createElement("th", {
       key: h,
       style: {
@@ -6097,7 +6093,7 @@ function AdminView({
         color: C.spark,
         fontWeight: 700
       }
-    }, e.badge)), /*#__PURE__*/React.createElement("td",{style:{padding:"8px 12px",fontFamily:Fm,fontSize:13,color:C.t3}},e.gsId||"-"), /*#__PURE__*/React.createElement("td", {
+    }, e.badge)), /*#__PURE__*/React.createElement("td", {
       style: {
         padding: "8px 12px"
       }
@@ -6225,7 +6221,6 @@ function AdminView({
   /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"First Name"), /*#__PURE__*/React.createElement("input",{value:editForm.fn||"",onChange:function(ev){setEditForm(Object.assign({},editForm,{fn:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.t1,padding:"8px 10px",borderRadius:6,fontSize:14,outline:"none"}})),
   /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"Last Name"), /*#__PURE__*/React.createElement("input",{value:editForm.ln||"",onChange:function(ev){setEditForm(Object.assign({},editForm,{ln:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.t1,padding:"8px 10px",borderRadius:6,fontSize:14,outline:"none"}})),
   /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"Badge"), /*#__PURE__*/React.createElement("input",{value:editForm.badge||"",onChange:function(ev){setEditForm(Object.assign({},editForm,{badge:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px 10px",borderRadius:6,fontSize:14,fontFamily:Fm,outline:"none"}})),
-  /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"GS ID"), /*#__PURE__*/React.createElement("input",{value:editForm.gsId||"",onChange:function(ev){setEditForm(Object.assign({},editForm,{gsId:ev.target.value}))},placeholder:"Greenshades ID",style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px 10px",borderRadius:6,fontSize:14,fontFamily:Fm,outline:"none"}})),
   /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"PIN"), /*#__PURE__*/React.createElement("input",{value:editForm.pin||"",maxLength:4,onChange:function(ev){setEditForm(Object.assign({},editForm,{pin:ev.target.value.replace(/\D/g,"")}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px 10px",borderRadius:6,fontSize:14,fontFamily:Fm,fontWeight:700,letterSpacing:4,outline:"none"}})),
   /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"Department"), /*#__PURE__*/React.createElement("select",{value:editForm.dept||"Assembly",onChange:function(ev){setEditForm(Object.assign({},editForm,{dept:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.t1,padding:"8px 10px",borderRadius:6,fontSize:14,outline:"none",appearance:"none"}}, (function(){var allDepts=DEPTS.slice();emps.forEach(function(e){if(e.dept&&allDepts.indexOf(e.dept)===-1)allDepts.push(e.dept)});return allDepts.sort()})().map(function(d){return /*#__PURE__*/React.createElement("option",{key:d,value:d},d)}))),
   /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:C.t4,marginBottom:4}},"Rate/HR"), /*#__PURE__*/React.createElement("input",{type:"number",step:"0.50",value:editForm.rate||"",onChange:function(ev){setEditForm(Object.assign({},editForm,{rate:ev.target.value}))},style:{width:"100%",background:C.bg,border:"1px solid "+C.bd,color:C.spark,padding:"8px 10px",borderRadius:6,fontSize:14,fontFamily:Fm,outline:"none"}})),
@@ -7601,78 +7596,6 @@ function AdminView({
 
 /* ═══ MAIN APP ═══ */
 
-/* ═══ QUICK ISSUE MODAL — unified point issuing with incident date ═══ */
-function QuickIssueModal({ emp, presetType, presetPts, onIssue, onClose }) {
-  var QI_PRESETS = [
-    { k: 'tardy-short', lbl: 'Tardy (\u226430 min)', p: 0.5 },
-    { k: 'tardy-long', lbl: 'Tardy (>30 min)', p: 1 },
-    { k: 'left-early', lbl: 'Left Early', p: 1 },
-    { k: 'unexcused', lbl: 'Unexcused Absence', p: 1.5 },
-    { k: 'no-show', lbl: 'No-Show / No-Call', p: 2 },
-    { k: 'manual', lbl: 'Manual Adjustment', p: 0.5 }
-  ];
-  function qiLocalDate() {
-    var x = new Date();
-    return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0');
-  }
-  var initPreset = QI_PRESETS.find(function (x) { return x.k === (presetType || 'tardy-short'); }) || QI_PRESETS[0];
-  var rT = React.useState(initPreset.k); var t = rT[0], setT = rT[1];
-  var rP = React.useState(String(presetPts !== undefined && presetPts !== null ? presetPts : initPreset.p)); var p = rP[0], setP = rP[1];
-  var todayStr = qiLocalDate();
-  var rD = React.useState(todayStr); var d = rD[0], setD = rD[1];
-  function changeType(nt) {
-    setT(nt);
-    var pr = QI_PRESETS.find(function (x) { return x.k === nt; });
-    if (pr) setP(String(pr.p));
-  }
-  var lblStyle = { display: 'block', fontSize: 10.5, color: '#a9b3c1', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700, marginBottom: 5 };
-  var inpStyle = { width: '100%', background: '#0a0d12', border: '1px solid #1f2733', color: '#e8ecf2', padding: '10px 12px', borderRadius: 6, fontSize: 13, outline: 'none', boxSizing: 'border-box' };
-  var ptsNum = parseFloat(p);
-  var isBackdated = d !== todayStr;
-  return React.createElement('div', { onClick: onClose, style: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20 } },
-    React.createElement('div', { onClick: function (e) { e.stopPropagation(); }, style: { background: '#11151c', border: '1px solid #1f2733', borderRadius: 12, padding: 24, width: 420, maxWidth: '92%' } },
-      React.createElement('div', { style: { fontSize: 10.5, color: '#ffc233', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 6, fontWeight: 700 } }, 'Quick Issue Point'),
-      React.createElement('div', { style: { fontSize: 18, fontWeight: 700, marginBottom: 18, color: '#e8ecf2' } }, emp ? ((emp.fn || '') + ' ' + (emp.ln || '')) : 'Employee'),
-      React.createElement('div', { style: { marginBottom: 12 } },
-        React.createElement('label', { style: lblStyle }, 'Violation Type'),
-        React.createElement('select', { value: t, onChange: function (e) { changeType(e.target.value); }, style: inpStyle },
-          QI_PRESETS.map(function (r) { return React.createElement('option', { key: r.k, value: r.k }, r.lbl + ' (+' + r.p + ')'); })
-        )
-      ),
-      React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 } },
-        React.createElement('div', null,
-          React.createElement('label', { style: lblStyle }, 'Points'),
-          React.createElement('input', { type: 'number', step: '0.5', value: p, onChange: function (e) { setP(e.target.value); }, style: Object.assign({}, inpStyle, { border: '2px solid #ffc233', color: '#ffc233', fontFamily: "'IBM Plex Mono',monospace", fontWeight: 700 }) })
-        ),
-        React.createElement('div', null,
-          React.createElement('label', { style: lblStyle }, 'Incident Date'),
-          React.createElement('input', { type: 'date', value: d, max: todayStr, onChange: function (e) { setD(e.target.value); }, style: Object.assign({}, inpStyle, { fontFamily: "'IBM Plex Mono',monospace" }) })
-        )
-      ),
-      isBackdated && React.createElement('div', { style: { marginBottom: 14, padding: '7px 10px', background: 'rgba(255,194,51,0.08)', border: '1px solid rgba(255,194,51,0.25)', borderRadius: 6, fontSize: 11.5, color: '#ffc233' } },
-        'Backdated — rolling-window expiration runs from the incident date'
-      ),
-      React.createElement('div', { style: { display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 6 } },
-        React.createElement('button', { onClick: onClose, style: { padding: '10px 18px', background: 'transparent', border: '1px solid #1f2733', color: '#a9b3c1', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 600 } }, 'Cancel'),
-        React.createElement('button', {
-          onClick: function () {
-            var ptsVal = parseFloat(p);
-            if (isNaN(ptsVal) || ptsVal === 0) { alert('Enter a non-zero points value.'); return; }
-            if (!d) { alert('Pick an incident date.'); return; }
-            if (d > todayStr) { alert('Incident date cannot be in the future.'); return; }
-            var dt = new Date(d + 'T12:00:00');
-            if (isNaN(dt.getTime())) { alert('Invalid date.'); return; }
-            onIssue(t, ptsVal, dt.toISOString());
-          },
-          style: { padding: '10px 22px', background: '#ffc233', border: 'none', color: '#000', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 700 }
-        }, 'Issue ' + (isNaN(ptsNum) ? '' : (ptsNum > 0 ? '+' : '') + ptsNum) + ' pts')
-      )
-    )
-  );
-}
-
-
-
 // ═══════════════════════════════════════════════════════════════════
 // EMPLOYEE PROFILE / COMMAND CENTER (Phase 1)
 // Drilled-down employee view: header card, stats, timesheet grid,
@@ -7689,7 +7612,6 @@ function EmployeeDirectory({ employees, punches, pointEvents, onIssuePoint, poli
   var rv = React.useState('grid'), viewMode = rv[0], setViewMode = rv[1];
   var rs = React.useState('name'), sortBy = rs[0], setSortBy = rs[1];
   var rss = React.useState('active'), statusFilter = rss[0], setStatusFilter = rss[1];
-  var rqi = React.useState(null), quickIssueFor = rqi[0], setQuickIssueFor = rqi[1];
 
   // ── filter + sort ─────────────────────────────────────────────────
   var list = (employees || []).filter(function (e) {
@@ -7753,7 +7675,7 @@ function EmployeeDirectory({ employees, punches, pointEvents, onIssuePoint, poli
     var data = byEmp[eid] || {};
     if (data.hasIssue) return { color: '#ef4444', label: 'ISSUE' };
     if (data.clockedIn) return { color: '#22c55e', label: 'IN' };
-    return { color: '#7f8a9b', label: 'OUT' };
+    return { color: '#5b6473', label: 'OUT' };
   };
 
   // ── toolbar ───────────────────────────────────────────────────────
@@ -7762,7 +7684,7 @@ function EmployeeDirectory({ employees, punches, pointEvents, onIssuePoint, poli
     // Toolbar
     React.createElement('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 16, padding: '12px 14px', background: '#11151c', border: '1px solid #1f2733', borderRadius: 10 } },
       React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 14 } },
-        React.createElement('div', { style: { fontSize: 13, color: '#a9b3c1' } },
+        React.createElement('div', { style: { fontSize: 13, color: '#8993a4' } },
           React.createElement('b', { style: { color: '#e8ecf2', fontSize: 16, fontFamily: 'JetBrains Mono, monospace' } }, list.length),
           ' employees'
         )
@@ -7778,7 +7700,7 @@ function EmployeeDirectory({ employees, punches, pointEvents, onIssuePoint, poli
               style: {
                 padding: '6px 12px',
                 background: statusFilter === s ? '#ffc233' : 'transparent',
-                color: statusFilter === s ? '#1a1300' : '#a9b3c1',
+                color: statusFilter === s ? '#1a1300' : '#8993a4',
                 border: 'none',
                 fontFamily: 'inherit',
                 fontSize: 11.5,
@@ -7808,27 +7730,19 @@ function EmployeeDirectory({ employees, punches, pointEvents, onIssuePoint, poli
           React.createElement('button', {
             onClick: function () { setViewMode('grid'); },
             title: 'Grid view',
-            style: { padding: '6px 12px', background: viewMode === 'grid' ? '#ffc233' : 'transparent', color: viewMode === 'grid' ? '#1a1300' : '#a9b3c1', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 11, fontWeight: 700, letterSpacing: 0.5 }
+            style: { padding: '6px 12px', background: viewMode === 'grid' ? '#ffc233' : 'transparent', color: viewMode === 'grid' ? '#1a1300' : '#8993a4', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 11, fontWeight: 700, letterSpacing: 0.5 }
           }, '⊞ GRID'),
           React.createElement('button', {
             onClick: function () { setViewMode('list'); },
             title: 'List view',
-            style: { padding: '6px 12px', background: viewMode === 'list' ? '#ffc233' : 'transparent', color: viewMode === 'list' ? '#1a1300' : '#a9b3c1', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 11, fontWeight: 700, letterSpacing: 0.5 }
+            style: { padding: '6px 12px', background: viewMode === 'list' ? '#ffc233' : 'transparent', color: viewMode === 'list' ? '#1a1300' : '#8993a4', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 11, fontWeight: 700, letterSpacing: 0.5 }
           }, '☰ LIST')
         )
       )
     ),
 
-    quickIssueFor && React.createElement(QuickIssueModal, {
-      emp: quickIssueFor.emp,
-      presetType: quickIssueFor.presetType,
-      presetPts: quickIssueFor.presetPts,
-      onIssue: function(type, pts, dateISO) { if (onIssuePoint) onIssuePoint(quickIssueFor.emp.id, type, pts, dateISO); setQuickIssueFor(null); },
-      onClose: function() { setQuickIssueFor(null); }
-    }),
-
     // Empty state
-    list.length === 0 && React.createElement('div', { style: { textAlign: 'center', padding: 60, color: '#7f8a9b', fontSize: 13 } }, 'No employees match those filters.'),
+    list.length === 0 && React.createElement('div', { style: { textAlign: 'center', padding: 60, color: '#5b6473', fontSize: 13 } }, 'No employees match those filters.'),
 
     // ── GRID VIEW ───────────────────────────────────────────────────
     viewMode === 'grid' && list.length > 0 && React.createElement('div', {
@@ -7866,7 +7780,7 @@ function EmployeeDirectory({ employees, punches, pointEvents, onIssuePoint, poli
           React.createElement('div', { style: { textAlign: 'center', fontSize: 13, fontWeight: 700, color: '#e8ecf2', lineHeight: 1.2 } }, (e.fn || '') + ' ' + (e.ln || '')),
 
           // Badge + dept
-          React.createElement('div', { style: { textAlign: 'center', fontSize: 10.5, color: '#a9b3c1', fontFamily: 'JetBrains Mono, monospace' } }, (e.badge || '—') + ' · ' + (e.dept || '—')),
+          React.createElement('div', { style: { textAlign: 'center', fontSize: 10.5, color: '#8993a4', fontFamily: 'JetBrains Mono, monospace' } }, (e.badge || '—') + ' · ' + (e.dept || '—')),
 
           // Bottom row: points pill + status label
           React.createElement('div', { style: { display: 'flex', gap: 6, marginTop: 2, fontSize: 9.5, fontWeight: 700, letterSpacing: 0.3 } },
@@ -7875,7 +7789,7 @@ function EmployeeDirectory({ employees, punches, pointEvents, onIssuePoint, poli
                 padding: '2px 7px',
                 borderRadius: 3,
                 background: data.totalPts >= 6 ? '#ef44441a' : data.totalPts >= 4 ? '#f59e0b1a' : data.totalPts > 0 ? '#22c55e1a' : '#1f273340',
-                color: data.totalPts >= 6 ? '#ef4444' : data.totalPts >= 4 ? '#f59e0b' : data.totalPts > 0 ? '#22c55e' : '#7f8a9b'
+                color: data.totalPts >= 6 ? '#ef4444' : data.totalPts >= 4 ? '#f59e0b' : data.totalPts > 0 ? '#22c55e' : '#5b6473'
               }
             }, data.totalPts.toFixed(1) + ' PTS'),
             React.createElement('span', { style: { padding: '2px 7px', borderRadius: 3, background: s.color + '1a', color: s.color } }, s.label)
@@ -7889,7 +7803,7 @@ function EmployeeDirectory({ employees, punches, pointEvents, onIssuePoint, poli
       style: { background: '#11151c', border: '1px solid #1f2733', borderRadius: 10, overflow: 'hidden' }
     },
       // Header row
-      React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '40px 1.5fr 80px 1fr 1fr 100px 80px', gap: 10, padding: '10px 14px', borderBottom: '1px solid #1f2733', fontSize: 10.5, textTransform: 'uppercase', letterSpacing: 0.7, color: '#7f8a9b', fontWeight: 700 } },
+      React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '40px 1.5fr 80px 1fr 1fr 100px 80px', gap: 10, padding: '10px 14px', borderBottom: '1px solid #1f2733', fontSize: 10.5, textTransform: 'uppercase', letterSpacing: 0.7, color: '#5b6473', fontWeight: 700 } },
         React.createElement('div', null, ''),
         React.createElement('div', null, 'Name'),
         React.createElement('div', null, 'Badge'),
@@ -7913,18 +7827,18 @@ function EmployeeDirectory({ employees, punches, pointEvents, onIssuePoint, poli
         },
           React.createElement('div', { style: { width: 28, height: 28, borderRadius: 6, background: 'linear-gradient(135deg, #2a3441, #1a2029)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#ffc233' } }, initials(e)),
           React.createElement('div', { style: { fontWeight: 600, color: '#e8ecf2' } }, (e.fn || '') + ' ' + (e.ln || '')),
-          React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', color: '#a9b3c1', fontSize: 11.5 } }, e.badge || '—'),
-          React.createElement('div', { style: { color: '#a9b3c1', fontSize: 12 } }, e.dept || '—'),
-          React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', color: '#a9b3c1', fontSize: 11 } }, lastStr),
+          React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', color: '#8993a4', fontSize: 11.5 } }, e.badge || '—'),
+          React.createElement('div', { style: { color: '#8993a4', fontSize: 12 } }, e.dept || '—'),
+          React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', color: '#8993a4', fontSize: 11 } }, lastStr),
           React.createElement('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }, onClick: function(ev){ ev.stopPropagation(); } },
             !readOnly && React.createElement('button', {
-              onClick: function(ev){ ev.stopPropagation(); if(onIssuePoint && data.totalPts > 0) setQuickIssueFor({ emp: e, presetType: 'manual', presetPts: -0.5 }); },
+              onClick: function(ev){ ev.stopPropagation(); if(onIssuePoint && data.totalPts > 0) { if(confirm('Remove 0.5 point from ' + e.fn + ' ' + e.ln + '?')) onIssuePoint(e.id, 'manual', -0.5); } },
               title: 'Subtract 0.5',
-              style: { width: 22, height: 22, borderRadius: 4, background: '#0a0d12', color: '#a9b3c1', fontSize: 14, lineHeight: 1, border: '1px solid #1f2733', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, opacity: data.totalPts > 0 ? 1 : 0.3 }
+              style: { width: 22, height: 22, borderRadius: 4, background: '#0a0d12', color: '#8993a4', fontSize: 14, lineHeight: 1, border: '1px solid #1f2733', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, opacity: data.totalPts > 0 ? 1 : 0.3 }
             }, '−'),
-            React.createElement('span', { style: { fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: data.totalPts >= 6 ? '#ef4444' : data.totalPts >= 4 ? '#f59e0b' : data.totalPts > 0 ? '#22c55e' : '#7f8a9b', minWidth: 32, textAlign: 'center', fontSize: 13 } }, (data.totalPts || 0).toFixed(1)),
+            React.createElement('span', { style: { fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: data.totalPts >= 6 ? '#ef4444' : data.totalPts >= 4 ? '#f59e0b' : data.totalPts > 0 ? '#22c55e' : '#5b6473', minWidth: 32, textAlign: 'center', fontSize: 13 } }, (data.totalPts || 0).toFixed(1)),
             !readOnly && React.createElement('button', {
-              onClick: function(ev){ ev.stopPropagation(); if(onIssuePoint) setQuickIssueFor({ emp: e, presetType: 'manual', presetPts: 0.5 }); },
+              onClick: function(ev){ ev.stopPropagation(); if(onIssuePoint) { if(confirm('Add 0.5 point to ' + e.fn + ' ' + e.ln + '?')) onIssuePoint(e.id, 'manual', 0.5); } },
               title: 'Add 0.5',
               style: { width: 22, height: 22, borderRadius: 4, background: '#0a0d12', color: '#ffc233', fontSize: 14, lineHeight: 1, border: '1px solid #1f2733', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }
             }, '+'),
@@ -7932,10 +7846,24 @@ function EmployeeDirectory({ employees, punches, pointEvents, onIssuePoint, poli
               onClick: function(ev){
                 ev.stopPropagation();
                 if(!onIssuePoint) return;
-                setQuickIssueFor({ emp: e });
+                var menu = [
+                  { label: 'Tardy ≤30 min', key: 'tardy-short', pts: 0.5 },
+                  { label: 'Tardy >30 min', key: 'tardy-long', pts: 1 },
+                  { label: 'Left Early', key: 'left-early', pts: 1 },
+                  { label: 'Unexcused Absence', key: 'unexcused', pts: 1.5 },
+                  { label: 'No-Show / No-Call', key: 'no-show', pts: 2 }
+                ];
+                var msg = 'Quick Issue Point for ' + e.fn + ' ' + e.ln + ':\n\n';
+                menu.forEach(function(m, i){ msg += (i+1) + '. ' + m.label + '  (+' + m.pts + ')\n'; });
+                msg += '\nEnter number 1-5 (or cancel):';
+                var pick = prompt(msg);
+                if (!pick) return;
+                var idx = parseInt(pick) - 1;
+                if (idx < 0 || idx >= menu.length || isNaN(idx)) { alert('Invalid choice.'); return; }
+                onIssuePoint(e.id, menu[idx].key);
               },
               title: 'Issue point with reason',
-              style: { width: 22, height: 22, borderRadius: 4, background: '#0a0d12', color: '#a9b3c1', fontSize: 11, lineHeight: 1, border: '1px solid #1f2733', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, marginLeft: 2 }
+              style: { width: 22, height: 22, borderRadius: 4, background: '#0a0d12', color: '#8993a4', fontSize: 11, lineHeight: 1, border: '1px solid #1f2733', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, marginLeft: 2 }
             }, '⋯')
           ),
           React.createElement('div', { style: { textAlign: 'center' } },
@@ -7961,7 +7889,6 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
   const [activeTab, setActiveTab] = React.useState('overview');
   const [loading, setLoading] = React.useState(true);
   const [expandedCell, setExpandedCell] = React.useState(null); // {weekIdx, dayIdx} or null
-  const [quickIssue, setQuickIssue] = React.useState(null); // null | { type }
 
   // ── load employee + points + notes ────────────────────────────────
   React.useEffect(function () {
@@ -8021,7 +7948,7 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
   }
 
   if (!emp) {
-    return React.createElement('div', { style: { padding: 40, color: '#a9b3c1', textAlign: 'center' } },
+    return React.createElement('div', { style: { padding: 40, color: '#8993a4', textAlign: 'center' } },
       'Employee not found. ',
       React.createElement('button', { onClick: onBack, style: { marginLeft: 8, padding: '6px 12px', background: '#ffc233', border: 'none', borderRadius: 5, color: '#1a1300', fontWeight: 700, cursor: 'pointer' } }, 'Back')
     );
@@ -8089,7 +8016,7 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
   // Initials for avatar
   var initials = ((emp.fn || '') + ' ' + (emp.ln || '')).split(' ').map(function (p) { return p[0]; }).filter(Boolean).join('').slice(0, 2).toUpperCase();
 
-  var statusColor = emp.st === 'active' ? '#22c55e' : '#a9b3c1';
+  var statusColor = emp.st === 'active' ? '#22c55e' : '#8993a4';
   var statusLabel = (emp.st || 'unknown').toUpperCase();
 
   // ── render ─────────────────────────────────────────────────────────
@@ -8099,11 +8026,11 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
     React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 } },
       React.createElement('button', {
         onClick: onBack,
-        style: { display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', background: 'transparent', border: '1px solid #1f2733', color: '#a9b3c1', borderRadius: 6, fontSize: 12.5, cursor: 'pointer' }
+        style: { display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', background: 'transparent', border: '1px solid #1f2733', color: '#8993a4', borderRadius: 6, fontSize: 12.5, cursor: 'pointer' }
       }, '← Back to Employees'),
-      React.createElement('span', { style: { color: '#7f8a9b', fontSize: 12 } },
+      React.createElement('span', { style: { color: '#5b6473', fontSize: 12 } },
         'Manager · Employees · ',
-        React.createElement('b', { style: { color: '#a9b3c1', fontWeight: 500 } }, emp.fn + ' ' + emp.ln)
+        React.createElement('b', { style: { color: '#8993a4', fontWeight: 500 } }, emp.fn + ' ' + emp.ln)
       )
     ),
 
@@ -8114,29 +8041,29 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
       React.createElement('div', { style: { width: 96, height: 96, borderRadius: 14, background: 'linear-gradient(135deg, #2a3441, #1a2029)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, fontWeight: 800, color: '#ffc233', border: '1px solid #1f2733' } }, initials),
       React.createElement('div', null,
         React.createElement('div', { style: { fontSize: 28, fontWeight: 800, letterSpacing: -0.5, marginBottom: 4 } }, emp.fn + ' ' + emp.ln),
-        React.createElement('div', { style: { display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center', color: '#a9b3c1', fontSize: 12.5 } },
+        React.createElement('div', { style: { display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center', color: '#8993a4', fontSize: 12.5 } },
           React.createElement('span', { style: { display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 10px', borderRadius: 4, fontSize: 11, fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase', background: statusColor + '1a', color: statusColor } },
             React.createElement('span', { style: { width: 6, height: 6, borderRadius: '50%', background: statusColor, boxShadow: '0 0 8px ' + statusColor } }),
             statusLabel
           ),
-          React.createElement('span', { style: { color: '#7f8a9b' } }, '·'),
+          React.createElement('span', { style: { color: '#5b6473' } }, '·'),
           React.createElement('span', null, 'Badge ', React.createElement('b', { className: 'mono', style: { color: '#e8ecf2', fontFamily: 'JetBrains Mono, monospace' } }, emp.badge || '—')),
-          React.createElement('span', { style: { color: '#7f8a9b' } }, '·'),
+          React.createElement('span', { style: { color: '#5b6473' } }, '·'),
           React.createElement('span', null, emp.role || emp.dept || '—'),
-          emp.shift && React.createElement('span', { style: { color: '#7f8a9b' } }, '·'),
+          emp.shift && React.createElement('span', { style: { color: '#5b6473' } }, '·'),
           emp.shift && React.createElement('span', null, emp.shift),
-          emp.site && React.createElement('span', { style: { color: '#7f8a9b' } }, '·'),
+          emp.site && React.createElement('span', { style: { color: '#5b6473' } }, '·'),
           emp.site && React.createElement('span', null, emp.site)
         )
       ),
       React.createElement('div', { style: { display: 'flex', gap: 24 } },
         React.createElement('div', { style: { textAlign: 'right' } },
-          React.createElement('div', { style: { fontSize: 10.5, textTransform: 'uppercase', letterSpacing: 1, color: '#7f8a9b', marginBottom: 4 } }, 'This Week'),
-          React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', fontSize: 22, fontWeight: 600 } }, thisWeek.total.toFixed(1), React.createElement('span', { style: { fontSize: 13, color: '#a9b3c1' } }, ' hrs'))
+          React.createElement('div', { style: { fontSize: 10.5, textTransform: 'uppercase', letterSpacing: 1, color: '#5b6473', marginBottom: 4 } }, 'This Week'),
+          React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', fontSize: 22, fontWeight: 600 } }, thisWeek.total.toFixed(1), React.createElement('span', { style: { fontSize: 13, color: '#8993a4' } }, ' hrs'))
         ),
         React.createElement('div', { style: { textAlign: 'right' } },
-          React.createElement('div', { style: { fontSize: 10.5, textTransform: 'uppercase', letterSpacing: 1, color: '#7f8a9b', marginBottom: 4 } }, 'Points'),
-          React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', fontSize: 22, fontWeight: 600, color: totalPoints >= 6 ? '#ef4444' : totalPoints >= 4 ? '#f59e0b' : '#22c55e' } }, totalPoints.toFixed(1), React.createElement('span', { style: { fontSize: 13, color: '#a9b3c1' } }, ' / 8'))
+          React.createElement('div', { style: { fontSize: 10.5, textTransform: 'uppercase', letterSpacing: 1, color: '#5b6473', marginBottom: 4 } }, 'Points'),
+          React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', fontSize: 22, fontWeight: 600, color: totalPoints >= 6 ? '#ef4444' : totalPoints >= 4 ? '#f59e0b' : '#22c55e' } }, totalPoints.toFixed(1), React.createElement('span', { style: { fontSize: 13, color: '#8993a4' } }, ' / 8'))
         )
       )
     ),
@@ -8157,17 +8084,17 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
         var weekNet = w0.total;
         var exempt = emp && emp.breakExempt;
         return React.createElement('div', { style: { padding: '14px 18px', background: '#11151c', border: '1px solid #1f2733', borderRadius: 10, borderTop: '2px solid #ffc233' } },
-          React.createElement('div', { style: { fontSize: 10, color: '#7f8a9b', textTransform: 'uppercase', letterSpacing: 1.2, fontWeight: 700, marginBottom: 6 } }, 'Hours This Week'),
+          React.createElement('div', { style: { fontSize: 10, color: '#5b6473', textTransform: 'uppercase', letterSpacing: 1.2, fontWeight: 700, marginBottom: 6 } }, 'Hours This Week'),
           React.createElement('div', { style: { display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 4 } },
             React.createElement('div', { style: { fontSize: 22, fontWeight: 700, fontFamily: 'JetBrains Mono, monospace' } }, weekNet.toFixed(1)),
-            React.createElement('div', { style: { fontSize: 11, color: '#7f8a9b' } }, 'net hrs')
+            React.createElement('div', { style: { fontSize: 11, color: '#5b6473' } }, 'net hrs')
           ),
-          React.createElement('div', { style: { fontSize: 10.5, color: '#a9b3c1', fontFamily: 'JetBrains Mono, monospace', display: 'flex', gap: 10, flexWrap: 'wrap' } },
+          React.createElement('div', { style: { fontSize: 10.5, color: '#8993a4', fontFamily: 'JetBrains Mono, monospace', display: 'flex', gap: 10, flexWrap: 'wrap' } },
             React.createElement('span', null, 'gross ', weekGross.toFixed(1)),
             weekBreak > 0 && React.createElement('span', { style: { color: '#f59e0b' } }, '− ' + (weekBreak * 60).toFixed(0) + 'm lunch'),
             exempt && React.createElement('span', { style: { color: '#facc15', fontWeight: 700 } }, 'EXEMPT')
           ),
-          React.createElement('div', { style: { fontSize: 9.5, color: '#7f8a9b', marginTop: 6, letterSpacing: 0.5 } }, 'avg ' + avgWeekly.toFixed(1) + ' / wk · last 12 wks')
+          React.createElement('div', { style: { fontSize: 9.5, color: '#5b6473', marginTop: 6, letterSpacing: 0.5 } }, 'avg ' + avgWeekly.toFixed(1) + ' / wk · last 12 wks')
         );
       })(),
       statCard('Last Week', lastWeek.total.toFixed(1) + ' hrs', '', '#38bdf8'),
@@ -8195,23 +8122,23 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
         panel('Week-by-Week Timesheet · last 12 weeks',
           React.createElement('div', null,
             // Header row
-            React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '90px repeat(7, 1fr) 70px', gap: 4, padding: '8px 0', borderBottom: '1px solid #1f2733', fontSize: 10.5, textTransform: 'uppercase', letterSpacing: 0.8, color: '#7f8a9b', fontWeight: 600 } },
+            React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '90px repeat(7, 1fr) 70px', gap: 4, padding: '8px 0', borderBottom: '1px solid #1f2733', fontSize: 10.5, textTransform: 'uppercase', letterSpacing: 0.8, color: '#5b6473', fontWeight: 600 } },
               React.createElement('div', null, 'Week'),
               ['M', 'T', 'W', 'T', 'F', 'S', 'S'].map(function (d, i) { return React.createElement('div', { key: i, style: { textAlign: 'center' } }, d); }),
               React.createElement('div', { style: { textAlign: 'right' } }, 'Total')
             ),
             weeks.slice(0, 12).map(function (w, i) {
               return React.createElement('div', { key: i, style: { display: 'grid', gridTemplateColumns: '90px repeat(7, 1fr) 70px', gap: 4, padding: '8px 0', borderBottom: '1px solid #1a2029', alignItems: 'center' } },
-                React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', fontSize: 11.5, color: '#a9b3c1' } },
+                React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', fontSize: 11.5, color: '#8993a4' } },
                   formatDateShort(w.monday) + ' – ' + formatDateShort(w.sunday),
-                  React.createElement('div', { style: { color: '#7f8a9b', fontSize: 10 } }, 'WK ' + w.weekNum)
+                  React.createElement('div', { style: { color: '#5b6473', fontSize: 10 } }, 'WK ' + w.weekNum)
                 ),
                 w.days.map(function (hrs, di) {
                   var dpData = (w.dayPunches && w.dayPunches[di]) || [];
                   // Compute breakdown for this day
                   var dh = calcDayHours(dpData, eid);
                   var bg = hrs > 8.5 ? '#f59e0b1a' : hrs > 0 ? '#38bdf81a' : 'transparent';
-                  var color = hrs > 8.5 ? '#f59e0b' : hrs > 0 ? '#e8ecf2' : '#7f8a9b';
+                  var color = hrs > 8.5 ? '#f59e0b' : hrs > 0 ? '#e8ecf2' : '#5b6473';
                   var isExpanded = expandedCell && expandedCell.weekIdx === i && expandedCell.dayIdx === di;
                   return React.createElement('div', {
                     key: di,
@@ -8222,7 +8149,7 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
                     style: { textAlign: 'center', fontFamily: 'JetBrains Mono, monospace', padding: '5px 2px', borderRadius: 4, background: isExpanded ? '#ffc23333' : bg, cursor: 'pointer', border: isExpanded ? '1px solid #ffc233' : '1px solid transparent', minHeight: 38 }
                   },
                     React.createElement('div', { style: { fontSize: 12, color: color, fontWeight: hrs > 8.5 ? 600 : 500 } }, hrs > 0 ? hrs.toFixed(1) : '—'),
-                    dh.breakH > 0 && React.createElement('div', { style: { fontSize: 8.5, color: '#7f8a9b', marginTop: 1, lineHeight: 1 } },
+                    dh.breakH > 0 && React.createElement('div', { style: { fontSize: 8.5, color: '#5b6473', marginTop: 1, lineHeight: 1 } },
                       'g ' + dh.grossH.toFixed(1) + ' · −' + (dh.breakH * 60).toFixed(0) + 'm'
                     )
                   );
@@ -8242,19 +8169,19 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
           return panel('Punches · ' + dayLabel,
             React.createElement('div', null,
               dp.length === 0
-                ? React.createElement('div', { style: { color: '#7f8a9b', fontSize: 12, padding: '8px 0' } }, 'No punches recorded this day')
+                ? React.createElement('div', { style: { color: '#5b6473', fontSize: 12, padding: '8px 0' } }, 'No punches recorded this day')
                 : dp.map(function (p) {
                     var typeColors = { 'in': ['#22c55e', '#22c55e1a'], 'out': ['#ef4444', '#ef44441a'], 'break-out': ['#f59e0b', '#f59e0b1a'], 'break-in': ['#38bdf8', '#38bdf81a'] };
-                    var c = typeColors[p.type] || ['#a9b3c1', '#a9b3c11a'];
+                    var c = typeColors[p.type] || ['#8993a4', '#8993a41a'];
                     var typeLabel = p.type === 'in' ? 'CLOCK IN' : p.type === 'out' ? 'CLOCK OUT' : p.type === 'break-out' ? 'BREAK OUT' : 'BREAK IN';
                     return React.createElement('div', { key: p.id, style: { display: 'grid', gridTemplateColumns: '100px 1fr auto', gap: 10, padding: '9px 0', alignItems: 'center', borderBottom: '1px solid #1a2029', fontSize: 12 } },
                       React.createElement('div', { style: { padding: '3px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700, textAlign: 'center', background: c[1], color: c[0] } }, typeLabel),
                       React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace' } },
                         new Date(p.time).toLocaleString(),
-                        React.createElement('div', { style: { fontSize: 10.5, color: '#7f8a9b', marginTop: 2 } }, (p.dev || 'unknown') + (p.ip ? ' · ' + p.ip : ''))
+                        React.createElement('div', { style: { fontSize: 10.5, color: '#5b6473', marginTop: 2 } }, (p.dev || 'unknown') + (p.ip ? ' · ' + p.ip : ''))
                       ),
                       React.createElement('div', { style: { display: 'flex', gap: 4 } },
-                        React.createElement('button', { onClick: function () { onPunchEdit && onPunchEdit(p); }, style: { padding: '4px 10px', background: 'transparent', border: '1px solid #1f2733', color: '#a9b3c1', borderRadius: 4, cursor: 'pointer', fontSize: 11 } }, 'Edit'),
+                        React.createElement('button', { onClick: function () { onPunchEdit && onPunchEdit(p); }, style: { padding: '4px 10px', background: 'transparent', border: '1px solid #1f2733', color: '#8993a4', borderRadius: 4, cursor: 'pointer', fontSize: 11 } }, 'Edit'),
                         React.createElement('button', { onClick: function () { if (confirm('Delete this punch?')) onPunchDelete(p.id); }, style: { padding: '4px 10px', background: 'transparent', border: '1px solid #ef4444', color: '#ef4444', borderRadius: 4, cursor: 'pointer', fontSize: 11 } }, 'Delete')
                       )
                     );
@@ -8276,7 +8203,7 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
                   React.createElement('div', { style: { width: 3, height: 36, background: '#ef4444', borderRadius: 2 } }),
                   React.createElement('div', null,
                     React.createElement('div', { style: { fontSize: 13, fontWeight: 600 } }, 'Future-dated punch'),
-                    React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', fontSize: 11.5, color: '#a9b3c1', marginTop: 2 } }, p.type + ' @ ' + new Date(p.time).toLocaleString())
+                    React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', fontSize: 11.5, color: '#8993a4', marginTop: 2 } }, p.type + ' @ ' + new Date(p.time).toLocaleString())
                   ),
                   React.createElement('button', {
                     onClick: function () { if (confirm('Delete this future-dated ' + p.type + ' punch?')) onPunchDelete(p.id); },
@@ -8291,17 +8218,17 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
           React.createElement('div', null,
             sortedPunches.slice(0, 8).map(function (p) {
               var typeColors = { 'in': ['#22c55e', '#22c55e1a'], 'out': ['#ef4444', '#ef44441a'], 'break-out': ['#f59e0b', '#f59e0b1a'], 'break-in': ['#38bdf8', '#38bdf81a'] };
-              var c = typeColors[p.type] || ['#a9b3c1', '#a9b3c11a'];
+              var c = typeColors[p.type] || ['#8993a4', '#8993a41a'];
               var typeLabel = p.type === 'in' ? 'CLOCK IN' : p.type === 'out' ? 'CLOCK OUT' : p.type === 'break-out' ? 'BREAK OUT' : 'BREAK IN';
               return React.createElement('div', { key: p.id, style: { display: 'grid', gridTemplateColumns: '90px 1fr auto', gap: 10, padding: '9px 0', alignItems: 'center', borderBottom: '1px solid #1a2029', fontSize: 12 } },
                 React.createElement('div', { style: { padding: '3px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700, textAlign: 'center', background: c[1], color: c[0] } }, typeLabel),
                 React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace' } },
                   new Date(p.time).toLocaleString(),
-                  React.createElement('div', { style: { fontSize: 10.5, color: '#7f8a9b', marginTop: 2 } }, (p.dev || 'unknown') + (p.ip ? ' · ' + p.ip : ''))
+                  React.createElement('div', { style: { fontSize: 10.5, color: '#5b6473', marginTop: 2 } }, (p.dev || 'unknown') + (p.ip ? ' · ' + p.ip : ''))
                 ),
                 React.createElement('div', { style: { display: 'flex', gap: 4 } },
-                  React.createElement('button', { onClick: function () { onPunchEdit && onPunchEdit(p); }, style: { width: 24, height: 24, background: 'transparent', border: '1px solid #1f2733', color: '#a9b3c1', borderRadius: 4, cursor: 'pointer', fontSize: 11 } }, '✎'),
-                  React.createElement('button', { onClick: function () { if (confirm('Delete this ' + p.type + ' punch?')) onPunchDelete(p.id); }, style: { width: 24, height: 24, background: 'transparent', border: '1px solid #1f2733', color: '#a9b3c1', borderRadius: 4, cursor: 'pointer', fontSize: 11 } }, '×')
+                  React.createElement('button', { onClick: function () { onPunchEdit && onPunchEdit(p); }, style: { width: 24, height: 24, background: 'transparent', border: '1px solid #1f2733', color: '#8993a4', borderRadius: 4, cursor: 'pointer', fontSize: 11 } }, '✎'),
+                  React.createElement('button', { onClick: function () { if (confirm('Delete this ' + p.type + ' punch?')) onPunchDelete(p.id); }, style: { width: 24, height: 24, background: 'transparent', border: '1px solid #1f2733', color: '#8993a4', borderRadius: 4, cursor: 'pointer', fontSize: 11 } }, '×')
                 )
               );
             })
@@ -8311,16 +8238,16 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
         // POINTS PREVIEW (5 most recent)
         panel('Points · most recent',
           points.length === 0
-            ? React.createElement('div', { style: { color: '#7f8a9b', fontSize: 12, padding: '8px 0' } }, 'No point events on record')
+            ? React.createElement('div', { style: { color: '#5b6473', fontSize: 12, padding: '8px 0' } }, 'No point events on record')
             : points.slice(0, 5).map(function (p, i) {
                 var pts = parseFloat(p.pts) || 0;
-                var color = pts > 0 ? '#ef4444' : pts < 0 ? '#22c55e' : '#a9b3c1';
+                var color = pts > 0 ? '#ef4444' : pts < 0 ? '#22c55e' : '#8993a4';
                 return React.createElement('div', { key: p.id || i, style: { padding: '10px 0', borderBottom: '1px solid #1a2029' } },
                   React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between' } },
                     React.createElement('div', { style: { fontWeight: 600, fontSize: 12.5 } }, pointLabel(p.type)),
                     React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: 12, color: color } }, (pts > 0 ? '+' : '') + pts.toFixed(1) + ' pts')
                   ),
-                  React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#a9b3c1', marginTop: 2 } }, p.date ? new Date(p.date).toLocaleDateString() : '')
+                  React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#8993a4', marginTop: 2 } }, p.date ? new Date(p.date).toLocaleDateString() : '')
                 );
               })
         )
@@ -8337,7 +8264,7 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
             React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 } },
               React.createElement('div', { style: { fontWeight: 700, fontSize: 13 } },
                 'Week of ' + formatDateShort(w.monday) + ' – ' + formatDateShort(w.sunday),
-                React.createElement('span', { style: { marginLeft: 8, fontSize: 11, color: '#7f8a9b', fontWeight: 500 } }, 'WK ' + w.weekNum)
+                React.createElement('span', { style: { marginLeft: 8, fontSize: 11, color: '#5b6473', fontWeight: 500 } }, 'WK ' + w.weekNum)
               ),
               React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, fontSize: 14, color: weekTotal > 40 ? '#f59e0b' : '#ffc233' } }, weekTotal.toFixed(1) + ' h' + (weekTotal > 40 ? '  · ' + (weekTotal - 40).toFixed(1) + ' OT' : ''))
             ),
@@ -8346,21 +8273,21 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
                 var hrs = w.days[di];
                 var dp = (w.dayPunches && w.dayPunches[di]) || [];
                 var bg = hrs > 8.5 ? '#f59e0b1a' : hrs > 0 ? '#38bdf81a' : '#0a0d12';
-                var color = hrs > 8.5 ? '#f59e0b' : hrs > 0 ? '#e8ecf2' : '#7f8a9b';
+                var color = hrs > 8.5 ? '#f59e0b' : hrs > 0 ? '#e8ecf2' : '#5b6473';
                 return React.createElement('div', { key: di, style: { background: bg, border: '1px solid #1f2733', borderRadius: 6, padding: '8px 6px' } },
-                  React.createElement('div', { style: { fontSize: 10, color: '#7f8a9b', textTransform: 'uppercase', letterSpacing: 0.6, fontWeight: 600, marginBottom: 4 } }, dn),
+                  React.createElement('div', { style: { fontSize: 10, color: '#5b6473', textTransform: 'uppercase', letterSpacing: 0.6, fontWeight: 600, marginBottom: 4 } }, dn),
                   React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', fontSize: 13, fontWeight: 600, color: color, marginBottom: 4 } }, hrs > 0 ? hrs.toFixed(1) + 'h' : '—'),
                   dp.length > 0 && React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 2 } },
                     dp.map(function (p) {
                       var typeColors = { 'in': '#22c55e', 'out': '#ef4444', 'break-out': '#f59e0b', 'break-in': '#38bdf8' };
-                      var tc = typeColors[p.type] || '#a9b3c1';
+                      var tc = typeColors[p.type] || '#8993a4';
                       var lbl = p.type === 'in' ? 'IN' : p.type === 'out' ? 'OUT' : p.type === 'break-out' ? 'B-OUT' : 'B-IN';
                       var tm = new Date(p.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                       return React.createElement('div', { key: p.id, style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 10, fontFamily: 'JetBrains Mono, monospace', padding: '2px 4px', borderRadius: 3, background: '#0a0d12' } },
                         React.createElement('span', { style: { color: tc, fontWeight: 700 } }, lbl),
-                        React.createElement('span', { style: { color: '#a9b3c1', flex: 1, textAlign: 'right', marginRight: 4 } }, tm),
-                        React.createElement('button', { onClick: function () { onPunchEdit && onPunchEdit(p); }, title: 'Edit', style: { width: 16, height: 16, padding: 0, background: 'transparent', border: '1px solid #1f2733', color: '#a9b3c1', borderRadius: 3, cursor: 'pointer', fontSize: 9, lineHeight: 1 } }, '✎'),
-                        React.createElement('button', { onClick: function () { if (confirm('Delete this ' + p.type + ' punch?')) onPunchDelete(p.id); }, title: 'Delete', style: { width: 16, height: 16, padding: 0, marginLeft: 2, background: 'transparent', border: '1px solid #1f2733', color: '#a9b3c1', borderRadius: 3, cursor: 'pointer', fontSize: 9, lineHeight: 1 } }, '×')
+                        React.createElement('span', { style: { color: '#8993a4', flex: 1, textAlign: 'right', marginRight: 4 } }, tm),
+                        React.createElement('button', { onClick: function () { onPunchEdit && onPunchEdit(p); }, title: 'Edit', style: { width: 16, height: 16, padding: 0, background: 'transparent', border: '1px solid #1f2733', color: '#8993a4', borderRadius: 3, cursor: 'pointer', fontSize: 9, lineHeight: 1 } }, '✎'),
+                        React.createElement('button', { onClick: function () { if (confirm('Delete this ' + p.type + ' punch?')) onPunchDelete(p.id); }, title: 'Delete', style: { width: 16, height: 16, padding: 0, marginLeft: 2, background: 'transparent', border: '1px solid #1f2733', color: '#8993a4', borderRadius: 3, cursor: 'pointer', fontSize: 9, lineHeight: 1 } }, '×')
                       );
                     })
                   )
@@ -8377,7 +8304,7 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
       React.createElement('div', null,
         sortedPunches.map(function (p) {
           var typeColors = { 'in': ['#22c55e', '#22c55e1a'], 'out': ['#ef4444', '#ef44441a'], 'break-out': ['#f59e0b', '#f59e0b1a'], 'break-in': ['#38bdf8', '#38bdf81a'] };
-          var c = typeColors[p.type] || ['#a9b3c1', '#a9b3c11a'];
+          var c = typeColors[p.type] || ['#8993a4', '#8993a41a'];
           var typeLabel = p.type === 'in' ? 'CLOCK IN' : p.type === 'out' ? 'CLOCK OUT' : p.type === 'break-out' ? 'BREAK OUT' : 'BREAK IN';
           var isFuture = new Date(p.time).getTime() > nowMs + 90000;
           return React.createElement('div', { key: p.id, style: { display: 'grid', gridTemplateColumns: '100px 1fr auto', gap: 10, padding: '10px 0', alignItems: 'center', borderBottom: '1px solid #1a2029', fontSize: 12, background: isFuture ? '#ef44441a' : 'transparent' } },
@@ -8385,10 +8312,10 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
             React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace' } },
               new Date(p.time).toLocaleString(),
               isFuture && React.createElement('span', { style: { marginLeft: 8, padding: '1px 6px', background: '#ef4444', color: '#fff', borderRadius: 3, fontSize: 9.5, fontWeight: 700 } }, 'FUTURE'),
-              React.createElement('div', { style: { fontSize: 10.5, color: '#7f8a9b', marginTop: 2 } }, (p.dev || 'unknown') + (p.ip ? ' · ' + p.ip : ''))
+              React.createElement('div', { style: { fontSize: 10.5, color: '#5b6473', marginTop: 2 } }, (p.dev || 'unknown') + (p.ip ? ' · ' + p.ip : ''))
             ),
             React.createElement('div', { style: { display: 'flex', gap: 4 } },
-              React.createElement('button', { onClick: function () { onPunchEdit && onPunchEdit(p); }, style: { padding: '4px 10px', background: 'transparent', border: '1px solid #1f2733', color: '#a9b3c1', borderRadius: 4, cursor: 'pointer', fontSize: 11 } }, 'Edit'),
+              React.createElement('button', { onClick: function () { onPunchEdit && onPunchEdit(p); }, style: { padding: '4px 10px', background: 'transparent', border: '1px solid #1f2733', color: '#8993a4', borderRadius: 4, cursor: 'pointer', fontSize: 11 } }, 'Edit'),
               React.createElement('button', { onClick: function () { if (confirm('Delete this punch?')) onPunchDelete(p.id); }, style: { padding: '4px 10px', background: 'transparent', border: '1px solid #ef4444', color: '#ef4444', borderRadius: 4, cursor: 'pointer', fontSize: 11 } }, 'Delete')
             )
           );
@@ -8401,7 +8328,7 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
       React.createElement('div', null,
         // Quick-issue toolbar
         React.createElement('div', { style: { display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16, padding: '10px 12px', background: '#0a0d12', border: '1px solid #1a2029', borderRadius: 8 } },
-          React.createElement('div', { style: { fontSize: 11, fontWeight: 700, color: '#7f8a9b', letterSpacing: 0.6, textTransform: 'uppercase', alignSelf: 'center', marginRight: 6 } }, 'Quick Issue:'),
+          React.createElement('div', { style: { fontSize: 11, fontWeight: 700, color: '#5b6473', letterSpacing: 0.6, textTransform: 'uppercase', alignSelf: 'center', marginRight: 6 } }, 'Quick Issue:'),
           [
             { k: 'tardy-short', lbl: 'Tardy ≤30', pts: 0.5 },
             { k: 'tardy-long', lbl: 'Tardy >30', pts: 1 },
@@ -8412,28 +8339,61 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
             return React.createElement('button', {
               key: r.k,
               onClick: async function() {
-                setQuickIssue({ type: r.k });
+                if (!confirm('Issue ' + r.lbl + ' (+' + r.pts + ' pts) to ' + emp.fn + ' ' + emp.ln + '?')) return;
+                var newEv = {
+                  id: 'PE-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
+                  eid: eid,
+                  type: r.k,
+                  pts: r.pts,
+                  date: new Date().toISOString()
+                };
+                try {
+                  var sb = window._sb;
+                  if (sb) {
+                    var res = await sb.from('tk_point_events').insert(newEv);
+                    if (res.error) { alert('Failed to save: ' + res.error.message); return; }
+                  }
+                  setPoints(function(prev) { return [newEv].concat(prev); });
+                } catch(e) { alert('Error: ' + e.message); }
               },
               style: { padding: '5px 10px', background: '#ffc23312', border: '1px solid #ffc23333', color: '#ffc233', borderRadius: 5, fontSize: 11, fontWeight: 600, cursor: 'pointer' }
             }, r.lbl + ' (+' + r.pts + ')');
           }),
           React.createElement('button', {
             onClick: async function() {
-              setQuickIssue({ type: 'manual' });
+              var amtStr = prompt('Custom adjustment for ' + emp.fn + ' ' + emp.ln + '\n\nEnter point change (e.g. 0.5 to add, -1 to remove):');
+              if (!amtStr) return;
+              var amt = parseFloat(amtStr);
+              if (isNaN(amt) || amt === 0) { alert('Invalid amount.'); return; }
+              var newEv = {
+                id: 'PE-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
+                eid: eid,
+                type: 'manual',
+                pts: amt,
+                date: new Date().toISOString()
+              };
+              try {
+                var sb = window._sb;
+                if (sb) {
+                  var res = await sb.from('tk_point_events').insert(newEv);
+                  if (res.error) { alert('Failed to save: ' + res.error.message); return; }
+                }
+                setPoints(function(prev) { return [newEv].concat(prev); });
+              } catch(e) { alert('Error: ' + e.message); }
             },
-            style: { padding: '5px 10px', background: 'transparent', border: '1px solid #1f2733', color: '#a9b3c1', borderRadius: 5, fontSize: 11, fontWeight: 600, cursor: 'pointer' }
+            style: { padding: '5px 10px', background: 'transparent', border: '1px solid #1f2733', color: '#8993a4', borderRadius: 5, fontSize: 11, fontWeight: 600, cursor: 'pointer' }
           }, 'Custom ±')
         ),
         // List of events
         points.length === 0
-          ? React.createElement('div', { style: { color: '#7f8a9b', fontSize: 12, padding: '12px 0', textAlign: 'center' } }, 'No point events on record')
+          ? React.createElement('div', { style: { color: '#5b6473', fontSize: 12, padding: '12px 0', textAlign: 'center' } }, 'No point events on record')
           : points.map(function (p, i) {
               var pts = parseFloat(p.pts) || 0;
-              var color = pts > 0 ? '#ef4444' : pts < 0 ? '#22c55e' : '#a9b3c1';
+              var color = pts > 0 ? '#ef4444' : pts < 0 ? '#22c55e' : '#8993a4';
               return React.createElement('div', { key: p.id || i, style: { display: 'grid', gridTemplateColumns: '1fr auto auto', gap: 12, alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #1a2029' } },
                 React.createElement('div', null,
                   React.createElement('div', { style: { fontWeight: 600, fontSize: 13 } }, pointLabel(p.type)),
-                  React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#a9b3c1', marginTop: 2 } },
+                  React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#8993a4', marginTop: 2 } },
                     p.date ? new Date(p.date).toLocaleString() : ''
                   )
                 ),
@@ -8451,7 +8411,7 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
                     } catch(e) { alert('Error: ' + e.message); }
                   },
                   title: 'Delete',
-                  style: { width: 26, height: 26, padding: 0, background: 'transparent', border: '1px solid #1f2733', color: '#a9b3c1', borderRadius: 4, cursor: 'pointer', fontSize: 13, lineHeight: 1 }
+                  style: { width: 26, height: 26, padding: 0, background: 'transparent', border: '1px solid #1f2733', color: '#8993a4', borderRadius: 4, cursor: 'pointer', fontSize: 13, lineHeight: 1 }
                 }, '×')
               );
             })
@@ -8470,50 +8430,33 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
         React.createElement('button', {
           onClick: postNote,
           disabled: !noteDraft.trim(),
-          style: { marginTop: 8, marginBottom: 18, padding: '7px 16px', background: noteDraft.trim() ? '#ffc233' : '#1f2733', color: noteDraft.trim() ? '#1a1300' : '#7f8a9b', border: 'none', borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: noteDraft.trim() ? 'pointer' : 'not-allowed' }
+          style: { marginTop: 8, marginBottom: 18, padding: '7px 16px', background: noteDraft.trim() ? '#ffc233' : '#1f2733', color: noteDraft.trim() ? '#1a1300' : '#5b6473', border: 'none', borderRadius: 6, fontWeight: 700, fontSize: 12, cursor: noteDraft.trim() ? 'pointer' : 'not-allowed' }
         }, 'Post Note'),
         notes.length === 0
-          ? React.createElement('div', { style: { color: '#7f8a9b', fontSize: 12, textAlign: 'center', padding: '24px 0' } }, 'No notes yet. Be the first.')
+          ? React.createElement('div', { style: { color: '#5b6473', fontSize: 12, textAlign: 'center', padding: '24px 0' } }, 'No notes yet. Be the first.')
           : notes.map(function (n) {
               return React.createElement('div', { key: n.id, style: { background: '#161b24', borderRadius: 8, padding: '12px 14px', marginBottom: 10, borderLeft: '2px solid #ffc233' } },
                 React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 } },
                   React.createElement('div', { style: { fontWeight: 700, fontSize: 12 } }, n.author_name),
                   React.createElement('div', { style: { display: 'flex', gap: 8, alignItems: 'center' } },
-                    React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', fontSize: 10.5, color: '#7f8a9b' } }, new Date(n.created_at).toLocaleString()),
-                    React.createElement('button', { onClick: function () { deleteNote(n.id); }, style: { background: 'transparent', border: 'none', color: '#7f8a9b', cursor: 'pointer', fontSize: 14, lineHeight: 1, padding: 0 } }, '×')
+                    React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', fontSize: 10.5, color: '#5b6473' } }, new Date(n.created_at).toLocaleString()),
+                    React.createElement('button', { onClick: function () { deleteNote(n.id); }, style: { background: 'transparent', border: 'none', color: '#5b6473', cursor: 'pointer', fontSize: 14, lineHeight: 1, padding: 0 } }, '×')
                   )
                 ),
-                React.createElement('div', { style: { fontSize: 12.5, color: '#a9b3c1', lineHeight: 1.55 } }, n.body)
+                React.createElement('div', { style: { fontSize: 12.5, color: '#8993a4', lineHeight: 1.55 } }, n.body)
               );
             })
       )
     )
-    ,quickIssue && React.createElement(QuickIssueModal, {
-      emp: emp,
-      presetType: quickIssue.type,
-      onIssue: async function(type, ptsVal, dateISO) {
-        var newEv = { id: 'PE-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4), eid: eid, type: type, pts: ptsVal, date: dateISO };
-        try {
-          var sb = window._sb;
-          if (sb) {
-            var res = await sb.from('tk_point_events').insert(newEv);
-            if (res.error) { alert('Failed to save: ' + res.error.message); return; }
-          }
-          setPoints(function(prev) { return [newEv].concat(prev); });
-          setQuickIssue(null);
-        } catch(e) { alert('Error: ' + e.message); }
-      },
-      onClose: function() { setQuickIssue(null); }
-    })
   );
 }
 
 // ── small helpers used by EmployeeProfile ────────────────────────────
 function statCard(label, value, delta, accent) {
   return React.createElement('div', { style: { background: '#11151c', border: '1px solid #1f2733', borderRadius: 10, padding: '14px 16px', borderTop: '2px solid ' + accent } },
-    React.createElement('div', { style: { fontSize: 10.5, textTransform: 'uppercase', letterSpacing: 0.8, color: '#7f8a9b', marginBottom: 6, fontWeight: 600 } }, label),
+    React.createElement('div', { style: { fontSize: 10.5, textTransform: 'uppercase', letterSpacing: 0.8, color: '#5b6473', marginBottom: 6, fontWeight: 600 } }, label),
     React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', fontSize: 20, fontWeight: 600 } }, value),
-    delta && React.createElement('div', { style: { fontSize: 11, color: '#a9b3c1', marginTop: 2 } }, delta)
+    delta && React.createElement('div', { style: { fontSize: 11, color: '#8993a4', marginTop: 2 } }, delta)
   );
 }
 
@@ -8522,7 +8465,7 @@ function tabBtn(id, label, active, setActive) {
   return React.createElement('button', {
     key: id,
     onClick: function () { setActive(id); },
-    style: { padding: '10px 18px', background: 'transparent', border: 'none', color: isActive ? '#ffc233' : '#a9b3c1', fontFamily: 'inherit', fontSize: 13, fontWeight: 600, cursor: 'pointer', borderBottom: '2px solid ' + (isActive ? '#ffc233' : 'transparent'), marginBottom: -1 }
+    style: { padding: '10px 18px', background: 'transparent', border: 'none', color: isActive ? '#ffc233' : '#8993a4', fontFamily: 'inherit', fontSize: 13, fontWeight: 600, cursor: 'pointer', borderBottom: '2px solid ' + (isActive ? '#ffc233' : 'transparent'), marginBottom: -1 }
   }, label);
 }
 
