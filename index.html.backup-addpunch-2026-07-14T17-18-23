@@ -45,8 +45,7 @@ const {
   useState,
   useEffect,
   useCallback,
-  useRef,
-  useMemo
+  useRef
 } = React;
 const C = {
   bg: "#09090B",
@@ -830,15 +829,6 @@ function fmtTime(iso) {
     minute: "2-digit"
   });
 }
-var __punchIndex=null,__punchIndexKey="";
-function getPunchesByEid(allPunches){
-  var key=allPunches.length+"-"+(allPunches[0]?allPunches[0].id:"")+"-"+(allPunches[allPunches.length-1]?allPunches[allPunches.length-1].id:"");
-  if(__punchIndex&&__punchIndexKey===key)return __punchIndex;
-  var idx={};
-  for(var i=0;i<allPunches.length;i++){var eid=allPunches[i].eid;if(!idx[eid])idx[eid]=[];idx[eid].push(allPunches[i])}
-  __punchIndex=idx;__punchIndexKey=key;
-  return idx;
-}
 function calcDayHours(punches, eid) {
   var sorted = punches.slice().sort(function (a, b) {
     return new Date(a.time) - new Date(b.time);
@@ -881,7 +871,8 @@ function calcDayHours(punches, eid) {
 }
 // Overnight shift handler: get day punches + carry-over from previous night
 function getDayPunchesWithCarryOver(allPunches, eid, dayStart, dayEnd) {
-  allPunches = getPunchesByEid(allPunches)[eid] || [];var pt=new Date(p.time);return pt.getFullYear()===dayStart.getFullYear()&&pt.getMonth()===dayStart.getMonth()&&pt.getDate()===dayStart.getDate();
+  var dp = allPunches.filter(function(p) {
+    if(p.eid!==eid)return false;var pt=new Date(p.time);return pt.getFullYear()===dayStart.getFullYear()&&pt.getMonth()===dayStart.getMonth()&&pt.getDate()===dayStart.getDate();
   }).sort(function(a,b){return new Date(a.time)-new Date(b.time)});
 
   // FORWARD LOOK: If last punch is an evening clock-in (>=18:00) with no clock-out after it,
@@ -1965,7 +1956,7 @@ function LoadScreen() {
 }
 
 function PunchEditorPanel(props) {
-  var pEmps=props.emps||[],pPunches=props.punches||[],onEdit=props.onEdit,onClose=props.onClose,onPunchOut=props.onPunchOut,onDelete=props.onDelete;var onAddPunch=props.onAddPunch;
+  var pEmps=props.emps||[],pPunches=props.punches||[],onEdit=props.onEdit,onClose=props.onClose,onPunchOut=props.onPunchOut,onDelete=props.onDelete;
   var r1=React.useState(""),selEmp=r1[0],setSelEmp=r1[1];
   var r2=React.useState(new Date().toISOString().slice(0,10)),selDate=r2[0],setSelDate=r2[1];
   var r3=React.useState(null),expandedEmp=r3[0],setExpandedEmp=r3[1];
@@ -2005,7 +1996,6 @@ function PunchEditorPanel(props) {
             isClockedIn&&onPunchOut&&React.createElement("button",{onClick:function(ev){ev.stopPropagation();if(confirm("Clock out "+(emp.name||emp.fn+" "+emp.ln)+" now?")){onPunchOut(eid)}},style:{padding:"4px 12px",fontSize:12,background:C.red||"#EF4444",border:"none",color:"#fff",borderRadius:6,cursor:"pointer",fontWeight:600}},"Clock Out"),
             hasIssue&&React.createElement("span",{style:{fontSize:11,color:C.red||"#EF4444",fontWeight:600,padding:"2px 8px",background:"rgba(239,68,68,0.08)",borderRadius:4}},"Mismatch"),
             React.createElement("div",{style:{fontFamily:"monospace",fontSize:14,fontWeight:700,color:parseFloat(totalHrs)>40?(C.red||"#EF4444"):(C.t1||"#E4E4E7")}},totalHrs+"h"),
-            onAddPunch&&React.createElement("button",{onClick:function(ev){ev.stopPropagation();onAddPunch({eid:eid})},style:{padding:"4px 10px",fontSize:11,background:"transparent",border:"1px solid "+(C.spark||"#FACC15"),color:C.spark||"#FACC15",borderRadius:4,cursor:"pointer",fontWeight:600}},"+ Punch"),
             React.createElement("span",{style:{fontSize:14,color:C.t3,transform:isExp?"rotate(180deg)":"none",transition:"transform 0.2s",display:"inline-block"}},"\u25BC")
           )
         ),
@@ -2017,10 +2007,10 @@ function PunchEditorPanel(props) {
               var ins=dayP.filter(function(p){return p.type==="in"});var outs=dayP.filter(function(p){return p.type==="out"});
               var dayLabel=new Date(dateStr+"T12:00:00").toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric"});
               var isToday=dateStr===new Date().toISOString().slice(0,10);
-              if(dayP.length===0)return React.createElement("tr",{key:dateStr,style:{opacity:0.5}},React.createElement("td",{style:Object.assign({},tds,{color:isToday?C.spark:C.t4})},dayLabel),React.createElement("td",{style:tds,colSpan:4},React.createElement("span",{style:{fontSize:12,color:C.t4,fontStyle:"italic"}},"No punches"),onAddPunch&&React.createElement("button",{onClick:function(){onAddPunch({eid:eid,date:dateStr,type:"in"})},style:{marginLeft:10,padding:"2px 8px",fontSize:10.5,background:"transparent",border:"1px solid "+(C.spark||"#FACC15"),color:C.spark||"#FACC15",borderRadius:4,cursor:"pointer",fontWeight:600}},"+ Add")));
+              if(dayP.length===0)return React.createElement("tr",{key:dateStr,style:{opacity:0.5}},React.createElement("td",{style:Object.assign({},tds,{color:isToday?C.spark:C.t4})},dayLabel),React.createElement("td",{style:tds,colSpan:4},React.createElement("span",{style:{fontSize:12,color:C.t4,fontStyle:"italic"}},"No punches")));
               var pairs=Math.max(ins.length,outs.length);var rows=[];
               for(var pi=0;pi<pairs;pi++){(function(pi){var inP=ins[pi]||null;var outP=outs[pi]||null;var hrs=(inP&&outP)?((new Date(outP.time)-new Date(inP.time))/3600000).toFixed(1):"--";var mm=(inP&&!outP)||(!inP&&outP);
-              rows.push(React.createElement("tr",{key:dateStr+"-"+pi,style:{background:mm?"rgba(239,68,68,0.08)":"transparent"}},pi===0&&React.createElement("td",{rowSpan:pairs,style:Object.assign({},tds,{color:isToday?C.spark:C.t2})},dayLabel),React.createElement("td",{style:tds},inP?React.createElement("span",{style:{fontFamily:"monospace",color:C.t1,cursor:"pointer",borderBottom:"1px dashed "+(C.t4||"#3F3F46")},onClick:function(){onEdit(inP)}},new Date(inP.time).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}),inP.edited&&React.createElement("span",{style:{color:C.spark,fontSize:10,marginLeft:4}},"*")):React.createElement("span",{style:{display:"inline-flex",alignItems:"center",gap:6}},React.createElement("span",{style:{color:C.t4,fontSize:12}},mm?"Missing":"--"),mm&&onAddPunch&&React.createElement("button",{onClick:function(){onAddPunch({eid:eid,date:dateStr,type:"in"})},style:{padding:"2px 8px",fontSize:10.5,background:"transparent",border:"1px solid "+(C.spark||"#FACC15"),color:C.spark||"#FACC15",borderRadius:4,cursor:"pointer",fontWeight:600}},"+ Add"))),React.createElement("td",{style:tds},outP?React.createElement("span",{style:{fontFamily:"monospace",color:C.t1,cursor:"pointer",borderBottom:"1px dashed "+(C.t4||"#3F3F46")},onClick:function(){onEdit(outP)}},new Date(outP.time).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}),outP.edited&&React.createElement("span",{style:{color:C.spark,fontSize:10,marginLeft:4}},"*")):React.createElement("span",{style:{display:"inline-flex",alignItems:"center",gap:6}},React.createElement("span",{style:{color:C.t4,fontSize:12}},mm?"Missing":"--"),mm&&onAddPunch&&React.createElement("button",{onClick:function(){onAddPunch({eid:eid,date:dateStr,type:"out"})},style:{padding:"2px 8px",fontSize:10.5,background:"transparent",border:"1px solid "+(C.spark||"#FACC15"),color:C.spark||"#FACC15",borderRadius:4,cursor:"pointer",fontWeight:600}},"+ Add"))),React.createElement("td",{style:Object.assign({},tds,{fontFamily:"monospace",fontWeight:600,color:parseFloat(hrs)>10?C.red:C.t1})},hrs==="--"?"":hrs+"h"),React.createElement("td",{style:Object.assign({},tds,{textAlign:"center"})},(inP||outP)&&React.createElement("span",{style:{display:"flex",gap:4}},React.createElement("button",{onClick:function(){onEdit(inP||outP)},style:{padding:"3px 10px",fontSize:11,background:"transparent",border:"1px solid "+(C.spark||"#FACC15"),color:C.spark,borderRadius:4,cursor:"pointer",fontWeight:600}},"Edit"),onDelete&&React.createElement("button",{onClick:function(){onDelete((inP||outP).id)},style:{padding:"3px 10px",fontSize:11,background:"transparent",border:"1px solid "+(C.red||"#EF4444"),color:C.red||"#EF4444",borderRadius:4,cursor:"pointer",fontWeight:600}},"Del")))))})(pi)}
+              rows.push(React.createElement("tr",{key:dateStr+"-"+pi,style:{background:mm?"rgba(239,68,68,0.08)":"transparent"}},pi===0&&React.createElement("td",{rowSpan:pairs,style:Object.assign({},tds,{color:isToday?C.spark:C.t2})},dayLabel),React.createElement("td",{style:tds},inP?React.createElement("span",{style:{fontFamily:"monospace",color:C.t1,cursor:"pointer",borderBottom:"1px dashed "+(C.t4||"#3F3F46")},onClick:function(){onEdit(inP)}},new Date(inP.time).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}),inP.edited&&React.createElement("span",{style:{color:C.spark,fontSize:10,marginLeft:4}},"*")):React.createElement("span",{style:{color:C.t4,fontSize:12}},mm?"Missing":"--")),React.createElement("td",{style:tds},outP?React.createElement("span",{style:{fontFamily:"monospace",color:C.t1,cursor:"pointer",borderBottom:"1px dashed "+(C.t4||"#3F3F46")},onClick:function(){onEdit(outP)}},new Date(outP.time).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}),outP.edited&&React.createElement("span",{style:{color:C.spark,fontSize:10,marginLeft:4}},"*")):React.createElement("span",{style:{color:C.t4,fontSize:12}},mm?"Missing":"--")),React.createElement("td",{style:Object.assign({},tds,{fontFamily:"monospace",fontWeight:600,color:parseFloat(hrs)>10?C.red:C.t1})},hrs==="--"?"":hrs+"h"),React.createElement("td",{style:Object.assign({},tds,{textAlign:"center"})},(inP||outP)&&React.createElement("span",{style:{display:"flex",gap:4}},React.createElement("button",{onClick:function(){onEdit(inP||outP)},style:{padding:"3px 10px",fontSize:11,background:"transparent",border:"1px solid "+(C.spark||"#FACC15"),color:C.spark,borderRadius:4,cursor:"pointer",fontWeight:600}},"Edit"),onDelete&&React.createElement("button",{onClick:function(){onDelete((inP||outP).id)},style:{padding:"3px 10px",fontSize:11,background:"transparent",border:"1px solid "+(C.red||"#EF4444"),color:C.red||"#EF4444",borderRadius:4,cursor:"pointer",fontWeight:600}},"Del")))))})(pi)}
               return rows;
             }).reduce(function(a,b){return a.concat(b)},[]))
           )
@@ -2091,17 +2081,16 @@ function AddPunchModal({
   emps,
   onAdd,
   onClose,
-  staffName,
-  prefill
+  staffName
 }) {
   var mo = useMobile();
-  var r1 = useState((prefill && prefill.eid) || ""),
+  var r1 = useState(""),
     eid = r1[0],
     setEid = r1[1];
-  var r2 = useState((prefill && prefill.type) || "in"),
+  var r2 = useState("in"),
     type = r2[0],
     setType = r2[1];
-  var r3 = useState((prefill && prefill.date) ? (prefill.date + "T") : new Date().toISOString().slice(0, 16)),
+  var r3 = useState(new Date().toISOString().slice(0, 16)),
     time = r3[0],
     setTime = r3[1];
   var inp = {
@@ -2131,13 +2120,11 @@ function AddPunchModal({
       onClose();
       return;
     }
-    var _pdt = new Date(time);
-    if (!time || time.length < 16 || isNaN(_pdt.getTime())) { alert("Enter a time for the punch."); return; }
     onAdd({
       id: "P-M-" + Date.now() + "-" + Math.random().toString(36).substr(2, 4),
       eid: eid,
       type: type,
-      time: _pdt.toISOString(),
+      time: new Date(time).toISOString(),
       dev: `MANAGER - ${staffName||"Unknown"}`,
       ip: getIP()
     });
@@ -4058,7 +4045,6 @@ function ManagerView({
   var r4 = useState(false),
     showAddPunch = r4[0],
     setShowAddPunch = r4[1];
-  var r4p = useState(null), addPrefill = r4p[0], setAddPrefill = r4p[1];
   var r4b = useState(null), editingPunch = r4b[0], setEditingPunch = r4b[1];
   var r4c = useState(false), showPunchEditor = r4c[0], setShowPunchEditor = r4c[1];
   var r5a = useState("all"), alertFilter = r5a[0], setAlertFilter = r5a[1];
@@ -4114,7 +4100,7 @@ function ManagerView({
   emps.forEach(function (e) { empIdSet[e.id] = true; });
   var validPunches = (punches || []).filter(function (p) { return p && p.eid && empIdSet[p.eid]; });
   var orphanCount = (punches || []).length - validPunches.length;
-  var statuses = useMemo(function(){ return active.map(function (e) {
+  var statuses = active.map(function (e) {
     var cs = getCurrentState(e, validPunches);
     var wk = calcWeekHoursForWeek(validPunches, e.id, mon);
     var excs = detectExceptions(e, validPunches, P);
@@ -4126,7 +4112,7 @@ function ManagerView({
       excs: excs,
       cost: cost
     });
-  }); }, [emps, punches, weekOffset]);
+  });
   var clockedIn = statuses.filter(function (e) {
     return e.cs.status === "in";
   });
@@ -4218,7 +4204,6 @@ function ManagerView({
           if (r.error) { alert("Delete failed: " + r.error.message); return; }
         } catch (e) { alert("Delete failed: " + e.message); }
       },
-      onAddPunch: onPunch,
       onPunchEdit: function (p) {
         try { setEditingPunch && setEditingPunch(p); setShowPunchEditor && setShowPunchEditor(true); } catch (e) {}
       }
@@ -4935,7 +4920,6 @@ function ManagerView({
     }
   }, "No pending requests"), !readOnly && /*#__PURE__*/React.createElement("button", {
     onClick: function () {
-      setAddPrefill(null);
       setShowAddPunch(true);
     },
     style: {
@@ -5000,7 +4984,6 @@ function ManagerView({
   
   , mTab === "ledger" && React.createElement(PointsLedger, { pointEvents: pointEvents || [], employees: emps, onIssuePoint: onIssuePoint, onUpdatePointEvents: function(updated){ if(typeof window.__tkSetPointEvents === "function") window.__tkSetPointEvents(updated); }, policy: P, readOnly: readOnly, currentUser: staffName }), mTab === "profile" && React.createElement(EmployeeDirectory, { employees: emps, punches: punches, pointEvents: pointEvents || [], onIssuePoint: onIssuePoint, policy: P, search: search, dept: dept, onOpen: function(eid){ setActiveEid(eid); }, readOnly: readOnly }),mTab === "reports" && /*#__PURE__*/React.createElement(ReportsTab, {emps:statuses,punches:punches,policy:P,weekOffset:weekOffset,mon:mon})
   ,showPunchEditor && /*#__PURE__*/React.createElement(PunchEditorPanel, {
-    onAddPunch: function(pref){ setAddPrefill(pref || null); setShowAddPunch(true); },
     emps: emps,
     punches: punches,
     onEdit: function(p){setEditingPunch(p)},onDelete: function(pid){deletePunch(pid)},
@@ -5017,10 +5000,8 @@ function ManagerView({
     emps: active,
     onAdd: onPunch,
     staffName: staffName,
-    prefill: addPrefill,
     onClose: function () {
       setShowAddPunch(false);
-      setAddPrefill(null);
     }
   }));
 }
@@ -5457,7 +5438,7 @@ function AdminView({
   function doExport(type) {
     if (type === "timesheet") {
       var monday = reportMon || getMonday();
-      var rows = ["Employee,GS ID,Badge,Dept,Title,Mon Net,Mon Gross,Mon Break,Tue Net,Tue Gross,Tue Break,Wed Net,Wed Gross,Wed Break,Thu Net,Thu Gross,Thu Break,Fri Net,Fri Gross,Fri Break,Sat Net,Sat Gross,Sat Break,Sun Net,Sun Gross,Sun Break,Week Gross,Week Break,Week Net,Week RT,Week OT,Lunch Exempt"];
+      var rows = ["Employee,GS ID,Badge,Dept,Title,Mon Net,Mon Gross,Mon Break,Tue Net,Tue Gross,Tue Break,Wed Net,Wed Gross,Wed Break,Thu Net,Thu Gross,Thu Break,Fri Net,Fri Gross,Fri Break,Sat Net,Sat Gross,Sat Break,Sun Net,Sun Gross,Sun Break,Week Gross,Week Break,Week Net,Week OT,Lunch Exempt"];
       emps.filter(function (e) {
         return e.st === "active";
       }).sort(function(a,b){return(a.ln||"").localeCompare(b.ln||"")}).forEach(function (e) {
@@ -5468,7 +5449,7 @@ function AdminView({
         var dayCells = daily.map(function(d) {
           return (d.netH || 0).toFixed(2) + "," + (d.grossH || 0).toFixed(2) + "," + ((d.breakH || 0) * 60).toFixed(0) + "m";
         }).join(",");
-        rows.push(e.fn + " " + e.ln + "," + (e.gsId||"") + "," + e.badge + "," + (e.dept||"") + "," + (e.role||"") + "," + dayCells + "," + totalGross.toFixed(2) + "," + (totalBreak * 60).toFixed(0) + "m," + totalNet.toFixed(2) + "," + Math.min(totalNet, P.otWeekly).toFixed(2) + "," + Math.max(0, totalNet - P.otWeekly).toFixed(2) + "," + (e.breakExempt ? "YES" : "no"));
+        rows.push(e.fn + " " + e.ln + "," + (e.gsId||"") + "," + e.badge + "," + (e.gsId||"") + "," + (e.dept||"") + "," + (e.role||"") + "," + dayCells + "," + totalGross.toFixed(2) + "," + (totalBreak * 60).toFixed(0) + "m," + totalNet.toFixed(2) + "," + Math.max(0, totalNet - P.otWeekly).toFixed(2) + "," + (e.breakExempt ? "YES" : "no"));
       });
       var blob = new Blob([rows.join("\n")], {
         type: "text/csv"
@@ -8004,7 +7985,6 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
   const [loading, setLoading] = React.useState(true);
   const [expandedCell, setExpandedCell] = React.useState(null); // {weekIdx, dayIdx} or null
   const [quickIssue, setQuickIssue] = React.useState(null); // null | { type }
-  const [addPunchDay, setAddPunchDay] = React.useState(null); // null | 'YYYY-MM-DD'
 
   // ── load employee + points + notes ────────────────────────────────
   React.useEffect(function () {
@@ -8284,12 +8264,6 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
           var dayLabel = dayStart.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
           return panel('Punches · ' + dayLabel,
             React.createElement('div', null,
-              onAddPunch && React.createElement('div', { style: { display: 'flex', justifyContent: 'flex-end', marginBottom: 6 } },
-                React.createElement('button', {
-                  onClick: function () { setAddPunchDay(dayStart.getFullYear() + '-' + String(dayStart.getMonth() + 1).padStart(2, '0') + '-' + String(dayStart.getDate()).padStart(2, '0')); },
-                  style: { padding: '4px 12px', background: 'transparent', border: '1px solid #ffc233', color: '#ffc233', borderRadius: 5, fontSize: 11, fontWeight: 600, cursor: 'pointer' }
-                }, '+ Add Punch')
-              ),
               dp.length === 0
                 ? React.createElement('div', { style: { color: '#7f8a9b', fontSize: 12, padding: '8px 0' } }, 'No punches recorded this day')
                 : dp.map(function (p) {
@@ -8553,13 +8527,6 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
         } catch(e) { alert('Error: ' + e.message); }
       },
       onClose: function() { setQuickIssue(null); }
-    })
-    ,addPunchDay && React.createElement(AddPunchModal, {
-      emps: [emp],
-      staffName: currentUser || 'Manager',
-      prefill: { eid: eid, date: addPunchDay },
-      onAdd: function(p) { if (onAddPunch) onAddPunch(p); },
-      onClose: function() { setAddPunchDay(null); }
     })
   );
 }
