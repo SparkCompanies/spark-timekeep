@@ -45,8 +45,7 @@ const {
   useState,
   useEffect,
   useCallback,
-  useRef,
-  useMemo
+  useRef
 } = React;
 const C = {
   bg: "#09090B",
@@ -830,15 +829,6 @@ function fmtTime(iso) {
     minute: "2-digit"
   });
 }
-var __punchIndex=null,__punchIndexKey="";
-function getPunchesByEid(allPunches){
-  var key=allPunches.length+"-"+(allPunches[0]?allPunches[0].id:"")+"-"+(allPunches[allPunches.length-1]?allPunches[allPunches.length-1].id:"");
-  if(__punchIndex&&__punchIndexKey===key)return __punchIndex;
-  var idx={};
-  for(var i=0;i<allPunches.length;i++){var eid=allPunches[i].eid;if(!idx[eid])idx[eid]=[];idx[eid].push(allPunches[i])}
-  __punchIndex=idx;__punchIndexKey=key;
-  return idx;
-}
 function calcDayHours(punches, eid) {
   var sorted = punches.slice().sort(function (a, b) {
     return new Date(a.time) - new Date(b.time);
@@ -881,7 +871,8 @@ function calcDayHours(punches, eid) {
 }
 // Overnight shift handler: get day punches + carry-over from previous night
 function getDayPunchesWithCarryOver(allPunches, eid, dayStart, dayEnd) {
-  allPunches = getPunchesByEid(allPunches)[eid] || [];var pt=new Date(p.time);return pt.getFullYear()===dayStart.getFullYear()&&pt.getMonth()===dayStart.getMonth()&&pt.getDate()===dayStart.getDate();
+  var dp = allPunches.filter(function(p) {
+    if(p.eid!==eid)return false;var pt=new Date(p.time);return pt.getFullYear()===dayStart.getFullYear()&&pt.getMonth()===dayStart.getMonth()&&pt.getDate()===dayStart.getDate();
   }).sort(function(a,b){return new Date(a.time)-new Date(b.time)});
 
   // FORWARD LOOK: If last punch is an evening clock-in (>=18:00) with no clock-out after it,
@@ -4114,7 +4105,7 @@ function ManagerView({
   emps.forEach(function (e) { empIdSet[e.id] = true; });
   var validPunches = (punches || []).filter(function (p) { return p && p.eid && empIdSet[p.eid]; });
   var orphanCount = (punches || []).length - validPunches.length;
-  var statuses = useMemo(function(){ return active.map(function (e) {
+  var statuses = active.map(function (e) {
     var cs = getCurrentState(e, validPunches);
     var wk = calcWeekHoursForWeek(validPunches, e.id, mon);
     var excs = detectExceptions(e, validPunches, P);
@@ -4126,7 +4117,7 @@ function ManagerView({
       excs: excs,
       cost: cost
     });
-  }); }, [emps, punches, weekOffset]);
+  });
   var clockedIn = statuses.filter(function (e) {
     return e.cs.status === "in";
   });
