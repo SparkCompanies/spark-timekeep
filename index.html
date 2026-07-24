@@ -879,7 +879,7 @@ function getDayPunchesWithCarryOver(allPunches, eid, dayStart, dayEnd) {
   // pull in next-day punches until we find the clock-out
   var lastPunch = dp.length > 0 ? dp[dp.length - 1] : null;
   
-  if (lastPunch && lastPunch.type === "in" && new Date(lastPunch.time).getHours() >= 14) {
+  if (lastPunch && lastPunch.type === "in" && new Date(lastPunch.time).getHours() >= 12) {
     var nextDayStart = new Date(dayEnd.getTime() + 1);
     var nextDayEnd = new Date(dayStart.getTime() + 36 * 3600000); // up to 12h into next day
     var nextPunches = allPunches.filter(function(p) {
@@ -903,7 +903,7 @@ function getDayPunchesWithCarryOver(allPunches, eid, dayStart, dayEnd) {
     // Check if there's an evening clock-in in the prior window
     var priorEveningIn = false;
     for (var j = 0; j < priorPunches.length; j++) {
-      if (priorPunches[j].type === "in" && new Date(priorPunches[j].time).getHours() >= 14) {
+      if (priorPunches[j].type === "in" && new Date(priorPunches[j].time).getHours() >= 12) {
         priorEveningIn = true;
         break;
       }
@@ -916,7 +916,7 @@ function getDayPunchesWithCarryOver(allPunches, eid, dayStart, dayEnd) {
       if (priorIsSunday) {
         // Add Sunday evening clock-in to Monday's punches
         for (var k2 = 0; k2 < priorPunches.length; k2++) {
-          if (priorPunches[k2].type === "in" && new Date(priorPunches[k2].time).getHours() >= 14) {
+          if (priorPunches[k2].type === "in" && new Date(priorPunches[k2].time).getHours() >= 12) {
             dp = [priorPunches[k2]].concat(dp);
             break;
           }
