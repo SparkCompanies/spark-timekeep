@@ -5254,6 +5254,7 @@ function AdminView({
     showAdd = r2[0],
     setShowAdd = r2[1];
   var rSE = useState([]), selEmps = rSE[0], setSelEmps = rSE[1];
+  var rQIA = useState(null), quickIssueFor = rQIA[0], setQuickIssueFor = rQIA[1];
   var r3 = useState({
       fn: "",
       ln: "",
@@ -5464,9 +5465,12 @@ function AdminView({
     logAdminAction("PIN_RESET",(emp2?emp2.fn+" "+emp2.ln:"ID:"+id),staffName);
   }
   function adj(id, d) {
-    var emp2=emps.find(function(e){return e.id===id});
-    logAdminAction("POINTS_ADJUST",(emp2?emp2.fn+" "+emp2.ln:"ID:"+id)+" "+(d>0?"+":"")+d+" pts",staffName);
-    onIssuePoint(id, "manual", d);
+    var emp2 = emps.find(function (e) { return e.id === id; });
+    if (!emp2) return;
+    /* Every adjustment now carries a violation type and an incident date.
+       Direct writes here previously produced undated "manual" events with
+       no reason and no occurrence date. */
+    setQuickIssueFor({ emp: emp2, presetType: "manual", presetPts: d });
   }
   var inp = {
     background: C.bg,
@@ -7662,7 +7666,19 @@ function AdminView({
       color: C.t4,
       marginTop: 8
     }
-  }, "Showing up to 50 most recent entries"))));
+  }, "Showing up to 50 most recent entries")))
+  , quickIssueFor && React.createElement(QuickIssueModal, {
+    emp: quickIssueFor.emp,
+    presetType: quickIssueFor.presetType,
+    presetPts: quickIssueFor.presetPts,
+    onIssue: function (type, pts, dateISO) {
+      var nm = quickIssueFor.emp.fn + " " + quickIssueFor.emp.ln;
+      logAdminAction("POINTS_ADJUST", nm + " " + (pts > 0 ? "+" : "") + pts + " pts · " + type + " · incident " + String(dateISO).slice(0, 10), staffName);
+      onIssuePoint(quickIssueFor.emp.id, type, pts, dateISO);
+      setQuickIssueFor(null);
+    },
+    onClose: function () { setQuickIssueFor(null); }
+  }));
 }
 
 /* ═══ MAIN APP ═══ */
