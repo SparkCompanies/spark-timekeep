@@ -479,7 +479,10 @@ async function sbLoadPointEvents() {
       eid: e.eid,
       type: e.type,
       pts: parseFloat(e.pts),
-      date: e.date
+      date: e.date,
+      occurredOn: e.occurred_on || null,
+      dateSource: e.date_source || null,
+      expires: e.expires === false ? false : true
     };
   });
 }
@@ -551,12 +554,20 @@ function getAdminLog(){try{var s=safeStorage.getItem("tk-admin-log");return s?JS
 async function sbSavePointEvent(ev) {
   var sb = getSb();
   if (!sb) return;
+  var _occ = ev.occurredOn;
+  if (!_occ) {
+    var _d = new Date(ev.date);
+    _occ = _d.getFullYear() + "-" + String(_d.getMonth() + 1).padStart(2, "0") + "-" + String(_d.getDate()).padStart(2, "0");
+  }
   await sb.from("tk_point_events").upsert({
     id: ev.id,
     eid: ev.eid,
     type: ev.type,
     pts: ev.pts,
-    date: ev.date
+    date: ev.date,
+    occurred_on: _occ,
+    date_source: ev.dateSource || "occurrence",
+    expires: ev.expires === false ? false : (parseFloat(ev.pts) || 0) >= 0
   });
 }
 async function sbSaveEmployee(e) {
@@ -1074,12 +1085,27 @@ function getNextActions(cs) {
   }];
 }
 function calcPts(eid, events, policy) {
-  var cutoff = Date.now() - (policy || DEFAULT_POLICY).rollingDays * 24 * 60 * 60 * 1000;
-  return parseFloat(events.filter(function (e) {
-    return e.eid === eid && new Date(e.date).getTime() >= cutoff;
+  var P = policy || DEFAULT_POLICY;
+  /* Local-midnight cutoff. occurred_on is a plain date, so the 90-day
+     boundary no longer shifts with timezone. */
+  var cut = new Date();
+  cut.setHours(0, 0, 0, 0);
+  cut.setDate(cut.getDate() - P.rollingDays);
+  var cutMs = cut.getTime();
+  var raw = (events || []).filter(function (e) {
+    if (e.eid !== eid) return false;
+    /* expires === false means a credit: HR relief must not age out */
+    if (e.expires === false) return true;
+    var d = e.occurredOn
+      ? new Date(e.occurredOn + "T12:00:00")
+      : new Date(e.date);
+    return d.getTime() >= cutMs;
   }).reduce(function (s, e) {
-    return s + e.pts;
-  }, 0).toFixed(1));
+    return s + (parseFloat(e.pts) || 0);
+  }, 0);
+  /* Clamp so permanent credits can't drive a balance negative and mask
+     future violations. */
+  return parseFloat(Math.max(0, raw).toFixed(1));
 }
 function detectExceptions(emp, punches, policy) {
   var P = policy || DEFAULT_POLICY;
@@ -3770,12 +3796,19 @@ function PointsLedger({ pointEvents, employees, onIssuePoint, onUpdatePointEvent
               ts: new Date().toISOString()
             });
           } catch(e) {}
-          var clean = { id: updated.id, eid: updated.eid, type: updated.type, pts: updated.pts, date: updated.date };
+          var _ud = new Date(updated.date);
+          var _uocc = _ud.getFullYear() + '-' + String(_ud.getMonth() + 1).padStart(2, '0') + '-' + String(_ud.getDate()).padStart(2, '0');
+          var _uexp = (parseFloat(updated.pts) || 0) >= 0;
+          var clean = { id: updated.id, eid: updated.eid, type: updated.type, pts: updated.pts, date: updated.date, occurred_on: _uocc, date_source: 'occurrence', expires: _uexp };
           var r = await sb.from('tk_point_events').upsert(clean);
           if (r.error) { alert('Save failed: ' + r.error.message); return; }
         }
         onUpdatePointEvents && onUpdatePointEvents((pointEvents || []).map(function(x) {
-          return x.id === updated.id ? { id: updated.id, eid: updated.eid, type: updated.type, pts: updated.pts, date: updated.date } : x;
+          if (x.id !== updated.id) return x;
+          var _d2 = new Date(updated.date);
+          return { id: updated.id, eid: updated.eid, type: updated.type, pts: updated.pts, date: updated.date,
+            occurredOn: _d2.getFullYear() + '-' + String(_d2.getMonth() + 1).padStart(2, '0') + '-' + String(_d2.getDate()).padStart(2, '0'),
+            dateSource: 'occurrence', expires: (parseFloat(updated.pts) || 0) >= 0 };
         }));
         setEditEv(null);
       },
@@ -8679,7 +8712,7 @@ function App() {
             }).subscribe();
             sb.channel("tk-points").on("postgres_changes", {event:"*",schema:"public",table:"tk_point_events"}, function(payload) {
               if(payload.eventType==="DELETE"){setPEvents(function(prev){return prev.filter(function(x){return x.id!==payload.old.id})})}
-              else{var ev=payload.new;var m={id:ev.id,eid:ev.eid,type:ev.type,pts:parseFloat(ev.pts),date:ev.date};setPEvents(function(prev){var ex=prev.some(function(x){return x.id===m.id});if(ex)return prev.map(function(x){return x.id===m.id?m:x});return[m].concat(prev)})}
+              else{var ev=payload.new;var m={id:ev.id,eid:ev.eid,type:ev.type,pts:parseFloat(ev.pts),date:ev.date,occurredOn:ev.occurred_on||null,dateSource:ev.date_source||null,expires:ev.expires===false?false:true};setPEvents(function(prev){var ex=prev.some(function(x){return x.id===m.id});if(ex)return prev.map(function(x){return x.id===m.id?m:x});return[m].concat(prev)})}
             }).subscribe();
             sb.channel("tk-requests").on("postgres_changes", {event:"*",schema:"public",table:"tk_requests"}, function(payload) {
               if(payload.eventType==="DELETE"){setRequests(function(prev){return prev.filter(function(x){return x.id!==payload.old.id})})}
@@ -8832,12 +8865,16 @@ function App() {
       return r.k === type;
     });
     var actualPts = pts !== undefined ? pts : rule ? rule.p : 0.5;
+    var _when = violationDate ? new Date(violationDate) : new Date();
     var ev = {
       id: "PE-" + Date.now() + "-" + Math.random().toString(36).substr(2, 4),
       eid: eid,
       type: type,
       pts: actualPts,
-      date: violationDate || new Date().toISOString()
+      date: violationDate || new Date().toISOString(),
+      occurredOn: _when.getFullYear() + "-" + String(_when.getMonth() + 1).padStart(2, "0") + "-" + String(_when.getDate()).padStart(2, "0"),
+      dateSource: "occurrence",
+      expires: actualPts >= 0
     };
     var npe = pEvents.concat([ev]);
     setPEvents(npe);
