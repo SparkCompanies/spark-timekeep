@@ -5,7 +5,8 @@
    Exposes: window.PunchSourceReport
    ═══════════════════════════════════════════════════════════════ */
 (function () {
-  var e = React.createElement;
+  /* React is loaded after this file in the document, so it must not be
+     dereferenced at module scope. Bound inside the component instead. */
 
   var CO = {
     bg: "#0a0d12", panel: "#11151c", bd: "#1f2733", bd2: "#1a2029",
@@ -53,6 +54,7 @@
   var mono = { fontFamily: "'IBM Plex Mono',monospace" };
 
   function PunchSourceReport(props) {
+    var e = React.createElement;
     var punches = props.punches || [];
     var emps = props.emps || [];
 
