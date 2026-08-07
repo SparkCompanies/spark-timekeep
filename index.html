@@ -25,6 +25,7 @@ select,input,textarea{font-family:inherit}
 </style>
 <script>setInterval(function(){var b=document.querySelector("[data-kiosk-idle]");if(b)location.reload()},5*60*1000)</script>
   <script src="command-center.js?v=1779378310498"></script>
+  <script src="punch-source-report.js?v=1786105519499"></script>
 </head>
 <body>
 <div id="root"></div>
@@ -5573,7 +5574,7 @@ function AdminView({
     np[key] = val;
     onUpdatePolicy(np);
   }
-  var tabDef2 = [["system", "System"], ["employees", "Employees"], ["staff", "Staff Access"], ["schedules", "Schedules"], ["policy", "Policy"], ["geofence", "Geofence"], ["reports", "Reports"], ["audit", "Audit Log"]];
+  var tabDef2 = [["system", "System"], ["employees", "Employees"], ["staff", "Staff Access"], ["schedules", "Schedules"], ["policy", "Policy"], ["geofence", "Geofence"], ["reports", "Reports"], ["sources", "Punch Source"], ["audit", "Audit Log"]];
   return /*#__PURE__*/React.createElement("div", {
     style: {
       minHeight: "100vh",
@@ -7666,7 +7667,11 @@ function AdminView({
       color: C.t4,
       marginTop: 8
     }
-  }, "Showing up to 50 most recent entries")))
+  }, "Showing up to 50 most recent entries"))
+  , tab === "sources" && (window.PunchSourceReport
+      ? React.createElement(window.PunchSourceReport, { punches: punches, emps: emps })
+      : React.createElement("div", { style: { padding: 24, color: C.red, fontSize: 13 } },
+          "punch-source-report.js did not load. Confirm the file is deployed alongside index.html, then hard refresh.")))
   , quickIssueFor && React.createElement(QuickIssueModal, {
     emp: quickIssueFor.emp,
     presetType: quickIssueFor.presetType,
