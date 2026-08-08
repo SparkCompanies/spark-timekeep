@@ -631,6 +631,18 @@ var cachedIP = "unknown";
     cachedIP = "browser-blocked";
   }
 })();
+/* Per-device name. Set once per physical machine from Admin > System. */
+function getDeviceName() {
+  try {
+    var v = localStorage.getItem("tk-device-id");
+    if (v && v.trim()) return v.trim();
+  } catch (e) {}
+  return "KIOSK-UNNAMED";
+}
+function setDeviceName(v) {
+  try { localStorage.setItem("tk-device-id", String(v || "").trim()); } catch (e) {}
+}
+
 function getIP() {
   return cachedIP;
 }
@@ -2393,7 +2405,7 @@ function KioskView({
       }
     }
     var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent||"");
-    var deviceName = isMobile ? "MOBILE" : "KIOSK-MARSHALL-01";
+    var deviceName = isMobile ? "MOBILE" : getDeviceName();  /* FIX: real device name */
     if (isExempt) deviceName = (isMobile ? "MOBILE-EXEMPT" : "EXEMPT-DEVICE");
     checkGeoLocation(gc, punches, emp.id, isMobile).then(function (geoResult) {
       setGeoChecking(false);
@@ -3129,7 +3141,7 @@ function KioskView({
       color: C.t4,
       letterSpacing: 1
     }
-  }, mo ? "KIOSK-01" : "KIOSK-MARSHALL-01")), /*#__PURE__*/React.createElement("div", {
+  }, getDeviceName())), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       alignItems: "center",
@@ -5692,7 +5704,7 @@ function AdminView({
       color: C.t1,
       marginBottom: 14
     }
-  }, "System Health & Overview"), /*#__PURE__*/React.createElement("div", {
+  }, "System Health & Overview"), React.createElement("div",{style:{background:C.sf,border:"1px solid "+(getDeviceName()==="KIOSK-UNNAMED"?C.orange:C.bd),borderRadius:12,padding:16,marginBottom:16,display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap"}},React.createElement("div",null,React.createElement("div",{style:{fontSize:14,fontWeight:700,color:C.t1,marginBottom:2}},"This Device"),React.createElement("div",{style:{fontSize:13,color:C.t3}},"Name this physical machine so punches show which kiosk they came from. Stored on this computer only."),React.createElement("div",{style:{fontFamily:Fm,fontSize:16,fontWeight:700,color:getDeviceName()==="KIOSK-UNNAMED"?C.orange:C.spark,marginTop:6}},getDeviceName())),React.createElement("button",{onClick:function(){var v=window.prompt("Name for THIS computer (e.g. Kiosk-Dock-A, Kiosk-Breakroom, Kiosk-Office):",getDeviceName()==="KIOSK-UNNAMED"?"":getDeviceName());if(v&&v.trim()){setDeviceName(v);logAdminAction("DEVICE_NAMED",v.trim(),staffName);alert("This device is now named: "+v.trim()+"\n\nRefresh the kiosk to apply.");}},style:{padding:"9px 18px",borderRadius:8,fontSize:13,fontWeight:700,color:C.bg,background:C.spark,border:"none",cursor:"pointer",flexShrink:0}},"Rename This Device")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: mo ? "repeat(2,1fr)" : "repeat(4,1fr)",
@@ -5741,7 +5753,7 @@ function AdminView({
       color: C.t1,
       marginBottom: 10
     }
-  }, "System Configuration"), [["Kiosk Device", "KIOSK-MARSHALL-01", C.green], ["Site", "DFM Marshall Plant, MI", C.spark], ["Pay Period", "Mon–Sun (Weekly)", C.blue], ["Policy Version", "v7.0", C.spark], ["IP Enforcement", GC.enforceIP ? "ENABLED" : "DISABLED", GC.enforceIP ? C.green : C.t4], ["Geo Enforcement", GC.enforceGeo ? "ENABLED" : "DISABLED", GC.enforceGeo ? C.green : C.t4], ["Current IP", getIP(), C.t3], ["Storage", "Persistent (Supabase-ready)", C.green]].map(function (r) {
+  }, "System Configuration"), [["This Device", getDeviceName(), getDeviceName()==="KIOSK-UNNAMED"?C.orange:C.green], ["Site", "DFM Marshall Plant, MI", C.spark], ["Pay Period", "Mon–Sun (Weekly)", C.blue], ["Policy Version", "v7.0", C.spark], ["IP Enforcement", GC.enforceIP ? "ENABLED" : "DISABLED", GC.enforceIP ? C.green : C.t4], ["Geo Enforcement", GC.enforceGeo ? "ENABLED" : "DISABLED", GC.enforceGeo ? C.green : C.t4], ["Current IP", getIP(), C.t3], ["Storage", "Persistent (Supabase-ready)", C.green]].map(function (r) {
     return /*#__PURE__*/React.createElement("div", {
       key: r[0],
       style: {
