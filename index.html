@@ -4351,6 +4351,18 @@ function ManagerView({
   });
   var totalBadges = pending.length;
   // ── PHASE 1: employee profile takes over when an employee is selected
+  /* __navList: same filtering the timesheet list uses, so arrows follow what you see */
+  var __navList = statuses.filter(function (e) {
+    if (search) {
+      var s = search.toLowerCase();
+      var nm = (e.fn + " " + e.ln).toLowerCase();
+      if (nm.indexOf(s) === -1 && (e.badge || "").indexOf(s) === -1 && (e.dept || "").toLowerCase().indexOf(s) === -1) return false;
+    }
+    if (dept !== "all" && e.dept !== dept) return false;
+    return true;
+  });
+  var __navIdx = __navList.findIndex(function (e) { return e.id === activeEid; });
+
   if (activeEid) {
     /* __profileModalFix: fragment lets the edit modal render over the profile */
     return React.createElement(React.Fragment, null, React.createElement(EmployeeProfile, {
@@ -4358,6 +4370,10 @@ function ManagerView({
       employees: emps,
       punches: punches,
       currentUser: (typeof currentUser !== 'undefined' && currentUser) || 'Manager',
+      navIndex: __navIdx,
+      navTotal: __navList.length,
+      onPrev: (__navIdx > 0) ? function () { setActiveEid(__navList[__navIdx - 1].id); } : null,
+      onNext: (__navIdx > -1 && __navIdx < __navList.length - 1) ? function () { setActiveEid(__navList[__navIdx + 1].id); } : null,
       onBack: function () { setActiveEid(null); },
       onPunchDelete: async function (id) {
         try {
@@ -8227,7 +8243,7 @@ function EmployeeDirectory({ employees, punches, pointEvents, onIssuePoint, poli
 // END EmployeeDirectory
 // ═══════════════════════════════════════════════════════════════════
 
-function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunchDelete, onAddPunch, currentUser }) {
+function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunchDelete, onAddPunch, currentUser, navIndex, navTotal, onPrev, onNext }) {
   const [emp, setEmp] = React.useState(null);
   const [points, setPoints] = React.useState([]);
   const [notes, setNotes] = React.useState([]);
@@ -8246,6 +8262,19 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
     loadNotes();
     // eslint-disable-next-line
   }, [eid, employees]);
+
+  /* left/right arrows move between employees, unless typing in a field */
+  React.useEffect(function () {
+    function onKey(ev) {
+      var t = ev.target || {};
+      var tag = (t.tagName || "").toLowerCase();
+      if (tag === "input" || tag === "textarea" || tag === "select" || t.isContentEditable) return;
+      if (ev.key === "ArrowLeft" && onPrev) { ev.preventDefault(); onPrev(); }
+      if (ev.key === "ArrowRight" && onNext) { ev.preventDefault(); onNext(); }
+    }
+    window.addEventListener("keydown", onKey);
+    return function () { window.removeEventListener("keydown", onKey); };
+  }, [onPrev, onNext]);
 
   async function loadPoints() {
     try {
@@ -8379,6 +8408,21 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
         onClick: onBack,
         style: { display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', background: 'transparent', border: '1px solid #1f2733', color: '#a9b3c1', borderRadius: 6, fontSize: 12.5, cursor: 'pointer' }
       }, '← Back to Employees'),
+      (navTotal > 1) && React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 6, marginLeft: 4 } },
+        React.createElement('button', {
+          onClick: function () { if (onPrev) onPrev(); },
+          disabled: !onPrev,
+          title: 'Previous employee (left arrow)',
+          style: { width: 32, height: 32, padding: 0, background: 'transparent', border: '1px solid #1f2733', color: onPrev ? '#e8ecf2' : '#3a4452', borderRadius: 6, cursor: onPrev ? 'pointer' : 'not-allowed', fontSize: 14, lineHeight: 1 }
+        }, '\u25C0'),
+        React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', fontSize: 11.5, color: '#a9b3c1', minWidth: 62, textAlign: 'center' } }, (navIndex + 1) + ' of ' + navTotal),
+        React.createElement('button', {
+          onClick: function () { if (onNext) onNext(); },
+          disabled: !onNext,
+          title: 'Next employee (right arrow)',
+          style: { width: 32, height: 32, padding: 0, background: 'transparent', border: '1px solid #1f2733', color: onNext ? '#e8ecf2' : '#3a4452', borderRadius: 6, cursor: onNext ? 'pointer' : 'not-allowed', fontSize: 14, lineHeight: 1 }
+        }, '\u25B6')
+      ),
       React.createElement('span', { style: { color: '#7f8a9b', fontSize: 12 } },
         'Manager · Employees · ',
         React.createElement('b', { style: { color: '#a9b3c1', fontWeight: 500 } }, emp.fn + ' ' + emp.ln)
