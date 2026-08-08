@@ -1230,6 +1230,7 @@ function withPts(emps, events, policy) {
   });
 }
 function detectViolations(emps, punches, pointEvents, policy, monday) {
+  var __byEid = getPunchesByEid(punches);  /* PERF */
   var P = policy || {
     graceMins: 7,
     otWeekly: 40
@@ -1262,9 +1263,9 @@ function detectViolations(emps, punches, pointEvents, policy, monday) {
       dayStart.setHours(0, 0, 0, 0);
       var dayEnd = new Date(day);
       dayEnd.setHours(23, 59, 59, 999);
-      var dayPunches = punches.filter(function (p) {
+      var dayPunches = (__byEid[emp.id] || []).filter(function (p) {  /* PERF */
         var t = new Date(p.time);
-        return p.eid === emp.id && t >= dayStart && t <= dayEnd;
+        return t >= dayStart && t <= dayEnd;
       }).sort(function (a, b) {
         return new Date(a.time) - new Date(b.time);
       });
@@ -4039,6 +4040,9 @@ function BulkIssueModal({ employees, onIssue, onClose }) {
 /* PERF: statuses cache — rebuild only when inputs actually change */
 var __tkStatusCache = { key: "", val: null };
 
+/* PERF: violations cache */
+var __tkViolCache = { key: "", val: null };
+
 function ManagerView({
   emps,
   punches,
@@ -4126,12 +4130,20 @@ function ManagerView({
   var storedDismissed = JSON.parse(localStorage.getItem("spark-tk-dismissed") || "{}"); var rdismissed = useState(storedDismissed),
     dismissed = rdismissed[0],
     _setDismissed = rdismissed[1]; var setDismissed = function(val){_setDismissed(val);localStorage.setItem("spark-tk-dismissed",JSON.stringify(val))};
-  var violations = detectViolations(emps, punches, pointEvents, P, mon).filter(function (v) {
+  var __vKey = emps.length + "|" + (punches ? punches.length : 0) + "|" + (pointEvents ? pointEvents.length : 0) + "|" + mon.getTime() + "|" + ((punches && punches.length) ? punches[0].id + "|" + punches[punches.length - 1].id : "");
+  if (__tkViolCache.key !== __vKey || !__tkViolCache.val) {
+    __tkViolCache = { key: __vKey, val: detectViolations(emps, punches, pointEvents, P, mon) };
+  }
+  var violations = __tkViolCache.val.filter(function (v) {
     return !dismissed[v.id];
   });
   var empIdSet = {};
   emps.forEach(function (e) { empIdSet[e.id] = true; });
-  var validPunches = (punches || []).filter(function (p) { return p && p.eid && empIdSet[p.eid]; });
+  var __vpKey = (punches ? punches.length : 0) + "|" + emps.length + "|" + ((punches && punches.length) ? punches[punches.length - 1].id : "");
+  if (!window.__tkVP || window.__tkVP.key !== __vpKey) {
+    window.__tkVP = { key: __vpKey, val: (punches || []).filter(function (p) { return p && p.eid && empIdSet[p.eid]; }) };
+  }
+  var validPunches = window.__tkVP.val;
   var orphanCount = (punches || []).length - validPunches.length;
   var __stKey = active.length + "|" + validPunches.length + "|" + weekOffset + "|" + (validPunches.length ? validPunches[0].id + "|" + validPunches[validPunches.length - 1].id : "") + "|" + active.reduce(function (s, e) { return s + (e.pts || 0); }, 0);
   var statuses;
@@ -4193,7 +4205,7 @@ function ManagerView({
     outline: "none",
     fontFamily: Fb
   };
-  var filtered = statuses.sort(function(a,b){return(a.ln||"").localeCompare(b.ln||"")}).filter(function (e) {
+  var filtered = statuses.slice().sort(function(a,b){return(a.ln||"").localeCompare(b.ln||"")}).filter(function (e) {
     var weekEnd=new Date(mon);weekEnd.setDate(weekEnd.getDate()+6);var hd=e.hireDate?new Date(e.hireDate):null;var td=e.termDate?new Date(e.termDate):null;if(hd&&hd>weekEnd)return false;if(td&&td<mon)return false;return (dept === "all" || e.dept === dept) && (!search || (e.fn + " " + e.ln).toLowerCase().includes(search.toLowerCase()) || e.badge.includes(search));
   });
   var recentEvents = pointEvents.slice().sort(function (a, b) {
