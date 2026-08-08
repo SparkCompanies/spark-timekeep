@@ -4352,7 +4352,8 @@ function ManagerView({
   var totalBadges = pending.length;
   // ── PHASE 1: employee profile takes over when an employee is selected
   if (activeEid) {
-    return React.createElement(EmployeeProfile, {
+    /* __profileModalFix: fragment lets the edit modal render over the profile */
+    return React.createElement(React.Fragment, null, React.createElement(EmployeeProfile, {
       eid: activeEid,
       employees: emps,
       punches: punches,
@@ -4366,9 +4367,17 @@ function ManagerView({
       },
       onAddPunch: onPunch,
       onPunchEdit: function (p) {
-        try { setEditingPunch && setEditingPunch(p); setShowPunchEditor && setShowPunchEditor(true); } catch (e) {}
+        setEditingPunch(Object.assign({}, p));
       }
-    });
+    }),
+    editingPunch && React.createElement(EditPunchModal, {
+      punch: editingPunch,
+      emp: emps.find(function (e) { return e.id === editingPunch.eid; }),
+      onSave: function (pid, nt, opts) { editPunch(pid, nt, opts); setEditingPunch(null); },
+      onDelete: function (pid, reason) { deletePunch(pid, reason); setEditingPunch(null); },
+      onClose: function () { setEditingPunch(null); }
+    })
+    );
   }
   var tabDef = [["dashboard", "Dashboard" + (violations.length > 0 ? " (" + violations.length + ")" : "")], ["whos-in", "Who's In"], ["reports", "Reports"], ["timesheets", "Timesheets"], ["ledger", "Points Ledger" + (function(){var c=(pointEvents||[]).length;return c>0?" · "+c:""}())], ["profile", "Profile"], ["alerts", "Alerts" + (function(){var c=alerts.filter(function(a,i){return !dismissedAlerts[a.id||"a"+i]}).length;return c>0?" ("+c+")":""}())], ["approvals", "Approvals" + (pending.length > 0 ? " (" + pending.length + ")" : "")]].filter(function(t){return !(readOnly && t[0]==="approvals")});
   return /*#__PURE__*/React.createElement("div", {
