@@ -5491,6 +5491,66 @@ function AdminView({
     width: "100%"
   };
   function doExport(type) {
+    var __activeIds = {};
+    emps.forEach(function (e) { if (e.st === "active") __activeIds[e.id] = true; });
+    function __srcCat(dev) {
+      var d = String(dev || "");
+      if (d.indexOf("KIOSK") === 0) return "Kiosk";
+      if (d.indexOf("MOBILE-EXEMPT") === 0 || d.indexOf("EXEMPT-DEVICE") === 0) return "Mobile (Exempt)";
+      if (d.indexOf("MOBILE") === 0) return "Mobile";
+      if (d.indexOf("MANAGER-HOURS") === 0) return "Manager (Total Hours)";
+      if (d.indexOf("MANAGER") === 0) return "Manager Entry";
+      if (d.indexOf("APPROVED") === 0) return "Approved Request";
+      return d ? "Other" : "Unknown";
+    }
+    if (type === "source") {
+      var monS = reportMon || getMonday();
+      var endS = new Date(monS.getTime() + 7 * 86400000);
+      var srows = ["Employee,GS ID,Badge,Dept,Date,Time,Punch Type,Source,Device,IP,Lat,Lng,Distance (m),Flags"];
+      var inRange = punches.filter(function (p) {
+        if (!__activeIds[p.eid]) return false;
+        var t = new Date(p.time);
+        return t >= monS && t < endS;
+      }).sort(function (a, b) { return new Date(a.time) - new Date(b.time); });
+      inRange.forEach(function (p) {
+        var em = emps.find(function (x) { return x.id === p.eid; }) || {};
+        var pt = PTYPES.find(function (x) { return x.k === p.type; }) || { l: p.type };
+        var dt = new Date(p.time);
+        srows.push([
+          (em.fn || "?") + " " + (em.ln || ""),
+          em.gsId || "",
+          em.badge || "",
+          em.dept || "",
+          dt.toLocaleDateString(),
+          dt.toLocaleTimeString(),
+          pt.l,
+          __srcCat(p.dev),
+          p.dev || "",
+          p.ip || "",
+          p.lat != null ? p.lat : "",
+          p.lng != null ? p.lng : "",
+          p.dist != null ? p.dist : "",
+          p.flags || ""
+        ].map(function (v) {
+          var s = String(v == null ? "" : v);
+          return (s.indexOf(",") > -1 || s.indexOf("\"") > -1) ? "\"" + s.replace(/"/g, "\"\"") + "\"" : s;
+        }).join(","));
+      });
+      var counts = {};
+      inRange.forEach(function (p) { var c = __srcCat(p.dev); counts[c] = (counts[c] || 0) + 1; });
+      srows.push("");
+      srows.push("SUMMARY,Count,Percent");
+      Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a]; }).forEach(function (k) {
+        srows.push(k + "," + counts[k] + "," + (inRange.length ? (counts[k] / inRange.length * 100).toFixed(1) : "0") + "%");
+      });
+      srows.push("TOTAL," + inRange.length + ",100%");
+      var sblob = new Blob([srows.join("\n")], { type: "text/csv" });
+      var surl = URL.createObjectURL(sblob);
+      var sa = document.createElement("a");
+      sa.href = surl;
+      sa.download = "punch-source-" + monS.toISOString().slice(0, 10) + ".csv";
+      sa.click();
+    }
     if (type === "timesheet") {
       var monday = reportMon || getMonday();
       var rows = ["Employee,GS ID,Badge,Dept,Title,Mon Net,Mon Gross,Mon Break,Tue Net,Tue Gross,Tue Break,Wed Net,Wed Gross,Wed Break,Thu Net,Thu Gross,Thu Break,Fri Net,Fri Gross,Fri Break,Sat Net,Sat Gross,Sat Break,Sun Net,Sun Gross,Sun Break,Week Gross,Week Break,Week Net,Week RT,Week OT,Lunch Exempt"];
@@ -5517,7 +5577,7 @@ function AdminView({
     }
     if (type === "points") {
       var rows2 = ["Employee,GS ID,Badge,Type,Points,Date"];
-      pointEvents.forEach(function (ev) {
+      pointEvents.filter(function (ev) { return __activeIds[ev.eid]; }).forEach(function (ev) {  /* FIX: active only */
         var emp = emps.find(function (e) {
           return e.id === ev.eid;
         });
@@ -5558,7 +5618,7 @@ function AdminView({
     }
         if (type === "audit") {
       var rows3 = ["Employee,GS ID,Badge,Type,Time,Device,IP,Lat,Lng,Distance,Accuracy,Altitude,Speed,Flags"];
-      punches.slice().sort(function (a, b) {
+      punches.filter(function (p) { return __activeIds[p.eid]; }).sort(function (a, b) {  /* FIX: active only */
         return new Date(b.time) - new Date(a.time);
       }).forEach(function (p) {
         var emp = emps.find(function (e) {
@@ -7467,7 +7527,7 @@ function AdminView({
   ),
   /*#__PURE__*/React.createElement("div", {
     style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }
-  }, [["Weekly Timesheet","Mon\u2013Sun hours by employee with OT breakdown","timesheet","\u{1F4CA}"],["Points Report","90-day attendance violation history","points","\u26A0"],["Audit Trail", "Every punch with badge, time, device, IP", "audit", "🔍"],["Detailed Punches","Daily in/out/break per employee sorted by last name","detailed","📋"]].map(function (x) {
+  }, [["Weekly Timesheet","Mon\u2013Sun hours by employee with OT breakdown","timesheet","\u{1F4CA}"],["Points Report","90-day attendance violation history","points","\u26A0"],["Audit Trail", "Every punch with badge, time, device, IP", "audit", "🔍"],["Detailed Punches","Daily in/out/break per employee sorted by last name","detailed","📋"],["Punch Source","Kiosk vs mobile vs manager entry, with summary","source","📱"]].map(function (x) {
     return /*#__PURE__*/React.createElement("div", {
       key: x[0],
       style: {
