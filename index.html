@@ -829,6 +829,22 @@ function fmtTime(iso) {
     minute: "2-digit"
   });
 }
+/* PERF: group punches by employee once; reuse until the punch array changes */
+var __tkIdx = null, __tkIdxKey = "";
+function getPunchesByEid(allPunches) {
+  if (!allPunches || !allPunches.length) return {};
+  var key = allPunches.length + "|" + (allPunches[0] && allPunches[0].id) + "|" + (allPunches[allPunches.length - 1] && allPunches[allPunches.length - 1].id);
+  if (__tkIdx && __tkIdxKey === key) return __tkIdx;
+  var idx = {};
+  for (var n = 0; n < allPunches.length; n++) {
+    var _e = allPunches[n].eid;
+    if (!idx[_e]) idx[_e] = [];
+    idx[_e].push(allPunches[n]);
+  }
+  __tkIdx = idx; __tkIdxKey = key;
+  return idx;
+}
+
 function calcDayHours(punches, eid) {
   var sorted = punches.slice().sort(function (a, b) {
     return new Date(a.time) - new Date(b.time);
@@ -871,6 +887,7 @@ function calcDayHours(punches, eid) {
 }
 // Overnight shift handler: get day punches + carry-over from previous night
 function getDayPunchesWithCarryOver(allPunches, eid, dayStart, dayEnd) {
+  allPunches = getPunchesByEid(allPunches)[eid] || [];  /* PERF */
   var dp = allPunches.filter(function(p) {
     if(p.eid!==eid)return false;var pt=new Date(p.time);return pt.getFullYear()===dayStart.getFullYear()&&pt.getMonth()===dayStart.getMonth()&&pt.getDate()===dayStart.getDate();
   }).sort(function(a,b){return new Date(a.time)-new Date(b.time)});
@@ -1015,6 +1032,7 @@ function getDailyBreakdownForWeek(allPunches, eid, monday) {
   });
 }
 function getCurrentState(emp, punches) {
+  punches = getPunchesByEid(punches)[emp.id] || [];  /* PERF */
   var cutoff = new Date(Date.now() - 24*60*60*1000);
   var ep = punches.filter(function (p) {
     return p.eid === emp.id && new Date(p.time) >= cutoff;
@@ -1081,7 +1099,7 @@ function calcPts(eid, events, policy) {
     return s + e.pts;
   }, 0).toFixed(1));
 }
-function detectExceptions(emp, punches, policy) {
+function detectExceptions(emp, punches, policy, precomputedWeekH) {
   var P = policy || DEFAULT_POLICY;
   var excs = [];
   var today = getToday();
@@ -1130,7 +1148,7 @@ function detectExceptions(emp, punches, policy) {
       }
     }
   }
-  var weekH = calcWeekHours(punches, emp.id);
+  var weekH = (precomputedWeekH !== undefined && precomputedWeekH !== null) ? precomputedWeekH : calcWeekHours(punches, emp.id);  /* PERF */
   if (weekH >= P.otWeekly) excs.push({
     type: "ot-weekly",
     label: "Weekly OT",
@@ -1190,9 +1208,9 @@ function calcLaborCost(emp, punches, policy) {
     otH: otH
   };
 }
-function calcLaborCostForWeek(emp, punches, policy, monday) {
+function calcLaborCostForWeek(emp, punches, policy, monday, precomputedWeekH) {
   var P = policy || DEFAULT_POLICY;
-  var weekH = calcWeekHoursForWeek(punches, emp.id, monday);
+  var weekH = (precomputedWeekH !== undefined && precomputedWeekH !== null) ? precomputedWeekH : calcWeekHoursForWeek(punches, emp.id, monday);  /* PERF */
   var rate = emp.rate || 16;
   var regH = Math.min(weekH, P.otWeekly);
   var otH = Math.max(0, weekH - P.otWeekly);
@@ -1237,7 +1255,7 @@ function detectViolations(emps, punches, pointEvents, policy, monday) {
       day.setDate(day.getDate() + d);
       if (day > now) continue;
       var dow = day.getDay();
-      if (dow === 0) dow = 7;
+      /* FIX: Sunday stays 0 to match workDays arrays */
       if (!emp.workDays || emp.workDays.indexOf(dow) === -1) continue;
       var dayStr = day.toISOString().slice(0, 10);
       var dayStart = new Date(day);
@@ -3370,7 +3388,7 @@ function TimesheetDrilldown({emp,punches,mon,weekOffset,setWeekOffset,setSelEmp,
             React.createElement("td",{style:Object.assign({},cellS,{padding:"6px 8px"})},
               React.createElement("div",{style:{display:"flex",gap:4}},
                 !readOnly && React.createElement("button",{onClick:function(){setEditingPunch(Object.assign({},p,{eid:emp.id}))},style:{padding:"3px 8px",fontSize:11,background:"transparent",border:"1px solid "+C.spark,color:C.spark,borderRadius:4,cursor:"pointer",fontWeight:600}},"Edit"),
-                React.createElement("button",{onClick:function(){deletePunch(p.id)},style:{padding:"3px 8px",fontSize:11,background:"transparent",border:"1px solid "+(C.red||"#EF4444"),color:C.red||"#EF4444",borderRadius:4,cursor:"pointer",fontWeight:600}},"Del")
+                !readOnly && React.createElement("button",{onClick:function(){deletePunch(p.id)},style:{padding:"3px 8px",fontSize:11,background:"transparent",border:"1px solid "+(C.red||"#EF4444"),color:C.red||"#EF4444",borderRadius:4,cursor:"pointer",fontWeight:600}},"Del")
               )
             )
           )
@@ -3389,7 +3407,7 @@ function TimesheetDrilldown({emp,punches,mon,weekOffset,setWeekOffset,setSelEmp,
           React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
             React.createElement("span",{style:{color:C.t4,fontSize:12}},p.dev||"",p.ip?" · "+p.ip:""),
             !readOnly && React.createElement("button",{onClick:function(){setEditingPunch(Object.assign({},p,{eid:emp.id}))},style:{padding:"2px 6px",fontSize:10,background:"transparent",border:"1px solid "+C.spark,color:C.spark,borderRadius:3,cursor:"pointer",fontWeight:600}},"Edit"),
-            React.createElement("button",{onClick:function(){deletePunch(p.id)},style:{padding:"2px 6px",fontSize:10,background:"transparent",border:"1px solid "+(C.red||"#EF4444"),color:C.red||"#EF4444",borderRadius:3,cursor:"pointer",fontWeight:600}},"Del")
+            !readOnly && React.createElement("button",{onClick:function(){deletePunch(p.id)},style:{padding:"2px 6px",fontSize:10,background:"transparent",border:"1px solid "+(C.red||"#EF4444"),color:C.red||"#EF4444",borderRadius:3,cursor:"pointer",fontWeight:600}},"Del")
           )
         )
       }))
@@ -4018,6 +4036,9 @@ function BulkIssueModal({ employees, onIssue, onClose }) {
   );
 }
 
+/* PERF: statuses cache — rebuild only when inputs actually change */
+var __tkStatusCache = { key: "", val: null };
+
 function ManagerView({
   emps,
   punches,
@@ -4043,6 +4064,13 @@ function ManagerView({
   var r2 = useState(""),
     search = r2[0],
     setSearch = r2[1];
+  var rSI = useState(""), searchInput = rSI[0], setSearchInput = rSI[1];
+  var __sTimer = useRef(null);
+  function setSearchDebounced(v) {
+    setSearchInput(v);
+    if (__sTimer.current) clearTimeout(__sTimer.current);
+    __sTimer.current = setTimeout(function () { setSearch(v); }, 250);
+  }
   var r3 = useState(null),
     selEmp = r3[0],
     setSelEmp = r3[1];
@@ -4105,11 +4133,14 @@ function ManagerView({
   emps.forEach(function (e) { empIdSet[e.id] = true; });
   var validPunches = (punches || []).filter(function (p) { return p && p.eid && empIdSet[p.eid]; });
   var orphanCount = (punches || []).length - validPunches.length;
-  var statuses = active.map(function (e) {
+  var __stKey = active.length + "|" + validPunches.length + "|" + weekOffset + "|" + (validPunches.length ? validPunches[0].id + "|" + validPunches[validPunches.length - 1].id : "") + "|" + active.reduce(function (s, e) { return s + (e.pts || 0); }, 0);
+  var statuses;
+  if (__tkStatusCache.key === __stKey && __tkStatusCache.val) { statuses = __tkStatusCache.val; } else {
+  statuses = active.map(function (e) {
     var cs = getCurrentState(e, validPunches);
     var wk = calcWeekHoursForWeek(validPunches, e.id, mon);
-    var excs = detectExceptions(e, validPunches, P);
-    var cost = calcLaborCostForWeek(e, validPunches, P, mon);
+    var excs = detectExceptions(e, validPunches, P, wk);
+    var cost = calcLaborCostForWeek(e, validPunches, P, mon, wk);
     return Object.assign({}, e, {
       cs: cs,
       weekH: wk,
@@ -4118,6 +4149,8 @@ function ManagerView({
       cost: cost
     });
   });
+  __tkStatusCache = { key: __stKey, val: statuses };
+  }
   var clockedIn = statuses.filter(function (e) {
     return e.cs.status === "in";
   });
@@ -4260,7 +4293,7 @@ function ManagerView({
         background: mTab === x[0] ? C.spark : "transparent"
       }
     }, x[1]);
-  })), !readOnly && onSwitchView && React.createElement("div",{style:{marginBottom:12}},React.createElement("button",{onClick:onSwitchView,style:{padding:"6px 16px",background:"transparent",border:"1px solid "+(C.spark||"#FACC15"),color:C.spark||"#FACC15",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:600}},"Switch to Admin View")), /*#__PURE__*/React.createElement("div",{style:{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap",alignItems:"center"}},/*#__PURE__*/React.createElement("input",{placeholder:"Search name or badge...",value:search,onChange:function(e){setSearch(e.target.value)},style:{padding:"8px 12px",background:C.bg,border:"1px solid "+C.bd,color:C.t1,borderRadius:6,fontSize:13,outline:"none",width:260,fontFamily:"inherit"}}),/*#__PURE__*/React.createElement("select",{value:dept,onChange:function(e){setDept(e.target.value)},style:{padding:"8px 12px",background:C.bg,border:"1px solid "+C.bd,color:C.t1,borderRadius:6,fontSize:13,outline:"none",fontFamily:"inherit",appearance:"auto"}},/*#__PURE__*/React.createElement("option",{value:"all"},"All Departments"),emps.filter(function(e){return e.st==="active"}).map(function(e){return e.dept}).filter(function(v,i,a){return v&&a.indexOf(v)===i}).sort().map(function(d){return /*#__PURE__*/React.createElement("option",{key:d,value:d},d)})),search&&/*#__PURE__*/React.createElement("button",{onClick:function(){setSearch("");setDept("all")},style:{padding:"6px 12px",background:"transparent",border:"1px solid "+C.bd,color:C.t3,borderRadius:6,fontSize:12,cursor:"pointer",fontFamily:"inherit"}},"Clear")), (mTab === "dashboard" || mTab === "timesheets") && /*#__PURE__*/React.createElement("div", {
+  })), !readOnly && onSwitchView && React.createElement("div",{style:{marginBottom:12}},React.createElement("button",{onClick:onSwitchView,style:{padding:"6px 16px",background:"transparent",border:"1px solid "+(C.spark||"#FACC15"),color:C.spark||"#FACC15",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:600}},"Switch to Admin View")), /*#__PURE__*/React.createElement("div",{style:{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap",alignItems:"center"}},/*#__PURE__*/React.createElement("input",{placeholder:"Search name or badge...",value:searchInput,onChange:function(e){setSearchDebounced(e.target.value)},style:{padding:"8px 12px",background:C.bg,border:"1px solid "+C.bd,color:C.t1,borderRadius:6,fontSize:13,outline:"none",width:260,fontFamily:"inherit"}}),/*#__PURE__*/React.createElement("select",{value:dept,onChange:function(e){setDept(e.target.value)},style:{padding:"8px 12px",background:C.bg,border:"1px solid "+C.bd,color:C.t1,borderRadius:6,fontSize:13,outline:"none",fontFamily:"inherit",appearance:"auto"}},/*#__PURE__*/React.createElement("option",{value:"all"},"All Departments"),emps.filter(function(e){return e.st==="active"}).map(function(e){return e.dept}).filter(function(v,i,a){return v&&a.indexOf(v)===i}).sort().map(function(d){return /*#__PURE__*/React.createElement("option",{key:d,value:d},d)})),search&&/*#__PURE__*/React.createElement("button",{onClick:function(){setSearch("");setSearchInput("");setDept("all")},style:{padding:"6px 12px",background:"transparent",border:"1px solid "+C.bd,color:C.t3,borderRadius:6,fontSize:12,cursor:"pointer",fontFamily:"inherit"}},"Clear")), (mTab === "dashboard" || mTab === "timesheets") && /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       alignItems: "center",
@@ -4420,7 +4453,7 @@ function ManagerView({
       color: C.t1,
       marginBottom: 4
     }
-  }, "Weekly Timesheets"), /*#__PURE__*/React.createElement("div",{style:{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap",alignItems:"center"}},/*#__PURE__*/React.createElement("input",{placeholder:"Search employee name or badge...",value:search,onChange:function(e){setSearch(e.target.value)},style:{padding:"8px 12px",background:C.bg,border:"1px solid "+C.bd,color:C.t1,borderRadius:6,fontSize:13,outline:"none",width:280,fontFamily:"inherit"}}),/*#__PURE__*/React.createElement("select",{value:dept,onChange:function(e){setDept(e.target.value)},style:{padding:"8px 12px",background:C.bg,border:"1px solid "+C.bd,color:C.t1,borderRadius:6,fontSize:13,outline:"none",fontFamily:"inherit",appearance:"auto"}},/*#__PURE__*/React.createElement("option",{value:"all"},"All Departments"),emps.filter(function(e){return e.st==="active"}).map(function(e){return e.dept}).filter(function(v,i,a){return v&&a.indexOf(v)===i}).sort().map(function(d){return /*#__PURE__*/React.createElement("option",{key:d,value:d},d)})),/*#__PURE__*/React.createElement("div",{style:{fontSize:12,color:C.t3,marginLeft:8}},statuses.filter(function(e){if(search){var s=search.toLowerCase();var nm=(e.fn+" "+e.ln).toLowerCase();if(nm.indexOf(s)===-1&&(e.badge||"").indexOf(s)===-1&&(e.dept||"").toLowerCase().indexOf(s)===-1)return false}if(dept!=="all"&&e.dept!==dept)return false;return true}).length+" of "+statuses.length+" employees")), /*#__PURE__*/React.createElement("div", {
+  }, "Weekly Timesheets"), /*#__PURE__*/React.createElement("div",{style:{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap",alignItems:"center"}},/*#__PURE__*/React.createElement("div",{style:{fontSize:12,color:C.t3,marginLeft:8}},statuses.filter(function(e){if(search){var s=search.toLowerCase();var nm=(e.fn+" "+e.ln).toLowerCase();if(nm.indexOf(s)===-1&&(e.badge||"").indexOf(s)===-1&&(e.dept||"").toLowerCase().indexOf(s)===-1)return false}if(dept!=="all"&&e.dept!==dept)return false;return true}).length+" of "+statuses.length+" employees")), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       color: C.t4,
@@ -4507,7 +4540,7 @@ function ManagerView({
       return calcDayHours(dp,e.id);
     });
     var wkKey=e.id+"-"+mon.toISOString().slice(0,10);var approved = approvals[wkKey] === "approved";
-    var wkEnd=new Date(mon.getTime()+7*86400000);var ep=punches.filter(function(p){return p.eid===e.id&&new Date(p.time)>=mon&&new Date(p.time)<wkEnd});var pIns=ep.filter(function(p){return p.type==="in"}).length;var pOuts=ep.filter(function(p){return p.type==="out"}).length;var pFlag=pIns!==pOuts;
+    var wkEnd=new Date(mon.getTime()+7*86400000);var ep=(getPunchesByEid(punches)[e.id]||[]).filter(function(p){return new Date(p.time)>=mon&&new Date(p.time)<wkEnd});var pIns=ep.filter(function(p){return p.type==="in"}).length;var pOuts=ep.filter(function(p){return p.type==="out"}).length;var pFlag=pIns!==pOuts;
     return /*#__PURE__*/React.createElement("tr", {
       key: e.id,
       onClick: function () {
@@ -8106,7 +8139,10 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
   var futurePunches = empPunches.filter(function (p) { return new Date(p.time).getTime() > nowMs + 90000; });
 
   // Total points — uses canonical field p.pts
-  var totalPoints = points.reduce(function (s, p) { return s + (parseFloat(p.pts) || 0); }, 0);
+  /* FIX: honor rolling window so this matches the admin table */
+  var __rollDays = (typeof DEFAULT_POLICY !== "undefined" && DEFAULT_POLICY.rollingDays) ? DEFAULT_POLICY.rollingDays : 90;
+  var __ptsCutoff = Date.now() - __rollDays * 24 * 60 * 60 * 1000;
+  var totalPoints = points.filter(function (p) { return new Date(p.date).getTime() >= __ptsCutoff; }).reduce(function (s, p) { return s + (parseFloat(p.pts) || 0); }, 0);
 
   // Type → friendly label map (mirrors module-level RULES const)
   var POINT_LABEL = {
