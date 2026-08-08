@@ -1103,6 +1103,14 @@ function getNextActions(cs) {
     c: C.green
   }];
 }
+/* True when a point event has aged out of the rolling window */
+function __tkExpired(dateVal, policy) {
+  var days = (policy && policy.rollingDays) || (typeof DEFAULT_POLICY !== "undefined" ? DEFAULT_POLICY.rollingDays : 90) || 90;
+  var t = new Date(dateVal).getTime();
+  if (isNaN(t)) return false;
+  return t < (Date.now() - days * 24 * 60 * 60 * 1000);
+}
+
 function calcPts(eid, events, policy) {
   var cutoff = Date.now() - (policy || DEFAULT_POLICY).rollingDays * 24 * 60 * 60 * 1000;
   return parseFloat(events.filter(function (e) {
@@ -3465,6 +3473,9 @@ function PointsLedger({ pointEvents, employees, onIssuePoint, onUpdatePointEvent
   var rBulkIssue = React.useState(false); var showBulkIssue = rBulkIssue[0], setShowBulkIssue = rBulkIssue[1];
 
   // Employee lookup
+  /* rolling-window awareness for the ledger */
+  var __ledgerRollDays = (policy && policy.rollingDays) || 90;
+
   var empById = {};
   (employees || []).forEach(function(e) { empById[e.id] = e; });
 
@@ -3758,7 +3769,7 @@ function PointsLedger({ pointEvents, employees, onIssuePoint, onUpdatePointEvent
               ),
               React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', color: '#a9b3c1', fontSize: 11.5 } }, e.badge || '—'),
               React.createElement('div', null,
-                React.createElement('span', { style: { padding: '3px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700, background: '#ffc23312', color: '#ffc233', letterSpacing: 0.4 } }, lbl(ev.type))
+                React.createElement('span', { style: { padding: '3px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700, background: '#ffc23312', color: '#ffc233', letterSpacing: 0.4 } }, lbl(ev.type)), __tkExpired(ev.date, policy) ? React.createElement('span', { style: { marginLeft: 6, padding: '2px 6px', borderRadius: 3, fontSize: 9, fontWeight: 700, background: 'rgba(127,138,155,0.18)', color: '#7f8a9b', letterSpacing: 0.5 } }, 'EXPIRED') : React.createElement('span', null)
               ),
               React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', fontWeight: 700, color: color, textAlign: 'right' } }, (pts > 0 ? '+' : '') + pts.toFixed(1)),
               React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', color: '#a9b3c1', fontSize: 11 } },
@@ -8592,7 +8603,7 @@ function EmployeeProfile({ eid, employees, punches, onBack, onPunchEdit, onPunch
               var color = pts > 0 ? '#ef4444' : pts < 0 ? '#22c55e' : '#a9b3c1';
               return React.createElement('div', { key: p.id || i, style: { display: 'grid', gridTemplateColumns: '1fr auto auto', gap: 12, alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #1a2029' } },
                 React.createElement('div', null,
-                  React.createElement('div', { style: { fontWeight: 600, fontSize: 13 } }, pointLabel(p.type)),
+                  React.createElement('div', { style: { fontWeight: 600, fontSize: 13, opacity: __tkExpired(p.date) ? 0.5 : 1 } }, pointLabel(p.type), __tkExpired(p.date) ? React.createElement('span', { style: { marginLeft: 8, padding: '2px 7px', borderRadius: 3, fontSize: 9.5, fontWeight: 700, background: 'rgba(127,138,155,0.18)', color: '#7f8a9b', letterSpacing: 0.6 } }, 'EXPIRED') : null),
                   React.createElement('div', { style: { fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#a9b3c1', marginTop: 2 } },
                     p.date ? new Date(p.date).toLocaleString() : ''
                   )
