@@ -8878,6 +8878,14 @@ function App() {
     }
   }
   function handlePunch(p) {
+    /* FIX: reject an exact duplicate from any source */
+    var __pt = new Date(p.time).getTime();
+    if (punches.some(function (x) {
+      return x.eid === p.eid && x.type === p.type && Math.abs(new Date(x.time).getTime() - __pt) < 1000;
+    })) {
+      console.warn("Duplicate punch ignored:", p.eid, p.type, p.time);
+      return;
+    }
     var np = punches.concat([p]);
     setPunches(np);
     persistP(np, p);
@@ -8891,7 +8899,20 @@ function App() {
     var req = requests.find(function (r) {
       return r.id === id;
     });
+    /* FIX: do not re-process an already-approved request */
+    if (req && req.status === "approved") { return; }
+    var __dupePunchGuard = false;
     if (req) {
+      var __rt = new Date(req.time).getTime();
+      __dupePunchGuard = punches.some(function (p) {
+        return p.eid === req.eid && p.type === req.type &&
+               Math.abs(new Date(p.time).getTime() - __rt) < 120000;
+      });
+      if (__dupePunchGuard) {
+        console.log("Approve: matching punch already exists within 2 min — marking approved without creating a duplicate");
+      }
+    }
+    if (req && !__dupePunchGuard) {
       var ap = {
         id: "P-A-" + Date.now() + "-" + Math.random().toString(36).substr(2, 4),
         eid: req.eid,
