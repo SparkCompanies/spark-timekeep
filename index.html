@@ -4572,7 +4572,19 @@ function ManagerView({
       ds.setDate(ds.getDate() + i);
       var de = new Date(ds.getTime() + 86400000 - 1);
       var dp = getDayPunchesWithCarryOver(punches, e.id, ds, de);
-      return calcDayHours(dp,e.id);
+      var hb = calcDayHours(dp, e.id);
+      var nIn = dp.filter(function (p) { return p.type === "in"; }).length;
+      var nOut = dp.filter(function (p) { return p.type === "out"; }).length;
+      var _now = new Date();
+      var _isToday = ds.toDateString() === _now.toDateString();
+      var _isFuture = ds > _now;
+      hb.dayName = dn;
+      hb.nIn = nIn; hb.nOut = nOut;
+      /* only flag completed days — today is still in progress */
+      hb.issue = (!_isToday && !_isFuture && nIn !== nOut)
+        ? (nIn > nOut ? "no-out" : "no-in")
+        : null;
+      return hb;
     });
     var wkKey=e.id+"-"+mon.toISOString().slice(0,10);var approved = approvals[wkKey] === "approved";
     var wkEnd=new Date(mon.getTime()+7*86400000);var ep=(getPunchesByEid(punches)[e.id]||[]).filter(function(p){return new Date(p.time)>=mon&&new Date(p.time)<wkEnd});var pIns=ep.filter(function(p){return p.type==="in"}).length;var pOuts=ep.filter(function(p){return p.type==="out"}).length;var pFlag=pIns!==pOuts;
@@ -4606,7 +4618,7 @@ function ManagerView({
         fontWeight: 600,
         color: C.t1
       }
-    }, e.fn, " ", e.ln, pFlag?React.createElement("span",{style:{marginLeft:6,fontSize:10,padding:"2px 5px",borderRadius:4,background:C.red+"22",color:C.red,fontWeight:700}},"⚠ "+pIns+"in/"+pOuts+"out"):null))),/*#__PURE__*/React.createElement("td",{style:{padding:"8px 6px",textAlign:"center",fontSize:12,color:C.t4,fontFamily:Fm}},(function(){var s=e.shiftStart||"06:00",n=e.shiftEnd||"14:30";function f(t){var p=t.split(":");var h=+p[0];return(h>12?h-12:h||12)+":"+p[1]+(h>=12?"p":"a")}return f(s)+"–"+f(n)}())), days.map(function (dh, di) {
+    }, e.fn, " ", e.ln, (function(){var __dayIssues = days.filter(function (d) { return d.issue; });if (!__dayIssues.length) return null;var __txt = __dayIssues.length === 1? (__dayIssues[0].issue === "no-out" ? "Missing OUT" : "Missing IN") + " \u00b7 " + __dayIssues[0].dayName: __dayIssues.length + " days need punches";return React.createElement("span",{title:"Click the row to open the timesheet and fix it",style:{marginLeft:8,fontSize:10.5,padding:"3px 8px",borderRadius:4,background:"rgba(239,68,68,0.14)",color:C.red,fontWeight:700,letterSpacing:0.3,whiteSpace:"nowrap"}},__txt);}())))),/*#__PURE__*/React.createElement("td",{style:{padding:"8px 6px",textAlign:"center",fontSize:12,color:C.t4,fontFamily:Fm}},(function(){var s=e.shiftStart||"06:00",n=e.shiftEnd||"14:30";function f(t){var p=t.split(":");var h=+p[0];return(h>12?h-12:h||12)+":"+p[1]+(h>=12?"p":"a")}return f(s)+"–"+f(n)}())), days.map(function (dh, di) {
       return /*#__PURE__*/React.createElement("td", {
         key: di,
         style: {
@@ -4615,7 +4627,10 @@ function ManagerView({
           fontFamily: Fm,
           fontSize: 13,
           fontWeight: 600,
-          color: dh.netH > P.otDaily ? C.orange : dh.netH > 0 ? C.t1 : C.t4
+          color: dh.netH > P.otDaily ? C.orange : dh.netH > 0 ? C.t1 : C.t4,
+          background: dh.issue ? "rgba(239,68,68,0.10)" : "transparent",
+          boxShadow: dh.issue ? "inset 0 0 0 1px rgba(239,68,68,0.45)" : "none",
+          borderRadius: dh.issue ? 4 : 0
         }
       }, dh.netH > 0
         ? React.createElement("div", null,
@@ -4626,7 +4641,9 @@ function ManagerView({
               "−" + (dh.breakH * 60).toFixed(0) + "m"
             )
           )
-        : "-");
+        : (dh.issue
+            ? React.createElement("span", { title: dh.issue === "no-out" ? "Clocked in, never clocked out" : "Clocked out with no clock in", style: { color: C.red, fontWeight: 800, fontSize: 14 } }, "!")
+            : "-"));
     }), /*#__PURE__*/React.createElement("td", {
       style: {
         padding: "8px",
