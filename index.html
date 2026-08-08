@@ -25,7 +25,6 @@ select,input,textarea{font-family:inherit}
 </style>
 <script>setInterval(function(){var b=document.querySelector("[data-kiosk-idle]");if(b)location.reload()},5*60*1000)</script>
   <script src="command-center.js?v=1779378310498"></script>
-  <script src="punch-source-report.js?v=1786105519499"></script>
 </head>
 <body>
 <div id="root"></div>
@@ -480,10 +479,7 @@ async function sbLoadPointEvents() {
       eid: e.eid,
       type: e.type,
       pts: parseFloat(e.pts),
-      date: e.date,
-      occurredOn: e.occurred_on || null,
-      dateSource: e.date_source || null,
-      expires: e.expires === false ? false : true
+      date: e.date
     };
   });
 }
@@ -555,20 +551,12 @@ function getAdminLog(){try{var s=safeStorage.getItem("tk-admin-log");return s?JS
 async function sbSavePointEvent(ev) {
   var sb = getSb();
   if (!sb) return;
-  var _occ = ev.occurredOn;
-  if (!_occ) {
-    var _d = new Date(ev.date);
-    _occ = _d.getFullYear() + "-" + String(_d.getMonth() + 1).padStart(2, "0") + "-" + String(_d.getDate()).padStart(2, "0");
-  }
   await sb.from("tk_point_events").upsert({
     id: ev.id,
     eid: ev.eid,
     type: ev.type,
     pts: ev.pts,
-    date: ev.date,
-    occurred_on: _occ,
-    date_source: ev.dateSource || "occurrence",
-    expires: ev.expires === false ? false : (parseFloat(ev.pts) || 0) >= 0
+    date: ev.date
   });
 }
 async function sbSaveEmployee(e) {
@@ -891,7 +879,7 @@ function getDayPunchesWithCarryOver(allPunches, eid, dayStart, dayEnd) {
   // pull in next-day punches until we find the clock-out
   var lastPunch = dp.length > 0 ? dp[dp.length - 1] : null;
   
-  if (lastPunch && lastPunch.type === "in" && new Date(lastPunch.time).getHours() >= 12) {
+  if (lastPunch && lastPunch.type === "in" && new Date(lastPunch.time).getHours() >= 14) {
     var nextDayStart = new Date(dayEnd.getTime() + 1);
     var nextDayEnd = new Date(dayStart.getTime() + 36 * 3600000); // up to 12h into next day
     var nextPunches = allPunches.filter(function(p) {
@@ -915,7 +903,7 @@ function getDayPunchesWithCarryOver(allPunches, eid, dayStart, dayEnd) {
     // Check if there's an evening clock-in in the prior window
     var priorEveningIn = false;
     for (var j = 0; j < priorPunches.length; j++) {
-      if (priorPunches[j].type === "in" && new Date(priorPunches[j].time).getHours() >= 12) {
+      if (priorPunches[j].type === "in" && new Date(priorPunches[j].time).getHours() >= 14) {
         priorEveningIn = true;
         break;
       }
@@ -928,7 +916,7 @@ function getDayPunchesWithCarryOver(allPunches, eid, dayStart, dayEnd) {
       if (priorIsSunday) {
         // Add Sunday evening clock-in to Monday's punches
         for (var k2 = 0; k2 < priorPunches.length; k2++) {
-          if (priorPunches[k2].type === "in" && new Date(priorPunches[k2].time).getHours() >= 12) {
+          if (priorPunches[k2].type === "in" && new Date(priorPunches[k2].time).getHours() >= 14) {
             dp = [priorPunches[k2]].concat(dp);
             break;
           }
@@ -1086,27 +1074,12 @@ function getNextActions(cs) {
   }];
 }
 function calcPts(eid, events, policy) {
-  var P = policy || DEFAULT_POLICY;
-  /* Local-midnight cutoff. occurred_on is a plain date, so the 90-day
-     boundary no longer shifts with timezone. */
-  var cut = new Date();
-  cut.setHours(0, 0, 0, 0);
-  cut.setDate(cut.getDate() - P.rollingDays);
-  var cutMs = cut.getTime();
-  var raw = (events || []).filter(function (e) {
-    if (e.eid !== eid) return false;
-    /* expires === false means a credit: HR relief must not age out */
-    if (e.expires === false) return true;
-    var d = e.occurredOn
-      ? new Date(e.occurredOn + "T12:00:00")
-      : new Date(e.date);
-    return d.getTime() >= cutMs;
+  var cutoff = Date.now() - (policy || DEFAULT_POLICY).rollingDays * 24 * 60 * 60 * 1000;
+  return parseFloat(events.filter(function (e) {
+    return e.eid === eid && new Date(e.date).getTime() >= cutoff;
   }).reduce(function (s, e) {
-    return s + (parseFloat(e.pts) || 0);
-  }, 0);
-  /* Clamp so permanent credits can't drive a balance negative and mask
-     future violations. */
-  return parseFloat(Math.max(0, raw).toFixed(1));
+    return s + e.pts;
+  }, 0).toFixed(1));
 }
 function detectExceptions(emp, punches, policy) {
   var P = policy || DEFAULT_POLICY;
@@ -3797,19 +3770,12 @@ function PointsLedger({ pointEvents, employees, onIssuePoint, onUpdatePointEvent
               ts: new Date().toISOString()
             });
           } catch(e) {}
-          var _ud = new Date(updated.date);
-          var _uocc = _ud.getFullYear() + '-' + String(_ud.getMonth() + 1).padStart(2, '0') + '-' + String(_ud.getDate()).padStart(2, '0');
-          var _uexp = (parseFloat(updated.pts) || 0) >= 0;
-          var clean = { id: updated.id, eid: updated.eid, type: updated.type, pts: updated.pts, date: updated.date, occurred_on: _uocc, date_source: 'occurrence', expires: _uexp };
+          var clean = { id: updated.id, eid: updated.eid, type: updated.type, pts: updated.pts, date: updated.date };
           var r = await sb.from('tk_point_events').upsert(clean);
           if (r.error) { alert('Save failed: ' + r.error.message); return; }
         }
         onUpdatePointEvents && onUpdatePointEvents((pointEvents || []).map(function(x) {
-          if (x.id !== updated.id) return x;
-          var _d2 = new Date(updated.date);
-          return { id: updated.id, eid: updated.eid, type: updated.type, pts: updated.pts, date: updated.date,
-            occurredOn: _d2.getFullYear() + '-' + String(_d2.getMonth() + 1).padStart(2, '0') + '-' + String(_d2.getDate()).padStart(2, '0'),
-            dateSource: 'occurrence', expires: (parseFloat(updated.pts) || 0) >= 0 };
+          return x.id === updated.id ? { id: updated.id, eid: updated.eid, type: updated.type, pts: updated.pts, date: updated.date } : x;
         }));
         setEditEv(null);
       },
@@ -5255,7 +5221,6 @@ function AdminView({
     showAdd = r2[0],
     setShowAdd = r2[1];
   var rSE = useState([]), selEmps = rSE[0], setSelEmps = rSE[1];
-  var rQIA = useState(null), quickIssueFor = rQIA[0], setQuickIssueFor = rQIA[1];
   var r3 = useState({
       fn: "",
       ln: "",
@@ -5466,12 +5431,9 @@ function AdminView({
     logAdminAction("PIN_RESET",(emp2?emp2.fn+" "+emp2.ln:"ID:"+id),staffName);
   }
   function adj(id, d) {
-    var emp2 = emps.find(function (e) { return e.id === id; });
-    if (!emp2) return;
-    /* Every adjustment now carries a violation type and an incident date.
-       Direct writes here previously produced undated "manual" events with
-       no reason and no occurrence date. */
-    setQuickIssueFor({ emp: emp2, presetType: "manual", presetPts: d });
+    var emp2=emps.find(function(e){return e.id===id});
+    logAdminAction("POINTS_ADJUST",(emp2?emp2.fn+" "+emp2.ln:"ID:"+id)+" "+(d>0?"+":"")+d+" pts",staffName);
+    onIssuePoint(id, "manual", d);
   }
   var inp = {
     background: C.bg,
@@ -5574,7 +5536,7 @@ function AdminView({
     np[key] = val;
     onUpdatePolicy(np);
   }
-  var tabDef2 = [["system", "System"], ["employees", "Employees"], ["staff", "Staff Access"], ["schedules", "Schedules"], ["policy", "Policy"], ["geofence", "Geofence"], ["reports", "Reports"], ["sources", "Punch Source"], ["audit", "Audit Log"]];
+  var tabDef2 = [["system", "System"], ["employees", "Employees"], ["staff", "Staff Access"], ["schedules", "Schedules"], ["policy", "Policy"], ["geofence", "Geofence"], ["reports", "Reports"], ["audit", "Audit Log"]];
   return /*#__PURE__*/React.createElement("div", {
     style: {
       minHeight: "100vh",
@@ -7667,23 +7629,7 @@ function AdminView({
       color: C.t4,
       marginTop: 8
     }
-  }, "Showing up to 50 most recent entries"))
-  , tab === "sources" && (window.PunchSourceReport
-      ? React.createElement(window.PunchSourceReport, { punches: punches, emps: emps })
-      : React.createElement("div", { style: { padding: 24, color: C.red, fontSize: 13 } },
-          "punch-source-report.js did not load. Confirm the file is deployed alongside index.html, then hard refresh.")))
-  , quickIssueFor && React.createElement(QuickIssueModal, {
-    emp: quickIssueFor.emp,
-    presetType: quickIssueFor.presetType,
-    presetPts: quickIssueFor.presetPts,
-    onIssue: function (type, pts, dateISO) {
-      var nm = quickIssueFor.emp.fn + " " + quickIssueFor.emp.ln;
-      logAdminAction("POINTS_ADJUST", nm + " " + (pts > 0 ? "+" : "") + pts + " pts · " + type + " · incident " + String(dateISO).slice(0, 10), staffName);
-      onIssuePoint(quickIssueFor.emp.id, type, pts, dateISO);
-      setQuickIssueFor(null);
-    },
-    onClose: function () { setQuickIssueFor(null); }
-  }));
+  }, "Showing up to 50 most recent entries"))));
 }
 
 /* ═══ MAIN APP ═══ */
@@ -8733,7 +8679,7 @@ function App() {
             }).subscribe();
             sb.channel("tk-points").on("postgres_changes", {event:"*",schema:"public",table:"tk_point_events"}, function(payload) {
               if(payload.eventType==="DELETE"){setPEvents(function(prev){return prev.filter(function(x){return x.id!==payload.old.id})})}
-              else{var ev=payload.new;var m={id:ev.id,eid:ev.eid,type:ev.type,pts:parseFloat(ev.pts),date:ev.date,occurredOn:ev.occurred_on||null,dateSource:ev.date_source||null,expires:ev.expires===false?false:true};setPEvents(function(prev){var ex=prev.some(function(x){return x.id===m.id});if(ex)return prev.map(function(x){return x.id===m.id?m:x});return[m].concat(prev)})}
+              else{var ev=payload.new;var m={id:ev.id,eid:ev.eid,type:ev.type,pts:parseFloat(ev.pts),date:ev.date};setPEvents(function(prev){var ex=prev.some(function(x){return x.id===m.id});if(ex)return prev.map(function(x){return x.id===m.id?m:x});return[m].concat(prev)})}
             }).subscribe();
             sb.channel("tk-requests").on("postgres_changes", {event:"*",schema:"public",table:"tk_requests"}, function(payload) {
               if(payload.eventType==="DELETE"){setRequests(function(prev){return prev.filter(function(x){return x.id!==payload.old.id})})}
@@ -8886,16 +8832,12 @@ function App() {
       return r.k === type;
     });
     var actualPts = pts !== undefined ? pts : rule ? rule.p : 0.5;
-    var _when = violationDate ? new Date(violationDate) : new Date();
     var ev = {
       id: "PE-" + Date.now() + "-" + Math.random().toString(36).substr(2, 4),
       eid: eid,
       type: type,
       pts: actualPts,
-      date: violationDate || new Date().toISOString(),
-      occurredOn: _when.getFullYear() + "-" + String(_when.getMonth() + 1).padStart(2, "0") + "-" + String(_when.getDate()).padStart(2, "0"),
-      dateSource: "occurrence",
-      expires: actualPts >= 0
+      date: violationDate || new Date().toISOString()
     };
     var npe = pEvents.concat([ev]);
     setPEvents(npe);
