@@ -843,9 +843,20 @@ function fmtTime(iso) {
 }
 /* PERF: group punches by employee once; reuse until the punch array changes */
 var __tkIdx = null, __tkIdxKey = "";
+/* Cheap content signature — changes when a punch time is edited, not just added/removed */
+function __tkSig(arr) {
+  if (!arr || !arr.length) return "0";
+  var h = 0;
+  for (var i = 0; i < arr.length; i++) {
+    var s = (arr[i].id || "") + (arr[i].time || "") + (arr[i].type || "");
+    for (var j = 0; j < s.length; j += 3) h = (h * 31 + s.charCodeAt(j)) | 0;
+  }
+  return arr.length + ":" + h;
+}
+
 function getPunchesByEid(allPunches) {
   if (!allPunches || !allPunches.length) return {};
-  var key = allPunches.length + "|" + (allPunches[0] && allPunches[0].id) + "|" + (allPunches[allPunches.length - 1] && allPunches[allPunches.length - 1].id);
+  var key = __tkSig(allPunches);  /* FIX: invalidate on edits, not just adds */
   if (__tkIdx && __tkIdxKey === key) return __tkIdx;
   var idx = {};
   for (var n = 0; n < allPunches.length; n++) {
@@ -2981,80 +2992,67 @@ function KioskView({
   }
   if (state === "status" && emp) {
     var cs2 = getCurrentState(emp, punches);
-    var wk2 = calcWeekHours(punches, emp.id);
-    var daily = getDailyBreakdown(punches, emp.id);
-    content = /*#__PURE__*/React.createElement("div", {
-      style: {
-        textAlign: "center"
-      }
-    }, /*#__PURE__*/React.createElement(Av, {
-      fn: emp.fn,
-      ln: emp.ln,
-      sz: 44
-    }), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 14,
-        fontWeight: 700,
-        color: C.t1,
-        marginTop: 6
-      }
-    }, emp.fn, " ", emp.ln), /*#__PURE__*/React.createElement(Tag, {
-      color: cs2.color
-    }, cs2.label), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        justifyContent: "center",
-        gap: 8,
-        marginTop: 14,
-        marginBottom: 12
-      }
-    }, daily.map(function (d) {
-      return /*#__PURE__*/React.createElement("div", {
-        key: d.day,
-        style: {
-          textAlign: "center",
-          minWidth: 36
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        style: {
-          fontFamily: Fm,
-          fontSize: 13,
-          color: d.isToday ? C.spark : C.t4,
-          letterSpacing: 1
-        }
-      }, d.day), /*#__PURE__*/React.createElement("div", {
-        style: {
-          fontFamily: Fm,
-          fontSize: 14,
-          fontWeight: 700,
-          color: d.hrs > 0 ? C.t1 : C.t4
-        }
-      }, d.hrs > 0 ? d.hrs.toFixed(1) : "-"));
-    })), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontFamily: Fm,
-        fontSize: 18,
-        fontWeight: 700,
-        color: C.spark
-      }
-    }, wk2.toFixed(1), "h"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontFamily: Fm,
-        fontSize: 13,
-        color: C.t4
-      }
-    }, "this week"), /*#__PURE__*/React.createElement("button", {
-      onClick: reset,
-      style: {
-        marginTop: 16,
-        padding: "10px 28px",
-        borderRadius: 8,
-        fontSize: 13,
-        fontWeight: 700,
-        color: C.bg,
-        background: C.spark
-      }
-    }, "DONE"));
+    var monNow = getMonday();
+    var wkDays = getDailyBreakdownForWeek(punches, emp.id, monNow);
+    var wkTotal = wkDays.reduce(function (s, d) { return s + d.hrs; }, 0);
+    var todayD = null;
+    for (var _ti = 0; _ti < wkDays.length; _ti++) { if (wkDays[_ti].isToday) todayD = wkDays[_ti]; }
+    var otHrs = Math.max(0, wkTotal - 40);
+    function _times(dp) {
+      var ins = (dp || []).filter(function (p) { return p.type === "in"; });
+      var outs = (dp || []).filter(function (p) { return p.type === "out"; });
+      var f = function (t) { return new Date(t).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); };
+      return {
+        inT: ins.length ? f(ins[0].time) : null,
+        outT: outs.length ? f(outs[outs.length - 1].time) : null
+      };
+    }
+    var tT = todayD ? _times(todayD.punches) : { inT: null, outT: null };
+    content = React.createElement("div", { style: { textAlign: "center", width: "100%", maxWidth: 520, margin: "0 auto" } },
+      React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 14 } },
+        React.createElement(Av, { fn: emp.fn, ln: emp.ln, sz: 44 }),
+        React.createElement("div", { style: { textAlign: "left" } },
+          React.createElement("div", { style: { fontSize: 19, fontWeight: 800, color: C.t1 } }, emp.fn + " " + emp.ln),
+          React.createElement(Tag, { color: cs2.color }, cs2.label)
+        )
+      ),
+      React.createElement("div", { style: { background: C.sf, border: "1px solid " + C.bd, borderRadius: 14, padding: "16px 18px", marginBottom: 12, textAlign: "left" } },
+        React.createElement("div", { style: { fontSize: 11, fontWeight: 700, color: C.t4, letterSpacing: 1.6, marginBottom: 6 } }, "TODAY"),
+        React.createElement("div", { style: { display: "flex", alignItems: "baseline", gap: 10 } },
+          React.createElement("div", { style: { fontFamily: Fm, fontSize: 40, fontWeight: 800, color: C.spark, lineHeight: 1 } }, todayD ? todayD.hrs.toFixed(2) : "0.00"),
+          React.createElement("div", { style: { fontSize: 14, color: C.t3, fontWeight: 600 } }, "hours")
+        ),
+        React.createElement("div", { style: { fontSize: 13, color: C.t2, marginTop: 8, fontFamily: Fm } },
+          (tT.inT ? "In " + tT.inT : "No clock in"),
+          (tT.outT ? "   \u00b7   Out " + tT.outT : (cs2.status === "in" ? "   \u00b7   still working" : ""))
+        ),
+        (todayD && todayD.breakH > 0) ? React.createElement("div", { style: { fontSize: 12, color: C.t4, marginTop: 4 } },
+          "Gross " + todayD.grossH.toFixed(2) + "h, lunch \u2212" + Math.round(todayD.breakH * 60) + " min") : null,
+        (cs2.status === "in") ? React.createElement("div", { style: { fontSize: 11.5, color: C.blue, marginTop: 6 } },
+          "Counting up while you are clocked in") : null
+      ),
+      React.createElement("div", { style: { background: C.sf, border: "1px solid " + C.bd, borderRadius: 14, padding: "14px 16px", textAlign: "left" } },
+        React.createElement("div", { style: { fontSize: 11, fontWeight: 700, color: C.t4, letterSpacing: 1.6, marginBottom: 10 } }, "THIS WEEK"),
+        wkDays.map(function (d, di) {
+          var t = _times(d.punches);
+          var worked = d.hrs > 0;
+          return React.createElement("div", { key: di, style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 8px", borderRadius: 6, marginBottom: 2, background: d.isToday ? "rgba(250,204,21,0.10)" : "transparent" } },
+            React.createElement("div", { style: { width: 46, fontSize: 13, fontWeight: 700, color: d.isToday ? C.spark : (worked ? C.t2 : C.t4) } }, d.day),
+            React.createElement("div", { style: { flex: 1, fontFamily: Fm, fontSize: 12, color: C.t4 } },
+              worked ? ((t.inT || "?") + " \u2013 " + (t.outT || "open")) : ""),
+            React.createElement("div", { style: { fontFamily: Fm, fontSize: 15, fontWeight: 700, color: worked ? C.t1 : C.t4, minWidth: 58, textAlign: "right" } },
+              worked ? d.hrs.toFixed(2) : "\u2013")
+          );
+        }),
+        React.createElement("div", { style: { borderTop: "1px solid " + C.bd, marginTop: 8, paddingTop: 10, display: "flex", alignItems: "center", justifyContent: "space-between" } },
+          React.createElement("div", { style: { fontSize: 13, fontWeight: 700, color: C.t2, letterSpacing: 0.4 } }, "WEEK TOTAL"),
+          React.createElement("div", { style: { fontFamily: Fm, fontSize: 26, fontWeight: 800, color: otHrs > 0 ? C.orange : C.spark } }, wkTotal.toFixed(2) + "h")
+        ),
+        otHrs > 0 ? React.createElement("div", { style: { fontSize: 12, color: C.orange, marginTop: 4, textAlign: "right", fontWeight: 600 } },
+          otHrs.toFixed(2) + "h overtime") : null
+      ),
+      React.createElement("button", { onClick: reset, style: { marginTop: 16, padding: "12px 40px", borderRadius: 10, fontSize: 15, fontWeight: 800, letterSpacing: 1, color: C.bg, background: C.spark, border: "none" } }, "DONE")
+    );
   }
   if (state === "req-done") content = /*#__PURE__*/React.createElement("div", {
     style: {
@@ -4240,7 +4238,7 @@ function ManagerView({
   var storedDismissed = JSON.parse(localStorage.getItem("spark-tk-dismissed") || "{}"); var rdismissed = useState(storedDismissed),
     dismissed = rdismissed[0],
     _setDismissed = rdismissed[1]; var setDismissed = function(val){_setDismissed(val);localStorage.setItem("spark-tk-dismissed",JSON.stringify(val))};
-  var __vKey = emps.length + "|" + (punches ? punches.length : 0) + "|" + (pointEvents ? pointEvents.length : 0) + "|" + mon.getTime() + "|" + ((punches && punches.length) ? punches[0].id + "|" + punches[punches.length - 1].id : "");
+  var __vKey = emps.length + "|" + (pointEvents ? pointEvents.length : 0) + "|" + mon.getTime() + "|" + __tkSig(punches);  /* FIX */
   if (__tkViolCache.key !== __vKey || !__tkViolCache.val) {
     __tkViolCache = { key: __vKey, val: detectViolations(emps, punches, pointEvents, P, mon) };
   }
@@ -4249,13 +4247,13 @@ function ManagerView({
   });
   var empIdSet = {};
   emps.forEach(function (e) { empIdSet[e.id] = true; });
-  var __vpKey = (punches ? punches.length : 0) + "|" + emps.length + "|" + ((punches && punches.length) ? punches[punches.length - 1].id : "");
+  var __vpKey = emps.length + "|" + __tkSig(punches);  /* FIX */
   if (!window.__tkVP || window.__tkVP.key !== __vpKey) {
     window.__tkVP = { key: __vpKey, val: (punches || []).filter(function (p) { return p && p.eid && empIdSet[p.eid]; }) };
   }
   var validPunches = window.__tkVP.val;
   var orphanCount = (punches || []).length - validPunches.length;
-  var __stKey = active.length + "|" + validPunches.length + "|" + weekOffset + "|" + (validPunches.length ? validPunches[0].id + "|" + validPunches[validPunches.length - 1].id : "") + "|" + active.reduce(function (s, e) { return s + (e.pts || 0); }, 0);
+  var __stKey = active.length + "|" + weekOffset + "|" + __tkSig(validPunches) + "|" + active.reduce(function (s, e) { return s + (e.pts || 0); }, 0);  /* FIX */
   var statuses;
   if (__tkStatusCache.key === __stKey && __tkStatusCache.val) { statuses = __tkStatusCache.val; } else {
   statuses = active.map(function (e) {
