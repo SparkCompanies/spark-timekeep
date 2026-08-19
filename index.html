@@ -1057,9 +1057,7 @@ function getDailyBreakdownForWeek(allPunches, eid, monday) {
 }
 function getCurrentState(emp, punches) {
   punches = getPunchesByEid(punches)[emp.id] || [];  /* PERF */
-  /* FIX: 24h was too short. A clock-in older than a day read as "clocked out",
-     so the kiosk offered Clock In to someone already clocked in. */
-  var cutoff = new Date(Date.now() - 7*24*60*60*1000);
+  var cutoff = new Date(Date.now() - 24*60*60*1000);
   var ep = punches.filter(function (p) {
     return p.eid === emp.id && new Date(p.time) >= cutoff;
   }).sort(function (a, b) {
@@ -1080,16 +1078,12 @@ function getCurrentState(emp, punches) {
     next: "break-in",
     since: last.time
   };
-  /* an open clock-in this old almost certainly means a missed clock-out */
-  var __staleShift = (last.type === "in" || last.type === "break-in") &&
-    (Date.now() - new Date(last.time).getTime()) > 20 * 60 * 60 * 1000;
   if (last.type === "in" || last.type === "break-in") return {
     status: "in",
-    label: __staleShift ? "Still clocked in" : "Working",
-    color: __staleShift ? C.orange : C.green,
+    label: "Working",
+    color: C.green,
     next: "out",
-    since: last.time,
-    stale: __staleShift
+    since: last.time
   };
   return {
     status: "out",
@@ -1105,11 +1099,6 @@ function getNextActions(cs) {
     l: "Clock In",
     c: C.green
   }];
-  /* stale open shift: let them clock out OR start fresh */
-  if (cs.status === "in" && cs.stale) return [
-    { k: "out", l: "Clock Out", c: C.red },
-    { k: "in", l: "Start New Shift", c: C.green }
-  ];
   if (cs.status === "in") return [{
     k: "out",
     l: "Clock Out",
