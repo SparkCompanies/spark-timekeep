@@ -397,11 +397,26 @@ async function sGet(k) {
     return null;
   }
 }
+/* Supabase is the source of truth. The local copy is only a small recent
+   window for offline resilience — never the whole history. */
+var __TK_LOCAL_PUNCH_CAP = 500;
+(function __tkClearBloat() {
+  try {
+    ["tk-v7-punches", "tk-v7-punches-backup", "spark-tk-punches"].forEach(function (k) {
+      var v = localStorage.getItem(k);
+      if (v && v.length > 400000) { localStorage.removeItem(k); console.log("Cleared oversized " + k); }
+    });
+  } catch (e) {}
+}());
+
 async function sSet(k, v) {
   try {
     safeStorage.setItem(k, JSON.stringify(v));
   } catch (e) {
-    console.error(e);
+    if (e && String(e.name || "").indexOf("Quota") > -1) {
+      try { localStorage.removeItem(k); } catch (e2) {}
+      console.warn("Storage full — dropped local copy of " + k);
+    } else { console.error(e); }
   }
 }
 
@@ -8932,7 +8947,7 @@ function App() {
           }
           setPunches(sbPch || []);
           /* Update backup to match Supabase (source of truth) */
-          try{localStorage.setItem("tk-v7-punches-backup",JSON.stringify(sbPch||[]))}catch(e){}
+          /* removed: full-array backup blew the storage quota */
           setRequests(sbReqs || []);
           if (sbPol) setPolicy(sbPol);
           if (sbGeo) setGeoConfig(sbGeo);
@@ -9042,12 +9057,15 @@ function App() {
   }
   function persistP(np, newPunch) {
     if (!saveOk.current) return;
-    sSet("tk-v7-punches", np);
-    /* Also save to localStorage as backup */
-    try{localStorage.setItem("tk-v7-punches-backup",JSON.stringify(np))}catch(e){}
-    if (useSupa() && newPunch) {
-      sbSavePunch(newPunch);
+    /* FIX: only the most recent slice — writing all 19k punches blew the quota */
+    try {
+      var recent = (np || []).slice(-__TK_LOCAL_PUNCH_CAP);
+      safeStorage.setItem("tk-v7-punches", JSON.stringify(recent));
+    } catch (e) {
+      try { localStorage.removeItem("tk-v7-punches"); } catch (e2) {}
+      console.warn("Local punch cache skipped:", e && e.message);
     }
+    if (useSupa() && newPunch) sbSavePunch(newPunch);
   }
   function persistR(nr, changedReq) {
     if (!saveOk.current) return;
@@ -9190,8 +9208,8 @@ function App() {
       return p;
     });
     setPunches(updated);
-    try{localStorage.setItem("spark-tk-punches", JSON.stringify(updated))}catch(e){}
-    try{localStorage.setItem("tk-v7-punches-backup", JSON.stringify(updated))}catch(e){}
+    /* removed: duplicate punch mirror */
+    /* removed: full-array backup blew the storage quota */
     if(useSupa()){(async function(){
       var sb=getSb(); if(!sb) return;
       var edited=updated.find(function(p){return p.id===punchId}); if(!edited) return;
@@ -9239,7 +9257,7 @@ function App() {
       } catch(e) { console.warn("Audit log unavailable:", e); }
     })()}
     var updated=punches.filter(function(p){return p.id!==punchId});
-    setPunches(updated);sSet("tk-v7-punches",updated);try{localStorage.setItem("tk-v7-punches-backup",JSON.stringify(updated))}catch(ex){}
+    setPunches(updated);sSet("tk-v7-punches",updated);/* removed: full-array backup blew the storage quota */
     if(useSupa()){(async function(){var sb=getSb();if(sb){var r=await sb.from("tk_punches").delete().eq("id",punchId);if(r.error)console.error("Delete failed:",r.error)}})()}
   }
   function switchView(){if(view==="admin")setView("manager");else if(view==="manager")setView("admin")}
