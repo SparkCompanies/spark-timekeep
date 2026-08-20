@@ -543,7 +543,7 @@ async function sbLoadConfig(key) {
 function getOfflineQueue() { try { var q=localStorage.getItem("tk-offline-queue"); return q?JSON.parse(q):[]; } catch(e){return[]} }
 function saveOfflineQueue(q) { localStorage.setItem("tk-offline-queue",JSON.stringify(q)); }
 async function flushOfflineQueue() { var q=getOfflineQueue(); if(q.length===0)return; var sb=getSb(); if(!sb)return; var failed=[]; for(var i=0;i<q.length;i++){var r=await sb.from("tk_punches").upsert(q[i]); if(r.error)failed.push(q[i])} saveOfflineQueue(failed); if(failed.length===0&&q.length>0)console.log("Flushed "+q.length+" offline punches"); }
-setInterval(flushOfflineQueue,30000); /* retry every 30 seconds */
+setInterval(flushOfflineQueue,10000); /* retry every 30 seconds */
 
 async function sbSavePunch(p) {
   var sb = getSb();
@@ -2430,6 +2430,44 @@ function KioskView({
     geoData = r10b[0],
     setGeoData = r10b[1];
   var rNet = useState({ online: true, queued: 0 }), netState = rNet[0], setNetState = rNet[1];
+  /* __tkVerify: at PIN entry, pull this person's latest punches straight
+     from the database so the buttons reflect punches made on ANY device. */
+  var rVer = useState(null), verified = rVer[0], setVerified = rVer[1];
+  useEffect(function () {
+    if (state !== "action" || !emp) return;
+    setVerified(null);
+    var alive = true;
+    fetch("https://rdyzvohphrmkkowdsoam.supabase.co/rest/v1/tk_punches?eid=eq." + encodeURIComponent(emp.id) + "&order=time.desc&limit=60", {
+      headers: { apikey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkeXp2b2hwaHJta2tvd2Rzb2FtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3NTk0MjIsImV4cCI6MjA4OTMzNTQyMn0.7KxbdsTpQcOZDmrP125lga7sfdphpyTbG4jbDtHKE_E", Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkeXp2b2hwaHJta2tvd2Rzb2FtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3NTk0MjIsImV4cCI6MjA4OTMzNTQyMn0.7KxbdsTpQcOZDmrP125lga7sfdphpyTbG4jbDtHKE_E" }
+    }).then(function (r) { return r.ok ? r.json() : null; }).then(function (rows) {
+      if (alive && rows && rows.length !== undefined) setVerified({ eid: emp.id, rows: rows });
+    }).catch(function () { /* offline: local state stands */ });
+    return function () { alive = false; };
+  }, [state, emp]);
+
+  /* Heartbeat: an idle kiosk checks every 60s whether the server has a
+     newer punch than it does; if so, reload. Catches dead websockets. */
+  useEffect(function () {
+    var iv = setInterval(function () {
+      if (state !== "idle") return;
+      fetch("https://rdyzvohphrmkkowdsoam.supabase.co/rest/v1/tk_punches?select=time&order=time.desc&limit=1", {
+        headers: { apikey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkeXp2b2hwaHJta2tvd2Rzb2FtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3NTk0MjIsImV4cCI6MjA4OTMzNTQyMn0.7KxbdsTpQcOZDmrP125lga7sfdphpyTbG4jbDtHKE_E", Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkeXp2b2hwaHJta2tvd2Rzb2FtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3NTk0MjIsImV4cCI6MjA4OTMzNTQyMn0.7KxbdsTpQcOZDmrP125lga7sfdphpyTbG4jbDtHKE_E" }
+      }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+        if (!d || !d[0]) return;
+        var serverT = new Date(d[0].time).getTime();
+        var localMax = 0;
+        for (var i = 0; i < (punches || []).length; i++) {
+          var t = new Date(punches[i].time).getTime();
+          if (t > localMax) localMax = t;
+        }
+        if (serverT > localMax + 5000) {
+          console.log("Kiosk stale — reloading to catch up");
+          location.reload();
+        }
+      }).catch(function () {});
+    }, 60000);
+    return function () { clearInterval(iv); };
+  }, [state, punches]);
   useEffect(function () {
     function upd() {
       var q = 0;
@@ -2703,7 +2741,12 @@ function KioskView({
     }
   }, "Cancel"));
   if (state === "action" && emp) {
-    var cs = getCurrentState(emp, punches);
+    /* prefer database truth over local memory for this person */
+    var __effP = punches;
+    if (verified && verified.eid === emp.id) {
+      __effP = (punches || []).filter(function (p) { return p.eid !== emp.id; }).concat(verified.rows);
+    }
+    var cs = getCurrentState(emp, __effP);
     var acts = getNextActions(cs);
     var wk = calcWeekHours(punches, emp.id);
     content = /*#__PURE__*/React.createElement("div", {
@@ -2711,7 +2754,7 @@ function KioskView({
         textAlign: "center"
       }
     }, (function () {
-      var dang = __tkDanglingIn(emp, punches);
+      var dang = __tkDanglingIn(emp, typeof __effP !== "undefined" ? __effP : punches);
       if (!dang) return null;
       var dd = new Date(dang.time);
       return React.createElement("div", { style: { margin: "0 auto 18px", maxWidth: 420, padding: "14px 16px", background: "rgba(251,146,60,0.12)", border: "1px solid rgba(251,146,60,0.45)", borderRadius: 12, textAlign: "left" } },
