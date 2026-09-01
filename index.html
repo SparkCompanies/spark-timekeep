@@ -2532,6 +2532,37 @@ function KioskView({
     }
   }
   function doPunch(type) {
+    /* __tkPunchGuard: enforcement, not display. A CLOCK IN is checked
+       against this person's latest known punch. An open clock-in less
+       than 20 hours old means a second IN is refused — the kiosk asks
+       whether they meant Clock Out instead. Verified (database) punches
+       are used when the PIN-entry fetch succeeded; local otherwise. */
+    if (type === "in" && emp) {
+      var __gSrc = (typeof verified !== "undefined" && verified && verified.eid === emp.id)
+        ? verified.rows
+        : (getPunchesByEid(punches)[emp.id] || []);
+      var __gLast = null;
+      for (var __gi = 0; __gi < __gSrc.length; __gi++) {
+        if (__gSrc[__gi].type !== "in" && __gSrc[__gi].type !== "out") continue;
+        if (!__gLast || new Date(__gSrc[__gi].time) > new Date(__gLast.time)) __gLast = __gSrc[__gi];
+      }
+      if (__gLast && __gLast.type === "in") {
+        var __gAge = Date.now() - new Date(__gLast.time).getTime();
+        if (__gAge > 60 * 1000 && __gAge < 20 * 60 * 60 * 1000) {
+          __tkBeep(false);
+          var __gWhen = new Date(__gLast.time);
+          var __gMsg = "You are already clocked in (since " +
+            __gWhen.toLocaleDateString(undefined, { weekday: "short" }) + " " +
+            __gWhen.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) +
+            ").\n\nRecord a CLOCK OUT instead?";
+          if (window.confirm(__gMsg)) {
+            type = "out";
+          } else {
+            return;
+          }
+        }
+      }
+    }
     if(window._punchLock)return;window._punchLock=true;setTimeout(function(){window._punchLock=false},10000);
     var gc = geoConfig || null;
     var isExempt = emp && emp.mobilePunchExempt === true;
