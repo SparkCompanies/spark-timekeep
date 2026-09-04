@@ -5834,25 +5834,68 @@ function AdminView({
       a.click();
     }
     if (type === "points") {
-      var rows2 = ["Employee,GS ID,Badge,Type,Points,Date"];
-      pointEvents.filter(function (ev) { return __activeIds[ev.eid]; }).forEach(function (ev) {  /* FIX: active only */
-        var emp = emps.find(function (e) {
-          return e.id === ev.eid;
+      /* __ptsStanding: one row per active employee — where they stand NOW,
+         not every event ever recorded. Detail lives on the Points Ledger tab. */
+      var __rollD = (P && P.rollingDays) || 90;
+      var __cut = Date.now() - __rollD * 24 * 60 * 60 * 1000;
+      function __standing(pts) {
+        if (pts >= 8) return "TERMINATION";
+        if (pts >= 6) return "Final Warning / Suspension";
+        if (pts >= 4.5) return "Written Warning";
+        if (pts >= 2.5) return "Verbal Warning";
+        return "Good Standing";
+      }
+      function __csv(v) {
+        var s = String(v == null ? "" : v);
+        return (s.indexOf(",") > -1 || s.indexOf("\"") > -1) ? "\"" + s.replace(/"/g, "\"\"") + "\"" : s;
+      }
+      var rows2 = ["Employee,GS ID,Badge,Dept,Current Points,Standing,Counting Events,Next Point Drops Off,Points Dropping,Lifetime Points,Expired Events"];
+      var __standRows = emps.filter(function (e) { return e.st === "active"; }).map(function (e) {
+        var mine = (pointEvents || []).filter(function (ev) { return ev.eid === e.id; });
+        var counting = mine.filter(function (ev) { return new Date(ev.date).getTime() >= __cut; });
+        var expired = mine.length - counting.length;
+        var cur = counting.reduce(function (s, ev) { return s + (parseFloat(ev.pts) || 0); }, 0);
+        var life = mine.reduce(function (s, ev) { return s + (parseFloat(ev.pts) || 0); }, 0);
+        /* the oldest still-counting event is the next one to fall off */
+        var oldest = null;
+        counting.forEach(function (ev) {
+          if (!oldest || new Date(ev.date) < new Date(oldest.date)) oldest = ev;
         });
-        var rule = RULES.find(function (r) {
-          return r.k === ev.type;
-        }) || {
-          v: ev.type
+        var dropDate = "", dropPts = "";
+        if (oldest) {
+          var d = new Date(oldest.date);
+          d.setDate(d.getDate() + __rollD);
+          dropDate = d.toLocaleDateString();
+          dropPts = (parseFloat(oldest.pts) || 0).toFixed(1);
+        }
+        return {
+          cur: cur,
+          line: [
+            e.fn + " " + e.ln,
+            e.gsId || "",
+            e.badge || "",
+            (e.dept || "").trim(),
+            cur.toFixed(1),
+            __standing(cur),
+            counting.length,
+            dropDate,
+            dropPts,
+            life.toFixed(1),
+            expired
+          ].map(__csv).join(",")
         };
-        rows2.push((emp ? emp.fn + " " + emp.ln : "?") + "," + ((emp?emp.gsId||"":"") + "," + (emp ? emp.badge : "?")) + "," + rule.v + "," + ev.pts + "," + new Date(ev.date).toLocaleDateString());
       });
-      var blob2 = new Blob([rows2.join("\n")], {
-        type: "text/csv"
+      /* worst first, then alphabetical */
+      __standRows.sort(function (a, b) {
+        if (b.cur !== a.cur) return b.cur - a.cur;
+        return a.line.localeCompare(b.line);
       });
+      __standRows.forEach(function (r) { rows2.push(r.line); });
+      var blob2 = new Blob([rows2.join("\n")], { type: "text/csv" });
       var url2 = URL.createObjectURL(blob2);
       var a2 = document.createElement("a");
       a2.href = url2;
-      a2.download = "points-report.csv";
+      a2.download = "points-standing-" + new Date().toISOString().slice(0, 10) + ".csv";
       a2.click();
     }
     if (type === "detailed") {
@@ -7785,7 +7828,7 @@ function AdminView({
   ),
   /*#__PURE__*/React.createElement("div", {
     style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }
-  }, [["Weekly Timesheet","Mon\u2013Sun hours by employee with OT breakdown","timesheet","\u{1F4CA}"],["Points Report","90-day attendance violation history","points","\u26A0"],["Audit Trail", "Every punch with badge, time, device, IP", "audit", "🔍"],["Detailed Punches","Daily in/out/break per employee sorted by last name","detailed","📋"],["Punch Source","Kiosk vs mobile vs manager entry, with summary","source","📱"]].map(function (x) {
+  }, [["Weekly Timesheet","Mon\u2013Sun hours by employee with OT breakdown","timesheet","\u{1F4CA}"],["Points Standing","Where each person stands today, worst first","points","\u26A0"],["Audit Trail", "Every punch with badge, time, device, IP", "audit", "🔍"],["Detailed Punches","Daily in/out/break per employee sorted by last name","detailed","📋"],["Punch Source","Kiosk vs mobile vs manager entry, with summary","source","📱"]].map(function (x) {
     return /*#__PURE__*/React.createElement("div", {
       key: x[0],
       style: {
