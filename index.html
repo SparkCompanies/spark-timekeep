@@ -553,6 +553,18 @@ async function sbSavePunch(p) {
   flushOfflineQueue();
 }
 
+/* ═══ WEEKLY TIMESHEET APPROVALS (Supabase tk_approvals) ═══ */
+async function saveApproval(eid, weekStart, status, staffName) {
+  var sb = getSb(); if (!sb) return;
+  try {
+    await sb.from("tk_approvals").upsert(
+      { eid: eid, week_start: weekStart, status: status, approved_by: staffName || null, approved_at: new Date().toISOString() },
+      { onConflict: "eid,week_start" }
+    );
+    logAdminAction("APPROVE_WEEK", eid + " wk " + weekStart, staffName);
+  } catch (e) { console.error("saveApproval failed", e); }
+}
+
 /* ═══ ADMIN AUDIT TRAIL ═══ */
 async function logAdminAction(action, details, staffName) {
   var entry={id:"AL-"+Date.now()+"-"+Math.random().toString(36).substr(2,4),action:action,details:details,by:staffName||"System",time:new Date().toISOString()};
@@ -4315,9 +4327,19 @@ function ManagerView({
     window.__tkOpenProfile = function(eid){ setActiveEid(eid); };
     return function(){ window.__tkOpenProfile = null; };
   }, []);
-  var rappr = useState(function(){try{return JSON.parse(localStorage.getItem("tk-approvals")||"{}")}catch(e){return {}}}),
+  var rappr = useState({}),
     approvals = rappr[0],
     setApprovals = rappr[1];
+  // Weekly approvals live in Supabase (tk_approvals) so every manager/admin sees the same status
+  React.useEffect(function(){
+    var sb = getSb(); if (!sb) return;
+    sb.from("tk_approvals").select("eid,week_start,status").then(function(res){
+      if (!res || !res.data) return;
+      var m = {};
+      res.data.forEach(function(r){ m[r.eid + "-" + r.week_start] = r.status; });
+      setApprovals(m);
+    });
+  }, []);
   var rwk = useState(0),
     weekOffset = rwk[0],
     setWeekOffset = rwk[1];
@@ -4897,7 +4919,7 @@ function ManagerView({
     }, "OK") : !readOnly && /*#__PURE__*/React.createElement("button", {
       onClick: function (ev) {
         ev.stopPropagation();
-        var wk=mon.toISOString().slice(0,10);var nxt=Object.assign({},approvals);nxt[e.id+"-"+wk]="approved";setApprovals(nxt);try{localStorage.setItem("tk-approvals",JSON.stringify(nxt))}catch(ex){}
+        var wk=mon.toISOString().slice(0,10);var nxt=Object.assign({},approvals);nxt[e.id+"-"+wk]="approved";setApprovals(nxt);saveApproval(e.id, wk, "approved", staffName);
       },
       style: {
         padding: "4px 10px",
@@ -4927,7 +4949,7 @@ function ManagerView({
       active.forEach(function (e) {
         all[e.id+"-"+wk2]="approved";
       });
-      setApprovals(all);try{localStorage.setItem("tk-approvals",JSON.stringify(all))}catch(ex){}
+      setApprovals(all);active.forEach(function (e) { saveApproval(e.id, wk2, "approved", staffName); });
     },
     style: {
       padding: "7px 16px",
