@@ -68,8 +68,8 @@ const C = {
   w: "#FAFAFA",
   t1: "#E4E4E7",
   t2: "#A1A1AA",
-  t3: "#71717A",
-  t4: "#3F3F46"
+  t3: "#8E8E9A",
+  t4: "#6B6B77"
 };
 const Fm = "'IBM Plex Mono','Courier New',monospace",
   Fb = "'DM Sans','Helvetica Neue',sans-serif";
@@ -3074,14 +3074,20 @@ function KioskView({
         alignItems: "center",
         justifyContent: "center",
         margin: "0 auto",
-        fontSize: 28
+        fontSize: 28,
+        display: "none"
       }
     }, "\u2713"), /*#__PURE__*/React.createElement("div", {
+      className: "tk-check",
+      style: punchType === "in" || punchType === "break-in" ? null : { background: "radial-gradient(circle at 50% 40%," + pt.c + "44," + pt.c + "14)", boxShadow: "0 0 0 2px " + pt.c + "bb,0 0 40px " + pt.c + "55" }
+    }, /*#__PURE__*/React.createElement("svg", { width: 40, height: 40, viewBox: "0 0 24 24", fill: "none", stroke: pt.c, strokeWidth: 3, strokeLinecap: "round", strokeLinejoin: "round" }, /*#__PURE__*/React.createElement("path", { d: "M20 6 9 17l-5-5" }))), /*#__PURE__*/React.createElement("div", {
+      className: "tk-greet"
+    }, (punchType === "in" ? "Have a good shift, " : punchType === "out" ? "See you next shift, " : punchType === "break-out" ? "Enjoy your break, " : "Welcome back, ") + emp.fn + "."), /*#__PURE__*/React.createElement("div", {
       style: {
-        fontSize: 18,
+        fontSize: 14,
         fontWeight: 800,
-        color: C.t1,
-        marginTop: 12,
+        color: C.t3,
+        marginTop: 8,
         letterSpacing: 2
       }
     }, pt.l.toUpperCase()), /*#__PURE__*/React.createElement("div", {
@@ -4271,6 +4277,157 @@ var __tkStatusCache = { key: "", val: null };
 /* PERF: violations cache */
 var __tkViolCache = { key: "", val: null };
 
+/* ═══ UI KIT: icons, mark, app shell, toasts (SaaS polish layer) ═══ */
+var TK_ICO = {
+  grid: ["M3 3h7v7H3z", "M14 3h7v7h-7z", "M14 14h7v7h-7z", "M3 14h7v7H3z"],
+  users: ["M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2", "M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z", "M22 21v-2a4 4 0 0 0-3-3.87", "M16 3.13a4 4 0 0 1 0 7.75"],
+  chart: ["M3 3v18h18", "M18 17V9", "M13 17V5", "M8 17v-3"],
+  clock: ["M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z", "M12 6v6l4 2"],
+  ledger: ["M4 19.5A2.5 2.5 0 0 1 6.5 17H20", "M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z", "M9 7h7", "M9 11h5"],
+  user: ["M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2", "M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"],
+  bell: ["M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9", "M13.73 21a2 2 0 0 1-3.46 0"],
+  inbox: ["M22 12h-6l-2 3h-4l-2-3H2", "M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"],
+  gear: ["M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z", "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"],
+  key: ["M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.78 7.78 5.5 5.5 0 0 1 7.78-7.78zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"],
+  calendar: ["M8 2v4", "M16 2v4", "M3 10h18", "M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"],
+  sliders: ["M4 21v-7", "M4 10V3", "M12 21v-9", "M12 8V3", "M20 21v-5", "M20 12V3", "M1 14h6", "M9 8h6", "M17 16h6"],
+  pin: ["M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z", "M12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"],
+  search: ["M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z", "m21 21-4.3-4.3"],
+  swap: ["M16 3l4 4-4 4", "M20 7H4", "M8 21l-4-4 4-4", "M4 17h16"],
+  check: ["M20 6 9 17l-5-5"],
+  x: ["M18 6 6 18", "M6 6l12 12"],
+  info: ["M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z", "M12 16v-4", "M12 8h.01"],
+  dot: ["M12 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"]
+};
+function TkIco({ n, s, sw, style }) {
+  var size = s || 16;
+  return React.createElement("svg", {
+    width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: sw || 2,
+    strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true",
+    style: Object.assign({ display: "inline-block", flex: "none" }, style || {})
+  }, (TK_ICO[n] || TK_ICO.dot).map(function (d, i) { return React.createElement("path", { key: i, d: d }); }));
+}
+function TkMark({ size, glow }) {
+  var s = size || 20;
+  return React.createElement("div", {
+    style: {
+      width: s, height: s, borderRadius: "50%", flex: "none", display: "inline-grid", placeItems: "center",
+      background: "radial-gradient(circle at 35% 30%, #FDE68A 0%, #FACC15 45%, #EAB308 100%)",
+      boxShadow: glow ? "0 0 0 1px rgba(250,204,21,.35), 0 0 " + Math.round(s * 0.9) + "px rgba(250,204,21,.35)" : "inset 0 -1px 0 rgba(0,0,0,.2)"
+    }
+  }, React.createElement("svg", { width: s * 0.56, height: s * 0.56, viewBox: "0 0 24 24", "aria-hidden": "true" },
+    React.createElement("path", { d: "M13 2 3 14h9l-1 8 10-12h-9l1-8z", fill: "#0B0B0D" })));
+}
+var TK_TAB_ICONS = {
+  dashboard: "grid", "whos-in": "users", reports: "chart", timesheets: "clock", ledger: "ledger", profile: "user",
+  alerts: "bell", approvals: "inbox", system: "gear", employees: "users", staff: "key", schedules: "calendar",
+  policy: "sliders", geofence: "pin", audit: "search"
+};
+function tkSplitLabel(label) {
+  var m = /^(.*?)\s*(?:\((\d+)\)|·\s*(\d+))\s*$/.exec(label || "");
+  return m ? { text: m[1], count: m[2] || m[3] } : { text: label, count: null };
+}
+function TkShell(props) {
+  var mo = useMobile();
+  if (mo) return React.createElement("div", { className: "tk-shell-mobile" }, props.children);
+  var groups = props.tabs || [];
+  return React.createElement("div", { className: "tk-shell" },
+    React.createElement("aside", { className: "tk-side" },
+      React.createElement("div", { className: "tk-brand" },
+        React.createElement(TkMark, { size: 30, glow: true }),
+        React.createElement("div", null,
+          React.createElement("div", { className: "tk-brand-name" }, "TimeKeep"),
+          React.createElement("div", { className: "tk-brand-area" }, props.area))),
+      React.createElement("nav", { className: "tk-nav", "aria-label": props.area + " sections" },
+        React.createElement("div", { className: "tk-nav-label" }, props.area === "Admin" ? "Configuration" : "Workspace"),
+        groups.map(function (t) {
+          var lab = tkSplitLabel(t[1]);
+          var on = props.active === t[0];
+          return React.createElement("button", {
+            key: t[0], className: "tk-nav-item" + (on ? " on" : ""), "aria-current": on ? "page" : undefined,
+            onClick: function () { props.onTab(t[0]); window.scrollTo({ top: 0 }); }
+          },
+            React.createElement(TkIco, { n: TK_TAB_ICONS[t[0]] || "dot", s: 17 }),
+            React.createElement("span", { className: "tk-nav-text" }, lab.text),
+            lab.count ? React.createElement("span", { className: "tk-nav-count" + (t[0] === "alerts" || t[0] === "approvals" || t[0] === "dashboard" ? " hot" : "") }, lab.count) : null);
+        })),
+      React.createElement("div", { className: "tk-side-foot" },
+        props.onSwitchView ? React.createElement("button", { className: "tk-switch", onClick: props.onSwitchView },
+          React.createElement(TkIco, { n: "swap", s: 15 }), "Open " + props.switchLabel + " view") : null,
+        React.createElement("div", { className: "tk-side-meta" }, "Spark Companies \xB7 TimeKeep"))),
+    React.createElement("div", { className: "tk-main" }, props.children));
+}
+/* Toasts: window.tkToast("Saved", "success" | "info" | "warn") */
+var _tkToastSubs = [];
+window.tkToast = function (msg, kind) {
+  var t = { id: Date.now() + Math.random(), msg: msg, kind: kind || "success" };
+  _tkToastSubs.forEach(function (f) { f(t); });
+};
+function TkToaster() {
+  var r = useState([]), list = r[0], setList = r[1];
+  useEffect(function () {
+    function add(t) {
+      setList(function (l) { return l.concat([t]).slice(-4); });
+      setTimeout(function () { setList(function (l) { return l.filter(function (x) { return x.id !== t.id; }); }); }, 3200);
+    }
+    _tkToastSubs.push(add);
+    return function () { _tkToastSubs = _tkToastSubs.filter(function (f) { return f !== add; }); };
+  }, []);
+  return React.createElement("div", { className: "tk-toasts", role: "status", "aria-live": "polite" },
+    list.map(function (t) {
+      return React.createElement("div", { key: t.id, className: "tk-toast " + t.kind },
+        React.createElement("span", { className: "tk-toast-ic" }, React.createElement(TkIco, { n: t.kind === "success" ? "check" : t.kind === "warn" ? "x" : "info", s: 14, sw: 2.6 })),
+        t.msg);
+    }));
+}
+var TK_SHELL_CSS = `
+body{background:radial-gradient(1100px 620px at 30% -15%,rgba(250,204,21,.07),transparent 62%),radial-gradient(900px 560px at 105% 110%,rgba(59,130,246,.06),transparent 60%),#09090B!important;background-attachment:fixed!important}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:1;opacity:.045;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+#root>div>div{background:transparent!important}
+.tk-shell{display:flex;min-height:100vh;font-family:'DM Sans','Helvetica Neue',sans-serif}
+.tk-side{position:sticky;top:0;height:100vh;width:232px;flex:none;display:flex;flex-direction:column;padding:18px 12px 14px;border-right:1px solid #1E1E22;background:linear-gradient(180deg,rgba(18,18,22,.92),rgba(11,11,14,.96));box-shadow:inset -1px 0 0 rgba(255,255,255,.02);z-index:5}
+.tk-brand{display:flex;align-items:center;gap:10px;padding:2px 8px 18px;border-bottom:1px solid #1E1E22;margin-bottom:14px}
+.tk-brand-name{font-size:16px;font-weight:800;color:#FAFAFA;letter-spacing:.2px}
+.tk-brand-area{font:600 10px 'IBM Plex Mono',monospace;letter-spacing:1.6px;color:#FACC15;text-transform:uppercase;margin-top:2px}
+.tk-nav{display:flex;flex-direction:column;gap:2px;flex:1;overflow-y:auto}
+.tk-nav-label{font:600 10px 'IBM Plex Mono',monospace;letter-spacing:1.6px;color:#5E5E69;text-transform:uppercase;padding:4px 10px 8px}
+.tk-nav-item{display:flex;align-items:center;gap:11px;width:100%;padding:9px 10px;border-radius:9px;color:#A1A1AA;font-size:14px;font-weight:600;text-align:left;transition:background .15s,color .15s}
+.tk-nav-item:hover{background:rgba(255,255,255,.045);color:#FAFAFA}
+.tk-nav-item.on{background:linear-gradient(180deg,rgba(250,204,21,.16),rgba(250,204,21,.08));color:#FDE68A;box-shadow:inset 0 0 0 1px rgba(250,204,21,.22)}
+.tk-nav-item.on svg{color:#FACC15}
+.tk-nav-text{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tk-nav-count{font:700 11px 'IBM Plex Mono',monospace;padding:2px 7px;border-radius:999px;background:rgba(255,255,255,.07);color:#A1A1AA}
+.tk-nav-count.hot{background:rgba(251,146,60,.16);color:#FDBA74}
+.tk-side-foot{border-top:1px solid #1E1E22;padding-top:12px;display:flex;flex-direction:column;gap:10px}
+.tk-switch{display:flex;align-items:center;justify-content:center;gap:8px;padding:9px 10px;border-radius:9px;font-size:13px;font-weight:700;color:#FACC15;border:1px solid rgba(250,204,21,.3);background:rgba(250,204,21,.05)}
+.tk-switch:hover{background:rgba(250,204,21,.1)}
+.tk-side-meta{font-size:11px;color:#5E5E69;text-align:center}
+.tk-main{flex:1;min-width:0}
+.tk-main>div:first-child{position:sticky;top:0;z-index:4;backdrop-filter:blur(10px);background:rgba(13,13,16,.82)!important}
+#root [style*="background: rgb(17, 17, 19)"]{background-image:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,0) 42%)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 10px 28px -14px rgba(0,0,0,.75)}
+#root [style*="background: rgb(250, 204, 21)"]{background-image:linear-gradient(180deg,#FDE047,#FACC15 55%,#EAB308)!important;box-shadow:0 6px 18px -8px rgba(250,204,21,.5),inset 0 1px 0 rgba(255,255,255,.35)}
+#root button{transition:filter .15s,background .15s,transform .1s}
+#root button:hover{filter:brightness(1.08)}
+#root button:focus-visible,#root input:focus-visible,#root select:focus-visible{outline:2px solid #FACC15;outline-offset:2px}
+#root table{border-collapse:separate;border-spacing:0}
+#root thead th{position:sticky;top:0;z-index:2;background:#121215}
+#root tbody tr{transition:background .12s}
+#root tbody tr:hover{background:rgba(255,255,255,.035)}
+.tk-toasts{position:fixed;right:max(18px,env(safe-area-inset-right,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:10000;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.tk-toast{display:flex;align-items:center;gap:10px;min-width:240px;max-width:380px;padding:11px 14px;border-radius:11px;font:600 13.5px 'DM Sans',sans-serif;color:#FAFAFA;background:rgba(24,24,28,.94);border:1px solid rgba(255,255,255,.1);box-shadow:0 18px 40px -16px rgba(0,0,0,.9);backdrop-filter:blur(10px);animation:tkin .25s ease-out}
+.tk-toast-ic{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;flex:none}
+.tk-toast.success .tk-toast-ic{background:rgba(34,197,94,.18);color:#4ADE80}
+.tk-toast.info .tk-toast-ic{background:rgba(59,130,246,.18);color:#60A5FA}
+.tk-toast.warn .tk-toast-ic{background:rgba(239,68,68,.18);color:#F87171}
+@keyframes tkin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.tk-check{width:84px;height:84px;margin:0 auto;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 50% 40%,rgba(34,197,94,.28),rgba(34,197,94,.08));box-shadow:0 0 0 2px rgba(34,197,94,.7),0 0 40px rgba(34,197,94,.35);animation:tkpop .35s cubic-bezier(.2,1.4,.4,1)}
+.tk-check path{stroke-dasharray:30;stroke-dashoffset:30;animation:tkdraw .45s .15s ease-out forwards}
+@keyframes tkpop{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
+@keyframes tkdraw{to{stroke-dashoffset:0}}
+.tk-greet{font-size:20px;font-weight:700;color:#FAFAFA;margin-top:14px}
+@media (prefers-reduced-motion:reduce){.tk-check,.tk-check path,.tk-toast{animation:none!important;stroke-dashoffset:0!important}}
+`;
+
 function ManagerView({
   emps,
   punches,
@@ -4524,12 +4681,13 @@ function ManagerView({
     );
   }
   var tabDef = [["dashboard", "Dashboard" + (violations.length > 0 ? " (" + violations.length + ")" : "")], ["whos-in", "Who's In"], ["reports", "Reports"], ["timesheets", "Timesheets"], ["ledger", "Points Ledger" + (function(){var c=(pointEvents||[]).length;return c>0?" · "+c:""}())], ["profile", "Profile"], ["alerts", "Alerts" + (function(){var c=alerts.filter(function(a,i){return !dismissedAlerts[a.id||"a"+i]}).length;return c>0?" ("+c+")":""}())], ["approvals", "Approvals" + (pending.length > 0 ? " (" + pending.length + ")" : "")]].filter(function(t){return !(readOnly && t[0]==="approvals")});
-  return /*#__PURE__*/React.createElement("div", {
-    style: {
-      minHeight: "100vh",
-      background: C.bg,
-      fontFamily: Fb
-    }
+  return /*#__PURE__*/React.createElement(TkShell, {
+    tabs: tabDef,
+    active: mTab,
+    onTab: setMTab,
+    area: readOnly ? "Viewer" : "Manager",
+    onSwitchView: !readOnly ? onSwitchView : null,
+    switchLabel: "Admin"
   }, /*#__PURE__*/React.createElement(Header, {
     title: "Manager Dashboard",
     sub: "Monitoring " + active.length + " employees",
@@ -4540,7 +4698,7 @@ function ManagerView({
     style: {
       padding: mo ? 12 : 28
     }
-  }, /*#__PURE__*/React.createElement("div", {
+  }, mo && /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 3,
@@ -4568,7 +4726,7 @@ function ManagerView({
         background: mTab === x[0] ? C.spark : "transparent"
       }
     }, x[1]);
-  })), !readOnly && onSwitchView && React.createElement("div",{style:{marginBottom:12}},React.createElement("button",{onClick:onSwitchView,style:{padding:"6px 16px",background:"transparent",border:"1px solid "+(C.spark||"#FACC15"),color:C.spark||"#FACC15",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:600}},"Switch to Admin View")), /*#__PURE__*/React.createElement("div",{style:{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap",alignItems:"center"}},/*#__PURE__*/React.createElement("input",{placeholder:"Search name or badge...",value:searchInput,onChange:function(e){setSearchDebounced(e.target.value)},style:{padding:"8px 12px",background:C.bg,border:"1px solid "+C.bd,color:C.t1,borderRadius:6,fontSize:13,outline:"none",width:260,fontFamily:"inherit"}}),/*#__PURE__*/React.createElement("select",{value:dept,onChange:function(e){setDept(e.target.value)},style:{padding:"8px 12px",background:C.bg,border:"1px solid "+C.bd,color:C.t1,borderRadius:6,fontSize:13,outline:"none",fontFamily:"inherit",appearance:"auto"}},/*#__PURE__*/React.createElement("option",{value:"all"},"All Departments"),emps.filter(function(e){return e.st==="active"}).map(function(e){return e.dept}).filter(function(v,i,a){return v&&a.indexOf(v)===i}).sort().map(function(d){return /*#__PURE__*/React.createElement("option",{key:d,value:d},d)})),search&&/*#__PURE__*/React.createElement("button",{onClick:function(){setSearch("");setSearchInput("");setDept("all")},style:{padding:"6px 12px",background:"transparent",border:"1px solid "+C.bd,color:C.t3,borderRadius:6,fontSize:12,cursor:"pointer",fontFamily:"inherit"}},"Clear")), (mTab === "dashboard" || mTab === "timesheets") && /*#__PURE__*/React.createElement("div", {
+  })), mo && !readOnly && onSwitchView && React.createElement("div",{style:{marginBottom:12}},React.createElement("button",{onClick:onSwitchView,style:{padding:"6px 16px",background:"transparent",border:"1px solid "+(C.spark||"#FACC15"),color:C.spark||"#FACC15",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:600}},"Switch to Admin View")), /*#__PURE__*/React.createElement("div",{style:{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap",alignItems:"center"}},/*#__PURE__*/React.createElement("input",{placeholder:"Search name or badge...",value:searchInput,onChange:function(e){setSearchDebounced(e.target.value)},style:{padding:"8px 12px",background:C.bg,border:"1px solid "+C.bd,color:C.t1,borderRadius:6,fontSize:13,outline:"none",width:260,fontFamily:"inherit"}}),/*#__PURE__*/React.createElement("select",{value:dept,onChange:function(e){setDept(e.target.value)},style:{padding:"8px 12px",background:C.bg,border:"1px solid "+C.bd,color:C.t1,borderRadius:6,fontSize:13,outline:"none",fontFamily:"inherit",appearance:"auto"}},/*#__PURE__*/React.createElement("option",{value:"all"},"All Departments"),emps.filter(function(e){return e.st==="active"}).map(function(e){return e.dept}).filter(function(v,i,a){return v&&a.indexOf(v)===i}).sort().map(function(d){return /*#__PURE__*/React.createElement("option",{key:d,value:d},d)})),search&&/*#__PURE__*/React.createElement("button",{onClick:function(){setSearch("");setSearchInput("");setDept("all")},style:{padding:"6px 12px",background:"transparent",border:"1px solid "+C.bd,color:C.t3,borderRadius:6,fontSize:12,cursor:"pointer",fontFamily:"inherit"}},"Clear")), (mTab === "dashboard" || mTab === "timesheets") && /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       alignItems: "center",
@@ -5965,12 +6123,13 @@ function AdminView({
     onUpdatePolicy(np);
   }
   var tabDef2 = [["system", "System"], ["employees", "Employees"], ["staff", "Staff Access"], ["schedules", "Schedules"], ["policy", "Policy"], ["geofence", "Geofence"], ["reports", "Reports"], ["audit", "Audit Log"]];
-  return /*#__PURE__*/React.createElement("div", {
-    style: {
-      minHeight: "100vh",
-      background: C.bg,
-      fontFamily: Fb
-    }
+  return /*#__PURE__*/React.createElement(TkShell, {
+    tabs: tabDef2,
+    active: tab,
+    onTab: setTab,
+    area: "Admin",
+    onSwitchView: onSwitchView,
+    switchLabel: "Manager"
   }, /*#__PURE__*/React.createElement(Header, {
     title: "Administration",
     sub: "System Configuration",
@@ -5980,7 +6139,7 @@ function AdminView({
     style: {
       padding: mo ? 12 : 28
     }
-  }, /*#__PURE__*/React.createElement("div", {
+  }, mo && /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 3,
@@ -6008,7 +6167,7 @@ function AdminView({
         background: tab === x[0] ? C.spark : "transparent"
       }
     }, x[1]);
-  })), onSwitchView && React.createElement("div",{style:{marginBottom:12}},React.createElement("button",{onClick:onSwitchView,style:{padding:"6px 16px",background:"transparent",border:"1px solid "+(C.spark||"#FACC15"),color:C.spark||"#FACC15",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:600}},"Switch to Manager View")), tab === "system" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  })), mo && onSwitchView && React.createElement("div",{style:{marginBottom:12}},React.createElement("button",{onClick:onSwitchView,style:{padding:"6px 16px",background:"transparent",border:"1px solid "+(C.spark||"#FACC15"),color:C.spark||"#FACC15",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:600}},"Switch to Manager View")), tab === "system" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       fontWeight: 700,
@@ -9250,6 +9409,7 @@ function App() {
     persistR(nr, req);
   }
   function handleApproveRequest(id) {
+    try { window.tkToast("Request approved, punch added"); } catch (_t) {}
     var req = requests.find(function (r) {
       return r.id === id;
     });
@@ -9287,6 +9447,7 @@ function App() {
     persistR(nr, updated);
   }
   function handleDenyRequest(id) {
+    try { window.tkToast("Request denied", "info"); } catch (_t) {}
     var req = requests.find(function (r) {
       return r.id === id;
     });
@@ -9311,6 +9472,7 @@ function App() {
   });
 
   function handleIssuePoint(eid, type, pts, violationDate) {
+    try { var _e = emps.find(function (x) { return x.id === eid; }); window.tkToast("Point issued" + (_e ? " to " + _e.fn + " " + _e.ln : "")); } catch (_t) {}
     var rule = RULES.find(function (r) {
       return r.k === type;
     });
@@ -9350,6 +9512,7 @@ function App() {
     if (useSupa()) { var changed = updated.find(function(ev){return ev.id===evId}); if(changed) sbSavePointEvent(changed); }
   }
   function editPunch(punchId, newTime, opts) {
+    try { window.tkToast("Punch updated"); } catch (_t) {}
     opts = opts || {};
     var editorName = (loggedIn && loggedIn.fn && loggedIn.ln) ? (loggedIn.fn + " " + loggedIn.ln) : "Unknown";
     var newDev = "MANAGER - " + editorName;
@@ -9398,6 +9561,7 @@ function App() {
     })()}
   }
   function deletePunch(punchId, reason) {
+    try { window.tkToast("Punch removed", "info"); } catch (_t) {}
     if (reason === undefined) {
       if(!confirm("Delete this punch? This cannot be undone.")) return;
     }
@@ -9419,6 +9583,7 @@ function App() {
   }
   function switchView(){if(view==="admin")setView("manager");else if(view==="manager")setView("admin")}
   function handleUpdatePolicy(np) {
+    try { window.tkToast("Policy saved"); } catch (_t) {}
     setPolicy(np);
     sSet("tk-v7-policy", np);
     if (useSupa()) {
@@ -9433,6 +9598,7 @@ function App() {
     }
   }
   function handleUpdateStaff(ns) {
+    try { window.tkToast("Staff access saved"); } catch (_t) {}
     setStaff(ns);
     sSet("tk-v7-staff", ns);
     if (useSupa()) {
@@ -9544,7 +9710,7 @@ function App() {
     staffName: loggedIn.fn + " " + loggedIn.ln,
     staff: staff,
     onUpdateStaff: handleUpdateStaff
-  }));
+  }), /*#__PURE__*/React.createElement("style", null, TK_SHELL_CSS), /*#__PURE__*/React.createElement(TkToaster, null));
 }
 ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
 </script>
