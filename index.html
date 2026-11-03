@@ -924,9 +924,29 @@ function calcDayHours(punches, eid) {
     }
   }
 
-  // Step 2: Auto-deduct break if gross hours >= policy threshold
+  // Step 2: Sum punched breaks (break-out -> next break-in). An open break
+  // that is still running today counts to now; an open break the person
+  // clocked out over (forgot Break In) is ignored and the auto rule applies.
+  var punchedMs = 0;
+  for (var b = 0; b < sorted.length; b++) {
+    if (sorted[b].type !== "break-out") continue;
+    var bStart = new Date(sorted[b].time).getTime(), bEnd = null, closed = false;
+    for (var c = b + 1; c < sorted.length; c++) {
+      if (sorted[c].type === "break-in") { bEnd = new Date(sorted[c].time).getTime(); b = c; break; }
+      if (sorted[c].type === "out" || sorted[c].type === "break-out") { closed = true; break; }
+    }
+    if (bEnd === null && !closed && isToday && b === sorted.length - 1) bEnd = Date.now();
+    if (bEnd !== null && bEnd > bStart) punchedMs += bEnd - bStart;
+  }
+
+  // Step 3: Deduction. Punched break wins (never less than the policy minimum
+  // for non-exempt); no punched break -> auto-deduct once gross >= threshold.
   var grossH = gross / 3600000;
-  var _bex=eid&&window.__breakExemptEids&&window.__breakExemptEids[eid]; var breakMs=_bex?0:(grossH>=(window.__breakReqHrs||8))?(window.__breakMins||30)*60000:0;
+  var _bex=eid&&window.__breakExemptEids&&window.__breakExemptEids[eid];
+  var _minMs=(window.__breakMins||30)*60000;
+  var breakMs = punchedMs > 0
+    ? (_bex ? punchedMs : Math.max(punchedMs, _minMs))
+    : (_bex ? 0 : (grossH>=(window.__breakReqHrs||8)) ? _minMs : 0);
 
   var net = gross - breakMs;
   return {
@@ -1137,16 +1157,14 @@ function getNextActions(cs) {
     { k: "out", l: "Clock Out", c: C.red },
     { k: "in", l: "Start New Shift", c: C.green }
   ];
-  if (cs.status === "in") return [{
-    k: "out",
-    l: "Clock Out",
-    c: C.red
-  }];
-  if (cs.status === "break") return [{
-    k: "out",
-    l: "Clock Out",
-    c: C.red
-  }];
+  if (cs.status === "in") return [
+    { k: "break-out", l: "Break Out", c: C.blue },
+    { k: "out", l: "Clock Out", c: C.red }
+  ];
+  if (cs.status === "break") return [
+    { k: "break-in", l: "Break In", c: C.blue },
+    { k: "out", l: "Clock Out", c: C.red }
+  ];
   return [{
     k: "in",
     l: "Clock In",
@@ -4873,7 +4891,7 @@ function ManagerView({
 ), mTab === "timesheets" && /*#__PURE__*/React.createElement("div", null,
     React.createElement("div", { style: { padding: "9px 14px", background: "rgba(56,189,248,0.06)", border: "1px solid rgba(56,189,248,0.2)", borderRadius: 8, marginBottom: 12, display: "flex", alignItems: "center", gap: 12, fontSize: 12, color: C.t2, flexWrap: "wrap" } },
       React.createElement("span", { style: { fontSize: 10, fontWeight: 700, color: C.blue, letterSpacing: 1.2, textTransform: "uppercase" } }, "Policy"),
-      React.createElement("span", null, "Lunch auto-deducts ", React.createElement("b", { style: { color: C.t1 } }, (P.breakMins || 30) + " min"), " after ", React.createElement("b", { style: { color: C.t1 } }, (P.breakReqHrs || 8) + "h"), " of gross work"),
+      React.createElement("span", null, "Lunch auto-deducts ", React.createElement("b", { style: { color: C.t1 } }, (P.breakMins || 30) + " min"), " after ", React.createElement("b", { style: { color: C.t1 } }, (P.breakReqHrs || 8) + "h"), " of gross work when no break is punched; a punched Break Out / Break In deducts actual time (", React.createElement("b", { style: { color: C.t1 } }, (P.breakMins || 30) + " min"), " minimum)"),
       React.createElement("span", { style: { color: C.t4 } }, "·"),
       (function(){ var n = emps.filter(function(x){return x.breakExempt}).length; return React.createElement("span", null, React.createElement("b", { style: { color: n > 0 ? C.spark : C.t1 } }, n), " exempt"); })(),
       React.createElement("span", { style: { color: C.t4 } }, "·"),
