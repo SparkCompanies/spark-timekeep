@@ -967,7 +967,13 @@ function getDayPunchesWithCarryOver(allPunches, eid, dayStart, dayEnd) {
   var lastPunch = dp.length > 0 ? dp[dp.length - 1] : null;
   
   /* FIX: 12:00 not 14:00 — second shift badges in early (13:28, 13:41, etc) */
-  if (lastPunch && lastPunch.type === "in" && new Date(lastPunch.time).getHours() >= 12) {
+  /* FIX: a night shift that took its break before midnight ends the day on
+     break-out/break-in, not "in" — still an open shift, so carry it over. */
+  var __openIn = null;
+  if (lastPunch && (lastPunch.type === "in" || lastPunch.type === "break-out" || lastPunch.type === "break-in")) {
+    for (var oi = dp.length - 1; oi >= 0; oi--) { if (dp[oi].type === "out") break; if (dp[oi].type === "in") { __openIn = dp[oi]; break; } }
+  }
+  if (__openIn && new Date(__openIn.time).getHours() >= 12) {
     var nextDayStart = new Date(dayEnd.getTime() + 1);
     var nextDayEnd = new Date(dayStart.getTime() + 36 * 3600000); // up to 12h into next day
     var nextPunches = allPunches.filter(function(p) {
@@ -3601,7 +3607,9 @@ function TimesheetDrilldown({emp,punches,mon,weekOffset,setWeekOffset,setSelEmp,
             var lastOut=outs.length>0?fmtT(outs[outs.length-1].time):"–";
             var breakMins=0;
             brkOut.forEach(function(bo,bi){if(brkIn[bi])breakMins+=Math.round((new Date(brkIn[bi].time)-new Date(bo.time))/60000)});
-            var breakStr=breakMins>0?breakMins+"m":"–";
+            /* Show the lunch actually deducted from Net (30-min minimum / auto), with punched time when it differs */
+            var dedMins=Math.round((d.breakH||0)*60);
+            var breakStr=dedMins>0?("−"+dedMins+"m"+(breakMins>0&&breakMins!==dedMins?" (punched "+breakMins+"m)":(breakMins===0?" auto":""))):"–";
             var isToday=d.date&&d.date.toDateString()===new Date().toDateString();
             var hasMismatch=ins.length!==outs.length&&!isToday;
             var dayLabel=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][i];
